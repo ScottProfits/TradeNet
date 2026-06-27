@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{ elements: { headerTitle: "!text-white font-bold text-2xl", headerSubtitle: "!text-gray-300 font-medium", formFieldLabel: "!text-gray-200 font-semibold", dividerText: "!text-gray-300 font-semibold", footerActionText: "!text-gray-300 font-medium", footerActionLink: "!text-[#00C896] font-semibold" } }}>
+    <ClerkProvider publishableKey="pk_live_Y2xlcmsucnl6ci5hcHAk" appearance={{ elements: { headerTitle: "!text-white font-bold text-2xl", headerSubtitle: "!text-gray-300 font-medium", formFieldLabel: "!text-gray-200 font-semibold", dividerText: "!text-gray-300 font-semibold", footerActionText: "!text-gray-300 font-medium", footerActionLink: "!text-[#00C896] font-semibold" } }}>
       <html lang="en">
         <body>
           <Navbar />
