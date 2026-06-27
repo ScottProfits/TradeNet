@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.9",
+    "canvas": "^3.2.3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.400.0",
     "next": "^15.5.19",

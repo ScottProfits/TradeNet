@@ -39,7 +39,8 @@
       "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\" https://trade-mmp7ebhy1-trade-net.vercel.app)",
       "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\" https://trade-net.vercel.app)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://trade-mmp7ebhy1-trade-net.vercel.app/\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://www.ryzr.app)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://www.ryzr.app)",
+      "Bash(node generate-icons.js)"
     ]
   }
 }
