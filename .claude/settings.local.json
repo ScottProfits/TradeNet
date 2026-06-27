@@ -30,7 +30,16 @@
       "Bash(git init *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{redirect_url}\" https://trade-net.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://trade-net-trade-net.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://tradenet.vercel.app)",
+      "Bash(curl -v https://trade-mmp7ebhy1-trade-net.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://trade-mmp7ebhy1-trade-net.vercel.app)",
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\" https://trade-mmp7ebhy1-trade-net.vercel.app)",
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code} %{url_effective}\" https://trade-net.vercel.app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://trade-mmp7ebhy1-trade-net.vercel.app/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://www.ryzr.app)"
     ]
   }
 }

@@ -22,7 +22,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-8 h-14">
         <Link href="/feed" className="flex items-center gap-2 font-bold text-white shrink-0">
           <TrendingUp className="w-5 h-5 text-[var(--green)]" />
-          TradeNet
+          Ryzr
         </Link>
 
         <div className="flex items-center gap-1">

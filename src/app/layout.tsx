@@ -4,7 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Navbar from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
-  title: "TradeNet — Social Trading Network",
+  title: "Ryzr — Social Trading Network",
   description: "Follow top traders, verify real P&L, copy winning strategies.",
 };
 
