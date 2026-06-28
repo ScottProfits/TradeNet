@@ -45,7 +45,10 @@
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
       "Bash(npx tsc *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(curl -s 'https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/trades?select=*&limit=5' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')",
+      "Bash(curl -s 'https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/profiles?select=*&limit=5' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')",
+      "Bash(curl -s 'https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/trades?select=*,profiles\\(id,handle,avatar_url,brokerage,verified\\)&order=created_at.desc&limit=50' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')"
     ]
   }
 }

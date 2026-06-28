@@ -51,7 +51,15 @@ export default function Navbar() {
             />
           </div>
           {isSignedIn ? (
-            <UserButton />
+            <div className="flex items-center gap-2">
+              <Link
+                href="/settings"
+                className="text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5"
+              >
+                Settings
+              </Link>
+              <UserButton />
+            </div>
           ) : (
             <SignInButton mode="redirect">
               <button className="px-3 py-1.5 text-sm font-medium text-[var(--green)] border border-[var(--green)]/30 rounded-lg hover:bg-[var(--green)]/10 transition-colors">
