@@ -17,7 +17,7 @@ interface Comment {
   };
 }
 
-export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: string; onCommentAdded?: () => void }) {
+export default function CommentSection({ tradeId, onCommentAdded, onCommentDeleted, onCountLoaded }: { tradeId: string; onCommentAdded?: () => void; onCommentDeleted?: () => void; onCountLoaded?: (n: number) => void }) {
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
@@ -27,7 +27,7 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
   useEffect(() => {
     fetch(`/api/comments?tradeId=${tradeId}`)
       .then((r) => r.ok ? r.json() : [])
-      .then((d) => { setComments(d); setLoading(false); });
+      .then((d) => { setComments(d); setLoading(false); onCountLoaded?.(d.length); });
   }, [tradeId]);
 
   async function handlePost(e: React.FormEvent) {
@@ -55,6 +55,7 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
       body: JSON.stringify({ commentId }),
     });
     setComments((c) => c.filter((x) => x.id !== commentId));
+    onCommentDeleted?.();
   }
 
   return (

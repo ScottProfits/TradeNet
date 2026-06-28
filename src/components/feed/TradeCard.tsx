@@ -185,6 +185,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
         <CommentSection
           tradeId={trade.id}
           onCommentAdded={() => setCommentCount((c) => c + 1)}
+          onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
+          onCountLoaded={(n) => setCommentCount(n)}
         />
       )}
     </div>
