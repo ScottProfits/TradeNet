@@ -44,7 +44,8 @@
       "Bash(node /Users/a.scott/TradeNet/generate-icons.js)",
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(gh run *)"
     ]
   }
 }

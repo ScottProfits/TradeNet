@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
+import Link from "next/link";
 
 interface TradeCardProps {
   trade: Trade;
@@ -42,10 +43,14 @@ export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
       <div className="flex items-start gap-3">
-        <Avatar initials={trader.initials} color={trader.color} />
+        <Link href={`/profile/${trader.handle}`}>
+          <Avatar initials={trader.initials} color={trader.color} />
+        </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-white">@{trader.handle}</span>
+            <Link href={`/profile/${trader.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
+              @{trader.handle}
+            </Link>
             {trader.verified && <span className="text-[var(--green)] text-xs">✓</span>}
             <span
               className={clsx(
