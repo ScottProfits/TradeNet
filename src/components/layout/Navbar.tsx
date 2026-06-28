@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface SearchResult {
   id: string;
@@ -136,6 +137,7 @@ export default function Navbar() {
 
           {isSignedIn ? (
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <Link
                 href="/settings"
                 className="text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5"

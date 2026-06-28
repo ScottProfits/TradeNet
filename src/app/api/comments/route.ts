@@ -40,5 +40,22 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return new Response(error.message, { status: 500 });
+
+  // Notify trade owner
+  const { data: trade } = await supabase
+    .from("trades")
+    .select("user_id")
+    .eq("id", tradeId)
+    .single();
+
+  if (trade && trade.user_id !== userId) {
+    await supabase.from("notifications").insert({
+      user_id: trade.user_id,
+      type: "comment",
+      actor_id: userId,
+      trade_id: tradeId,
+    });
+  }
+
   return Response.json(data, { status: 201 });
 }

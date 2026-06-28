@@ -13,9 +13,26 @@ export async function POST(req: NextRequest) {
     trade_id: tradeId,
   });
 
-  // 23505 = unique violation (already liked), 23503 = FK violation (mock trade)
   if (error && error.code !== "23505" && error.code !== "23503") {
     return new Response(error.message, { status: 500 });
+  }
+
+  // Notify trade owner
+  if (!error) {
+    const { data: trade } = await supabase
+      .from("trades")
+      .select("user_id")
+      .eq("id", tradeId)
+      .single();
+
+    if (trade && trade.user_id !== userId) {
+      await supabase.from("notifications").insert({
+        user_id: trade.user_id,
+        type: "like",
+        actor_id: userId,
+        trade_id: tradeId,
+      });
+    }
   }
 
   return new Response("OK", { status: 200 });

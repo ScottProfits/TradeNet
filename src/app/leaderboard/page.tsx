@@ -1,92 +1,126 @@
 "use client";
-import { useState } from "react";
-import { traders, currentUser } from "@/lib/mock-data";
-import { Trader } from "@/types";
-import Avatar from "@/components/ui/Avatar";
-import { CheckCircle, TrendingUp } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { clsx } from "clsx";
+import Link from "next/link";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
-const tabs = ["Top today", "This week", "This month", "All time", "Most improved"];
+interface LeaderEntry {
+  profile: {
+    id: string;
+    handle: string;
+    full_name: string;
+    avatar_url: string;
+    verified: boolean;
+    brokerage: string;
+  };
+  pnl: number;
+  tradeCount: number;
+  winRate: number;
+}
 
-const allTraders: (Trader & { rank: number; pnl: number; changePct?: number })[] = [
-  { ...traders[0], rank: 1, pnl: 4800 },
-  { ...traders[1], rank: 2, pnl: 1200 },
-  { ...currentUser, rank: 3, pnl: 880 },
-  { ...traders[4], rank: 4, pnl: 620 },
-  { ...traders[3], rank: 5, pnl: 340 },
-  { ...traders[2], rank: 6, pnl: -310 },
+const tabs = [
+  { label: "Today", period: "today" },
+  { label: "This week", period: "week" },
+  { label: "This month", period: "month" },
+  { label: "All time", period: "all" },
 ];
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState("Top today");
+  const [period, setPeriod] = useState("today");
+  const [data, setData] = useState<LeaderEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch(`/api/leaderboard?period=${period}`);
+    if (res.ok) setData(await res.json());
+    setLoading(false);
+  }, [period]);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {tabs.map((tab) => (
+        {tabs.map((t) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={t.period}
+            onClick={() => setPeriod(t.period)}
             className={clsx(
               "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-              activeTab === tab
+              period === t.period
                 ? "bg-[var(--green)] text-black"
                 : "bg-[var(--card)] border border-[var(--border)] text-gray-400 hover:text-white"
             )}
           >
-            {tab}
+            {t.label}
           </button>
         ))}
       </div>
 
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-[var(--border)]">
-              <th className="text-left text-xs text-gray-500 px-4 py-3 w-12">#</th>
-              <th className="text-left text-xs text-gray-500 px-4 py-3">Trader</th>
-              <th className="text-right text-xs text-gray-500 px-4 py-3">Win rate</th>
-              <th className="text-right text-xs text-gray-500 px-4 py-3">Followers</th>
-              <th className="text-right text-xs text-gray-500 px-4 py-3">P&L</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allTraders.map((t, i) => (
-              <tr
-                key={t.id}
-                className={clsx(
-                  "border-b border-[var(--border)] last:border-0 hover:bg-white/2 transition-colors",
-                  i < 3 && "bg-[var(--green)]/2"
-                )}
-              >
-                <td className="px-4 py-3 text-gray-500 text-sm font-mono">
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : t.rank}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar initials={t.initials} color={t.color} size="sm" />
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium text-white">@{t.handle}</span>
-                        {t.verified && <CheckCircle className="w-3 h-3 text-[var(--green)]" />}
-                      </div>
-                      <p className="text-xs text-gray-500">{t.brokerage}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right text-sm text-gray-300">{t.winRate}%</td>
-                <td className="px-4 py-3 text-right text-sm text-gray-300">
-                  {t.followers >= 1000 ? `${(t.followers / 1000).toFixed(1)}K` : t.followers}
-                </td>
-                <td className={clsx("px-4 py-3 text-right text-sm font-semibold", t.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
-                  {t.pnl >= 0 ? "+" : ""}${Math.abs(t.pnl).toLocaleString()}
-                </td>
+        {loading ? (
+          <div className="py-16 text-center text-gray-500 text-sm">Loading...</div>
+        ) : data.length === 0 ? (
+          <div className="py-16 text-center space-y-2">
+            <p className="text-gray-400 font-medium">No trades posted yet</p>
+            <p className="text-gray-600 text-sm">Be the first to post a trade and claim the #1 spot.</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left text-xs text-gray-500 px-4 py-3 w-10">#</th>
+                <th className="text-left text-xs text-gray-500 px-4 py-3">Trader</th>
+                <th className="text-right text-xs text-gray-500 px-4 py-3">Trades</th>
+                <th className="text-right text-xs text-gray-500 px-4 py-3">Win %</th>
+                <th className="text-right text-xs text-gray-500 px-4 py-3">P&L</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.map((entry, i) => (
+                <tr
+                  key={entry.profile?.id ?? i}
+                  className="border-b border-[var(--border)] last:border-0 hover:bg-white/[0.02] transition-colors"
+                >
+                  <td className="px-4 py-3 text-sm font-mono text-gray-400">
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-3 group">
+                      {entry.profile?.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={entry.profile.avatar_url} alt={entry.profile.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                          {entry.profile?.handle?.slice(0, 2).toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-white group-hover:text-[var(--green)] transition-colors">
+                            @{entry.profile?.handle}
+                          </span>
+                          {entry.profile?.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
+                        </div>
+                        {entry.profile?.brokerage && (
+                          <p className="text-xs text-gray-500">{entry.profile.brokerage}</p>
+                        )}
+                      </div>
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
+                  <td className="px-4 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
+                  <td className={clsx("px-4 py-3 text-right text-sm font-bold", entry.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                    {entry.pnl >= 0 ? "+" : ""}${Math.abs(entry.pnl).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

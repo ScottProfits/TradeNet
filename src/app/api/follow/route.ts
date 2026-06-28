@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
 
   const { targetHandle } = await req.json();
 
-  // Look up the target profile by handle
   const { data: target } = await supabase
     .from("profiles")
     .select("id")
@@ -24,6 +23,15 @@ export async function POST(req: NextRequest) {
 
   if (error && error.code !== "23505") {
     return new Response(error.message, { status: 500 });
+  }
+
+  // Notify the person being followed (don't notify yourself)
+  if (target.id !== userId) {
+    await supabase.from("notifications").insert({
+      user_id: target.id,
+      type: "follow",
+      actor_id: userId,
+    });
   }
 
   return new Response("OK", { status: 200 });
