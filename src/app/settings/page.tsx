@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle, Camera } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 export default function SettingsPage() {
   const { userId } = useAuth();
@@ -17,6 +18,9 @@ export default function SettingsPage() {
   const [brokerage, setBrokerage] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
+  const [verifyReason, setVerifyReason] = useState("");
+  const [sendingRequest, setSendingRequest] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -37,6 +41,9 @@ export default function SettingsPage() {
         }
         setLoading(false);
       });
+    fetch("/api/verify-request").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d) { setVerifyRequest(d); setVerifyReason(d.reason ?? ""); }
+    });
   }, [userId]);
 
   function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -232,6 +239,68 @@ export default function SettingsPage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Verification request */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <VerifiedBadge className="w-5 h-5" />
+          <h2 className="font-bold text-white">Request Verification</h2>
+        </div>
+        <p className="text-sm text-gray-400">
+          Verified traders receive the bullish candle badge next to their name. Tell us who you are and why you should be verified.
+        </p>
+
+        {verifyRequest?.status === "pending" && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-3">
+            <p className="text-yellow-400 text-sm font-medium">Request pending review</p>
+            <p className="text-gray-400 text-xs mt-1">We'll notify you once reviewed.</p>
+          </div>
+        )}
+
+        {verifyRequest?.status === "approved" && (
+          <div className="bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-lg px-4 py-3 flex items-center gap-2">
+            <VerifiedBadge className="w-4 h-4" />
+            <p className="text-[var(--green)] text-sm font-medium">You are verified!</p>
+          </div>
+        )}
+
+        {verifyRequest?.status === "rejected" && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
+            <p className="text-red-400 text-sm font-medium">Request not approved</p>
+            <p className="text-gray-400 text-xs mt-1">You can submit a new request below.</p>
+          </div>
+        )}
+
+        {verifyRequest?.status !== "pending" && verifyRequest?.status !== "approved" && (
+          <div className="space-y-3">
+            <textarea
+              value={verifyReason}
+              onChange={(e) => setVerifyReason(e.target.value)}
+              placeholder="Tell us about yourself — social media following, trading experience, why you'd be a good fit for verification..."
+              rows={4}
+              maxLength={500}
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
+            />
+            <button
+              onClick={async () => {
+                if (!verifyReason.trim()) return;
+                setSendingRequest(true);
+                await fetch("/api/verify-request", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ reason: verifyReason }),
+                });
+                setVerifyRequest({ status: "pending", reason: verifyReason });
+                setSendingRequest(false);
+              }}
+              disabled={sendingRequest || !verifyReason.trim()}
+              className="w-full py-2.5 border border-[var(--green)]/40 text-[var(--green)] font-medium rounded-lg hover:bg-[var(--green)]/10 transition-colors disabled:opacity-50 text-sm"
+            >
+              {sendingRequest ? "Submitting..." : "Submit Request"}
+            </button>
+          </div>
+        )}
       </div>
 
       {cropSrc && (
