@@ -20,6 +20,7 @@ interface RealTrade {
   caption: string;
   likes_count: number;
   comments_count: number;
+  image_url: string | null;
   created_at: string;
   profiles: {
     id: string;
@@ -109,7 +110,7 @@ export default function FeedPage() {
 
         {realTrades.map((rt) => {
           const { trade, trader } = realTradeToCardProps(rt);
-          return <TradeCard key={trade.id} trade={trade} trader={trader} />;
+          return <TradeCard key={trade.id} trade={trade} trader={trader} imageUrl={rt.image_url ?? undefined} />;
         })}
 
         {feedTrades.map((trade) => {

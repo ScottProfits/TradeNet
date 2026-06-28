@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const body = await req.json();
-  const { ticker, direction, entry, exit, caption } = body;
+  const { ticker, direction, entry, exit, caption, image_url } = body;
 
   if (!ticker || !direction || !entry || !exit) {
     return new Response("Missing required fields", { status: 400 });
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       pnl: Math.round(pnl * 100) / 100,
       pnl_percent: Math.round(pnl_percent * 100) / 100,
       caption,
+      image_url: image_url ?? null,
     })
     .select()
     .single();

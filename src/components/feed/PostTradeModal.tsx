@@ -1,7 +1,10 @@
 "use client";
-import { useState } from "react";
-import { X, TrendingUp, TrendingDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, TrendingUp, TrendingDown, ImagePlus } from "lucide-react";
 import { clsx } from "clsx";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@clerk/nextjs";
+import Image from "next/image";
 
 interface Props {
   onClose: () => void;
@@ -9,14 +12,18 @@ interface Props {
 }
 
 export default function PostTradeModal({ onClose, onPosted }: Props) {
+  const { userId } = useAuth();
   const [ticker, setTicker] = useState("");
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
   const [shares, setShares] = useState("100");
   const [caption, setCaption] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const entryNum = parseFloat(entry);
   const exitNum = parseFloat(exit);
@@ -34,19 +41,46 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     }
   }
 
+  function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
+
     try {
+      let image_url: string | null = null;
+
+      if (image && userId) {
+        const ext = image.name.split(".").pop();
+        const path = `${userId}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("trade-images")
+          .upload(path, image, { contentType: image.type });
+
+        if (uploadError) {
+          setError("Image upload failed: " + uploadError.message);
+          setSubmitting(false);
+          return;
+        }
+
+        const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+        image_url = data.publicUrl;
+      }
+
       const res = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, direction, entry, exit, shares, caption }),
+        body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, image_url }),
       });
+
       if (!res.ok) {
-        const msg = await res.text();
-        setError(msg || "Failed to post trade");
+        setError((await res.text()) || "Failed to post trade");
       } else {
         onPosted();
         onClose();
@@ -54,13 +88,14 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     } catch {
       setError("Something went wrong. Try again.");
     }
+
     setSubmitting(false);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-5">
+      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Post a Trade</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
@@ -183,6 +218,46 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
               maxLength={280}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
             />
+          </div>
+
+          {/* Screenshot upload */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Screenshot (optional)</label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
+            {imagePreview ? (
+              <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
+                <Image
+                  src={imagePreview}
+                  alt="Trade screenshot"
+                  width={400}
+                  height={200}
+                  className="w-full object-cover max-h-48"
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  onClick={() => { setImage(null); setImagePreview(null); }}
+                  className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white hover:bg-black/80"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full border border-dashed border-[var(--border)] rounded-lg py-4 flex flex-col items-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors"
+              >
+                <ImagePlus className="w-5 h-5" />
+                <span className="text-xs">Tap to attach a screenshot</span>
+              </button>
+            )}
           </div>
 
           {error && <p className="text-[var(--red)] text-sm">{error}</p>}

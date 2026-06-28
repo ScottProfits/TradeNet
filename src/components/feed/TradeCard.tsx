@@ -5,13 +5,15 @@ import Avatar from "@/components/ui/Avatar";
 import { clsx } from "clsx";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import Image from "next/image";
 
 interface TradeCardProps {
   trade: Trade;
   trader: Trader;
+  imageUrl?: string;
 }
 
-export default function TradeCard({ trade, trader }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
   const { isSignedIn } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(trade.likes);
@@ -62,7 +64,20 @@ export default function TradeCard({ trade, trader }: TradeCardProps) {
         </div>
       </div>
 
-      <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>
+      {trade.notes && <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>}
+
+      {imageUrl && (
+        <div className="rounded-lg overflow-hidden border border-[var(--border)]">
+          <Image
+            src={imageUrl}
+            alt="Trade screenshot"
+            width={600}
+            height={300}
+            className="w-full object-cover"
+            unoptimized
+          />
+        </div>
+      )}
 
       <div className="bg-[var(--bg)] rounded-lg p-3 flex items-center justify-between">
         <div>
