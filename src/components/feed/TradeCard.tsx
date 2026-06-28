@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import CommentSection from "@/components/feed/CommentSection";
 
 interface TradeCardProps {
   trade: Trade;
@@ -22,6 +23,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
   const [likeCount, setLikeCount] = useState(trade.likes);
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const positive = trade.pnl >= 0;
   const isOwner = userId === trade.traderId;
 
@@ -158,7 +160,10 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
           <Heart className={clsx("w-4 h-4", liked && "fill-current")} />
           {likeCount}
         </button>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <button
+          onClick={() => setShowComments((s) => !s)}
+          className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-gray-300")}
+        >
           <MessageCircle className="w-4 h-4" />
           {trade.comments}
         </button>
@@ -171,6 +176,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
           Copy trade
         </button>
       </div>
+      {showComments && <CommentSection tradeId={trade.id} />}
     </div>
   );
 }
