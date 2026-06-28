@@ -20,15 +20,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  // Ensure profile exists (in case webhook missed this user)
-  const user = await currentUser();
-  if (user) {
-    const handle = user.username || `user_${userId.slice(-6)}`;
-    const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
-    await supabase.from("profiles").upsert(
-      { id: userId, handle, full_name, avatar_url: user.imageUrl },
-      { onConflict: "id" }
-    );
+  // Create profile only if it doesn't exist — never overwrite handle set in Settings
+  const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
+  if (!existing) {
+    const user = await currentUser();
+    if (user) {
+      const handle = user.username || `user_${userId.slice(-6)}`;
+      const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
+      await supabase.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
+    }
   }
 
   const body = await req.json();

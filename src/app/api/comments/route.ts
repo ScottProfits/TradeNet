@@ -22,15 +22,15 @@ export async function POST(req: NextRequest) {
   const { tradeId, content } = await req.json();
   if (!content?.trim()) return new Response("Empty comment", { status: 400 });
 
-  // Ensure profile exists
-  const user = await currentUser();
-  if (user) {
-    const handle = user.username || `user_${userId.slice(-6)}`;
-    const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
-    await supabase.from("profiles").upsert(
-      { id: userId, handle, full_name, avatar_url: user.imageUrl },
-      { onConflict: "id" }
-    );
+  // Create profile only if it doesn't exist — never overwrite handle set in Settings
+  const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
+  if (!existing) {
+    const user = await currentUser();
+    if (user) {
+      const handle = user.username || `user_${userId.slice(-6)}`;
+      const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
+      await supabase.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
+    }
   }
 
   const { data, error } = await supabase
