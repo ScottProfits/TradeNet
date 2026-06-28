@@ -1,8 +1,33 @@
+"use client";
 import { traders } from "@/lib/mock-data";
 import Avatar from "@/components/ui/Avatar";
 import { CheckCircle } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { useState } from "react";
+import { clsx } from "clsx";
 
 export default function DiscoverPage() {
+  const { isSignedIn } = useAuth();
+  const [followed, setFollowed] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  async function handleFollow(handle: string) {
+    if (!isSignedIn || loading[handle]) return;
+    setLoading((l) => ({ ...l, [handle]: true }));
+    const isFollowing = followed[handle];
+    setFollowed((f) => ({ ...f, [handle]: !isFollowing }));
+    try {
+      await fetch("/api/follow", {
+        method: isFollowing ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetHandle: handle }),
+      });
+    } catch {
+      setFollowed((f) => ({ ...f, [handle]: isFollowing }));
+    }
+    setLoading((l) => ({ ...l, [handle]: false }));
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-white">Discover Traders</h1>
@@ -46,8 +71,17 @@ export default function DiscoverPage() {
               ))}
             </div>
 
-            <button className="w-full py-1.5 text-sm font-medium text-[var(--green)] border border-[var(--green)]/30 rounded-lg hover:bg-[var(--green)]/10 transition-colors">
-              Follow
+            <button
+              onClick={() => handleFollow(t.handle)}
+              disabled={loading[t.handle]}
+              className={clsx(
+                "w-full py-1.5 text-sm font-medium rounded-lg transition-colors",
+                followed[t.handle]
+                  ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/50"
+                  : "text-[var(--green)] border border-[var(--green)]/30 hover:bg-[var(--green)]/10"
+              )}
+            >
+              {followed[t.handle] ? "Following ✓" : "Follow"}
             </button>
           </div>
         ))}

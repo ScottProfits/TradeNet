@@ -4,6 +4,7 @@ import { Trade, Trader } from "@/types";
 import Avatar from "@/components/ui/Avatar";
 import { clsx } from "clsx";
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 interface TradeCardProps {
   trade: Trade;
@@ -11,8 +12,30 @@ interface TradeCardProps {
 }
 
 export default function TradeCard({ trade, trader }: TradeCardProps) {
+  const { isSignedIn } = useAuth();
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(trade.likes);
+  const [liking, setLiking] = useState(false);
   const positive = trade.pnl >= 0;
+
+  async function handleLike() {
+    if (!isSignedIn || liking) return;
+    setLiking(true);
+    const next = !liked;
+    setLiked(next);
+    setLikeCount((c) => c + (next ? 1 : -1));
+    try {
+      await fetch("/api/like", {
+        method: next ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tradeId: trade.id }),
+      });
+    } catch {
+      setLiked(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+    }
+    setLiking(false);
+  }
 
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
@@ -60,14 +83,15 @@ export default function TradeCard({ trade, trader }: TradeCardProps) {
 
       <div className="flex items-center gap-4 pt-1">
         <button
-          onClick={() => setLiked(!liked)}
+          onClick={handleLike}
+          disabled={liking}
           className={clsx(
             "flex items-center gap-1.5 text-sm transition-colors",
             liked ? "text-pink-400" : "text-gray-500 hover:text-pink-400"
           )}
         >
           <Heart className={clsx("w-4 h-4", liked && "fill-current")} />
-          {trade.likes + (liked ? 1 : 0)}
+          {likeCount}
         </button>
         <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <MessageCircle className="w-4 h-4" />
