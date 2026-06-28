@@ -7,7 +7,7 @@ export async function GET() {
     .from("trades")
     .select(`
       *,
-      profiles (id, handle, avatar_url, brokerage, verified)
+      profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)
     `)
     .order("created_at", { ascending: false })
     .limit(50);
