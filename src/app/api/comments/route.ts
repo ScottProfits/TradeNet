@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function DELETE(req: NextRequest) {
@@ -8,7 +9,7 @@ export async function DELETE(req: NextRequest) {
 
   const { commentId } = await req.json();
 
-  const { data: comment } = await supabase
+  const { data: comment } = await supabaseAdmin
     .from("comments")
     .select("user_id, trade_id")
     .eq("id", commentId)
@@ -17,8 +18,10 @@ export async function DELETE(req: NextRequest) {
   if (!comment) return new Response("Not found", { status: 404 });
   if (comment.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
-  await supabase.from("comments").delete().eq("id", commentId);
-  await supabase.rpc("decrement_comments", { trade_id_input: comment.trade_id });
+  const { error } = await supabaseAdmin.from("comments").delete().eq("id", commentId);
+  if (!error) {
+    await supabaseAdmin.rpc("decrement_comments", { trade_id_input: comment.trade_id });
+  }
 
   return new Response("OK", { status: 200 });
 }

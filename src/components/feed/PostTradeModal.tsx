@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { X, TrendingUp, TrendingDown, ImagePlus } from "lucide-react";
+import { X, TrendingUp, TrendingDown, ImagePlus, Video } from "lucide-react";
 import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
@@ -19,8 +19,9 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [exit, setExit] = useState("");
   const [shares, setShares] = useState("100");
   const [caption, setCaption] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [media, setMedia] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -41,11 +42,19 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     }
   }
 
-  function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    setMedia(file);
+    setMediaPreview(URL.createObjectURL(file));
+    setMediaType(file.type.startsWith("video/") ? "video" : "image");
+  }
+
+  function clearMedia() {
+    setMedia(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -56,15 +65,15 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     try {
       let image_url: string | null = null;
 
-      if (image && userId) {
-        const ext = image.name.split(".").pop();
+      if (media && userId) {
+        const ext = media.name.split(".").pop();
         const path = `${userId}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("trade-images")
-          .upload(path, image, { contentType: image.type });
+          .upload(path, media, { contentType: media.type });
 
         if (uploadError) {
-          setError("Image upload failed: " + uploadError.message);
+          setError("Upload failed: " + uploadError.message);
           setSubmitting(false);
           return;
         }
@@ -220,29 +229,37 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
             />
           </div>
 
-          {/* Screenshot upload */}
+          {/* Media upload — photo or video */}
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Screenshot (optional)</label>
+            <label className="text-xs text-gray-500 mb-1 block">Photo / Video (optional)</label>
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
-              onChange={handleImagePick}
+              onChange={handleMediaPick}
             />
-            {imagePreview ? (
+            {mediaPreview ? (
               <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
-                <Image
-                  src={imagePreview}
-                  alt="Trade screenshot"
-                  width={400}
-                  height={200}
-                  className="w-full object-cover max-h-48"
-                  unoptimized
-                />
+                {mediaType === "video" ? (
+                  <video
+                    src={mediaPreview}
+                    controls
+                    className="w-full max-h-48 object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={mediaPreview}
+                    alt="Trade screenshot"
+                    width={400}
+                    height={200}
+                    className="w-full object-cover max-h-48"
+                    unoptimized
+                  />
+                )}
                 <button
                   type="button"
-                  onClick={() => { setImage(null); setImagePreview(null); }}
+                  onClick={clearMedia}
                   className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white hover:bg-black/80"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -254,8 +271,11 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
                 onClick={() => fileRef.current?.click()}
                 className="w-full border border-dashed border-[var(--border)] rounded-lg py-4 flex flex-col items-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors"
               >
-                <ImagePlus className="w-5 h-5" />
-                <span className="text-xs">Tap to attach a screenshot</span>
+                <div className="flex gap-3">
+                  <ImagePlus className="w-5 h-5" />
+                  <Video className="w-5 h-5" />
+                </div>
+                <span className="text-xs">Tap to attach a photo or video</span>
               </button>
             )}
           </div>

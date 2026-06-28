@@ -120,14 +120,18 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
 
       {imageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
-          <Image
-            src={imageUrl}
-            alt="Trade screenshot"
-            width={600}
-            height={300}
-            className="w-full object-cover"
-            unoptimized
-          />
+          {/\.(mp4|mov|webm|avi|mkv)/i.test(imageUrl) ? (
+            <video src={imageUrl} controls className="w-full max-h-80 object-cover" />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt="Trade screenshot"
+              width={600}
+              height={300}
+              className="w-full object-cover"
+              unoptimized
+            />
+          )}
         </div>
       )}
 
