@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
@@ -19,6 +19,17 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  // Ensure profile exists (in case webhook missed this user)
+  const user = await currentUser();
+  if (user) {
+    const handle = user.username || `user_${userId.slice(-6)}`;
+    const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
+    await supabase.from("profiles").upsert(
+      { id: userId, handle, full_name, avatar_url: user.imageUrl },
+      { onConflict: "id" }
+    );
+  }
 
   const body = await req.json();
   const { ticker, direction, entry, exit, caption, image_url } = body;
