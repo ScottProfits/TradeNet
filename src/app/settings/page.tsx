@@ -1,24 +1,30 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Camera } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const { userId } = useAuth();
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [handle, setHandle] = useState("");
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [brokerage, setBrokerage] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`/api/profile/me`)
+    fetch("/api/profile/me")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (d) {
@@ -26,10 +32,39 @@ export default function SettingsPage() {
           setFullName(d.full_name ?? "");
           setBio(d.bio ?? "");
           setBrokerage(d.brokerage ?? "");
+          setAvatarUrl(d.avatar_url ?? "");
+          setAvatarPreview(d.avatar_url ?? "");
         }
         setLoading(false);
       });
   }, [userId]);
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    setUploadingAvatar(true);
+    setError("");
+
+    const ext = file.name.split(".").pop();
+    const path = `avatars/${userId}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("trade-images")
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      setError("Photo upload failed: " + uploadError.message);
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+    const url = data.publicUrl + `?t=${Date.now()}`;
+
+    await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
+    setAvatarUrl(url);
+    setAvatarPreview(url);
+    setUploadingAvatar(false);
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -60,11 +95,50 @@ export default function SettingsPage() {
     );
   }
 
+  const initials = handle.slice(0, 2).toUpperCase() || "?";
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-6">
+
+        {/* Avatar upload */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            {avatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarPreview}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover border-2 border-[var(--green)]"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-3xl border-2 border-[var(--border)]">
+                {initials}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--green)] rounded-full flex items-center justify-center hover:bg-[var(--green)]/90 transition-colors"
+            >
+              <Camera className="w-4 h-4 text-black" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            {uploadingAvatar ? "Uploading..." : "Tap the camera to change your photo"}
+          </p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </div>
+
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="text-sm text-gray-400 mb-1 block">Handle</label>

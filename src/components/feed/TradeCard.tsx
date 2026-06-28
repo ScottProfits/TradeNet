@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface TradeCardProps {
   trade: Trade;
@@ -51,7 +52,7 @@ export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
             <Link href={`/profile/${trader.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
               @{trader.handle}
             </Link>
-            {trader.verified && <span className="text-[var(--green)] text-xs">✓</span>}
+            {trader.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
             <span
               className={clsx(
                 "text-xs font-semibold px-2 py-0.5 rounded-full",

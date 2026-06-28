@@ -1,7 +1,7 @@
 "use client";
 import { traders } from "@/lib/mock-data";
 import Avatar from "@/components/ui/Avatar";
-import { CheckCircle } from "lucide-react";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { clsx } from "clsx";
@@ -40,7 +40,7 @@ export default function DiscoverPage() {
               <div>
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-white">@{t.handle}</span>
-                  {t.verified && <CheckCircle className="w-3.5 h-3.5 text-[var(--green)]" />}
+                  {t.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
                 </div>
                 <p className="text-xs text-gray-500">{t.brokerage}</p>
               </div>

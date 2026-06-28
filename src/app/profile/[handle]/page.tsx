@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 
 interface Profile {
@@ -117,7 +118,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
-                {profile.verified && <CheckCircle className="w-4 h-4 text-[var(--green)]" />}
+                {profile.verified && <VerifiedBadge className="w-4 h-4" />}
               </div>
               {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
               {profile.brokerage && <p className="text-xs text-gray-500 mt-0.5">{profile.brokerage} verified</p>}
