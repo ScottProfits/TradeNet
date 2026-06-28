@@ -68,6 +68,10 @@ export default function FeedPage() {
   const [showModal, setShowModal] = useState(false);
   const [realTrades, setRealTrades] = useState<RealTrade[]>([]);
 
+  function handleDelete(id: string) {
+    setRealTrades((t) => t.filter((r) => r.id !== id));
+  };
+
   const loadTrades = useCallback(async () => {
     try {
       const res = await fetch("/api/trades");
@@ -109,7 +113,7 @@ export default function FeedPage() {
 
         {realTrades.map((rt) => {
           const { trade, trader } = realTradeToCardProps(rt);
-          return <TradeCard key={trade.id} trade={trade} trader={trader} imageUrl={rt.image_url ?? undefined} />;
+          return <TradeCard key={trade.id} trade={trade} trader={trader} imageUrl={rt.image_url ?? undefined} avatarUrl={rt.profiles?.avatar_url ?? undefined} onDelete={handleDelete} />;
         })}
 
         {feedTrades.map((trade) => {

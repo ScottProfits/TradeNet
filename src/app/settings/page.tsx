@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Camera } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import AvatarCropModal from "@/components/ui/AvatarCropModal";
 
 export default function SettingsPage() {
   const { userId } = useAuth();
@@ -14,8 +15,8 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [brokerage, setBrokerage] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -32,24 +33,30 @@ export default function SettingsPage() {
           setFullName(d.full_name ?? "");
           setBio(d.bio ?? "");
           setBrokerage(d.brokerage ?? "");
-          setAvatarUrl(d.avatar_url ?? "");
           setAvatarPreview(d.avatar_url ?? "");
         }
         setLoading(false);
       });
   }, [userId]);
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !userId) return;
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCropSrc(url);
+    e.target.value = "";
+  }
+
+  async function handleCropSave(blob: Blob) {
+    if (!userId) return;
+    setCropSrc(null);
     setUploadingAvatar(true);
     setError("");
 
-    const ext = file.name.split(".").pop();
-    const path = `avatars/${userId}.${ext}`;
+    const path = `avatars/${userId}.jpg`;
     const { error: uploadError } = await supabase.storage
       .from("trade-images")
-      .upload(path, file, { contentType: file.type, upsert: true });
+      .upload(path, blob, { contentType: "image/jpeg", upsert: true });
 
     if (uploadError) {
       setError("Photo upload failed: " + uploadError.message);
@@ -59,9 +66,7 @@ export default function SettingsPage() {
 
     const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
     const url = data.publicUrl + `?t=${Date.now()}`;
-
     await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
-    setAvatarUrl(url);
     setAvatarPreview(url);
     setUploadingAvatar(false);
   }
@@ -122,7 +127,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={uploadingAvatar}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--green)] rounded-full flex items-center justify-center hover:bg-[var(--green)]/90 transition-colors"
+              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--green)] rounded-full flex items-center justify-center hover:bg-[var(--green)]/90 transition-colors shadow-lg"
             >
               <Camera className="w-4 h-4 text-black" />
             </button>
@@ -135,7 +140,7 @@ export default function SettingsPage() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={handleAvatarChange}
+            onChange={handleFilePick}
           />
         </div>
 
@@ -228,6 +233,14 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+
+      {cropSrc && (
+        <AvatarCropModal
+          imageSrc={cropSrc}
+          onSave={handleCropSave}
+          onClose={() => setCropSrc(null)}
+        />
+      )}
     </div>
   );
 }

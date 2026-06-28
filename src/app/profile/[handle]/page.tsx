@@ -116,9 +116,14 @@ export default function ProfilePage() {
               ) : initials}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
-                {profile.verified && <VerifiedBadge className="w-4 h-4" />}
+                {profile.verified && (
+                  <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-2 py-0.5">
+                    <VerifiedBadge className="w-3.5 h-3.5" />
+                    <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
+                  </span>
+                )}
               </div>
               {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
               {profile.brokerage && <p className="text-xs text-gray-500 mt-0.5">{profile.brokerage} verified</p>}

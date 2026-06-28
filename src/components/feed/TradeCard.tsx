@@ -1,7 +1,6 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy } from "lucide-react";
+import { Heart, MessageCircle, Share2, Copy, Trash2 } from "lucide-react";
 import { Trade, Trader } from "@/types";
-import Avatar from "@/components/ui/Avatar";
 import { clsx } from "clsx";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
@@ -13,14 +12,18 @@ interface TradeCardProps {
   trade: Trade;
   trader: Trader;
   imageUrl?: string;
+  avatarUrl?: string;
+  onDelete?: (id: string) => void;
 }
 
-export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
-  const { isSignedIn } = useAuth();
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete }: TradeCardProps) {
+  const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(trade.likes);
   const [liking, setLiking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const positive = trade.pnl >= 0;
+  const isOwner = userId === trade.traderId;
 
   async function handleLike() {
     if (!isSignedIn || liking) return;
@@ -41,18 +44,48 @@ export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
     setLiking(false);
   }
 
+  async function handleDelete() {
+    if (!confirm("Delete this trade?")) return;
+    setDeleting(true);
+    await fetch(`/api/trades/${trade.id}`, { method: "DELETE" });
+    onDelete?.(trade.id);
+  }
+
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+    <div className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}>
       <div className="flex items-start gap-3">
-        <Link href={`/profile/${trader.handle}`}>
-          <Avatar initials={trader.initials} color={trader.color} />
+        {/* Avatar */}
+        <Link href={`/profile/${trader.handle}`} className="flex-shrink-0">
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={trader.handle}
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+              style={{ backgroundColor: trader.color }}
+            >
+              {trader.initials}
+            </div>
+          )}
         </Link>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Link href={`/profile/${trader.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
               @{trader.handle}
             </Link>
-            {trader.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
+            {trader.verified && (
+              <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
+                <VerifiedBadge className="w-3 h-3" />
+                <span className="text-[10px] text-[var(--green)] font-semibold">Verified</span>
+              </span>
+            )}
             <span
               className={clsx(
                 "text-xs font-semibold px-2 py-0.5 rounded-full",
@@ -65,9 +98,20 @@ export default function TradeCard({ trade, trader, imageUrl }: TradeCardProps) {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            {trade.time} · {trader.brokerage} verified
+            {trade.time} {trader.brokerage && `· ${trader.brokerage} verified`}
           </p>
         </div>
+
+        {/* Delete button — only for post owner */}
+        {isOwner && (
+          <button
+            onClick={handleDelete}
+            className="text-gray-600 hover:text-[var(--red)] transition-colors p-1 flex-shrink-0"
+            title="Delete post"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {trade.notes && <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>}
