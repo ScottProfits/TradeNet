@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { TrendingUp, TrendingDown, X } from "lucide-react";
+import { TrendingUp, TrendingDown, X, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import Link from "next/link";
@@ -50,6 +51,7 @@ interface ProfileData {
 export default function ProfilePage() {
   const { handle } = useParams<{ handle: string }>();
   const { userId } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<ProfileData | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -154,18 +156,27 @@ export default function ProfilePage() {
           </div>
 
           {!isOwnProfile && (
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={clsx(
-                "px-4 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0",
-                following
-                  ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
-                  : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
-              )}
-            >
-              {following ? "Following ✓" : "Follow"}
-            </button>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={clsx(
+                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                  following
+                    ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                    : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+                )}
+              >
+                {following ? "Following ✓" : "Follow"}
+              </button>
+              <button
+                onClick={() => router.push(`/messages/${handle}`)}
+                className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                title="Send message"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
 

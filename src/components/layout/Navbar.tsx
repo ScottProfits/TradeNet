@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { TrendingUp, Search } from "lucide-react";
+import { TrendingUp, Search, MessageSquare } from "lucide-react";
 import { clsx } from "clsx";
 import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
@@ -137,6 +137,9 @@ export default function Navbar() {
 
           {isSignedIn ? (
             <div className="flex items-center gap-2">
+              <Link href="/messages" className={clsx("p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
+                <MessageSquare className="w-5 h-5" />
+              </Link>
               <NotificationBell />
               <Link
                 href="/settings"

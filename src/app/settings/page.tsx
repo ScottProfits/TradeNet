@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [brokerage, setBrokerage] = useState("");
+  const [tradingStyle, setTradingStyle] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
@@ -37,6 +38,7 @@ export default function SettingsPage() {
           setFullName(d.full_name ?? "");
           setBio(d.bio ?? "");
           setBrokerage(d.brokerage ?? "");
+          setTradingStyle(d.trading_style ?? "");
           setAvatarPreview(d.avatar_url ?? "");
         }
         setLoading(false);
@@ -87,7 +89,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/profile/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage }),
+      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle }),
     });
 
     if (res.ok) {
@@ -177,6 +179,20 @@ export default function SettingsPage() {
               maxLength={50}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
             />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Trading Style</label>
+            <select
+              value={tradingStyle}
+              onChange={(e) => setTradingStyle(e.target.value)}
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[var(--green)]"
+            >
+              <option value="">Select your trading style</option>
+              <option value="Day Trader">Day Trader</option>
+              <option value="Options">Options</option>
+              <option value="Investor">Investor</option>
+            </select>
           </div>
 
           <div>
