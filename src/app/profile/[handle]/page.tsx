@@ -169,7 +169,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {profile.bio && <p className="text-gray-300 text-sm mt-4">{profile.bio}</p>}
+        {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
 
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-[var(--border)]">
