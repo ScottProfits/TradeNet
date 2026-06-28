@@ -91,20 +91,19 @@ export default function FeedPage() {
       </aside>
 
       <section className="space-y-4">
+        <button
+          onClick={() => setShowModal(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--green)] text-black font-bold text-base rounded-xl hover:bg-[var(--green)]/90 transition-colors shadow-lg shadow-[var(--green)]/20"
+        >
+          <Plus className="w-5 h-5" />
+          Post a Trade
+        </button>
+
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-white">Live feed</h2>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-              <span className="text-xs text-gray-500">Live</span>
-            </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-black bg-[var(--green)] px-3 py-1.5 rounded-lg hover:bg-[var(--green)]/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Post Trade
-            </button>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+            <span className="text-xs text-gray-500">Live</span>
           </div>
         </div>
 
