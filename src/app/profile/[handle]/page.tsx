@@ -158,7 +158,7 @@ export default function ProfilePage() {
                     {profile.trading_style}
                   </span>
                 )}
-                {profile.brokerage && <p className="text-xs text-gray-500">{profile.brokerage} verified</p>}
+                {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500">{profile.brokerage}</p>}
               </div>
             </div>
           </div>
