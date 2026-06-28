@@ -90,13 +90,14 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
                         {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="text-gray-500 hover:text-[var(--red)] transition-colors p-0.5"
-                      title={`uid:${c.user_id} me:${userId}`}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {c.user_id === userId && (
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-gray-500 hover:text-[var(--red)] transition-colors p-0.5"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                   <p className="text-sm text-gray-300">{c.content}</p>
                 </div>
