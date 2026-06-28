@@ -17,7 +17,7 @@ interface Comment {
   };
 }
 
-export default function CommentSection({ tradeId }: { tradeId: string }) {
+export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: string; onCommentAdded?: () => void }) {
   const { isSignedIn } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
@@ -43,6 +43,7 @@ export default function CommentSection({ tradeId }: { tradeId: string }) {
       const comment = await res.json();
       setComments((c) => [...c, comment]);
       setText("");
+      onCommentAdded?.();
     }
     setPosting(false);
   }

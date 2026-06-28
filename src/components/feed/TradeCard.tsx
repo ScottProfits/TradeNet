@@ -21,6 +21,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(trade.likes);
+  const [commentCount, setCommentCount] = useState(trade.comments);
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -56,8 +57,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
   return (
     <div className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}>
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <Link href={`/profile/${trader.handle}`} className="flex-shrink-0">
+        {/* Avatar with verified badge overlay */}
+        <Link href={`/profile/${trader.handle}`} className="flex-shrink-0 relative">
           {avatarUrl ? (
             <Image
               src={avatarUrl}
@@ -75,6 +76,11 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
               {trader.initials}
             </div>
           )}
+          {trader.verified && (
+            <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--bg)] rounded-full p-0.5">
+              <VerifiedBadge className="w-3.5 h-3.5" />
+            </span>
+          )}
         </Link>
 
         <div className="flex-1 min-w-0">
@@ -82,12 +88,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
             <Link href={`/profile/${trader.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
               @{trader.handle}
             </Link>
-            {trader.verified && (
-              <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
-                <VerifiedBadge className="w-3 h-3" />
-                <span className="text-[10px] text-[var(--green)] font-semibold">Verified</span>
-              </span>
-            )}
             <span
               className={clsx(
                 "text-xs font-semibold px-2 py-0.5 rounded-full",
@@ -165,7 +165,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-gray-300")}
         >
           <MessageCircle className="w-4 h-4" />
-          {trade.comments}
+          {commentCount}
         </button>
         <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <Share2 className="w-4 h-4" />
@@ -176,7 +176,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
           Copy trade
         </button>
       </div>
-      {showComments && <CommentSection tradeId={trade.id} />}
+
+      {showComments && (
+        <CommentSection
+          tradeId={trade.id}
+          onCommentAdded={() => setCommentCount((c) => c + 1)}
+        />
+      )}
     </div>
   );
 }
