@@ -19,6 +19,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [exit, setExit] = useState("");
   const [shares, setShares] = useState("100");
   const [caption, setCaption] = useState("");
+  const [strategy, setStrategy] = useState("");
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
@@ -85,7 +86,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
       const res = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, image_url }),
+        body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy, image_url }),
       });
 
       if (!res.ok) {
@@ -226,6 +227,18 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
               rows={3}
               maxLength={280}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
+            />
+          </div>
+
+          {/* Strategy */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">What strategy did you use? (optional)</label>
+            <input
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value)}
+              placeholder="e.g. Momentum breakout, VWAP reclaim, Earnings play..."
+              maxLength={100}
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
             />
           </div>
 

@@ -21,6 +21,7 @@ interface RealTrade {
   likes_count: number;
   comments_count: number;
   image_url: string | null;
+  strategy: string | null;
   created_at: string;
   profiles: {
     id: string;
@@ -113,7 +114,7 @@ export default function FeedPage() {
 
         {realTrades.map((rt) => {
           const { trade, trader } = realTradeToCardProps(rt);
-          return <TradeCard key={trade.id} trade={trade} trader={trader} imageUrl={rt.image_url ?? undefined} avatarUrl={rt.profiles?.avatar_url ?? undefined} onDelete={handleDelete} />;
+          return <TradeCard key={trade.id} trade={trade} trader={trader} imageUrl={rt.image_url ?? undefined} avatarUrl={rt.profiles?.avatar_url ?? undefined} strategy={rt.strategy ?? undefined} onDelete={handleDelete} />;
         })}
 
         {feedTrades.map((trade) => {

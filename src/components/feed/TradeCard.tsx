@@ -14,10 +14,11 @@ interface TradeCardProps {
   trader: Trader;
   imageUrl?: string;
   avatarUrl?: string;
+  strategy?: string;
   onDelete?: (id: string) => void;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, onDelete }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(trade.likes);
@@ -117,6 +118,11 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, onDelete
       </div>
 
       {trade.notes && <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>}
+      {strategy && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">📊 {strategy}</span>
+        </div>
+      )}
 
       {imageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">

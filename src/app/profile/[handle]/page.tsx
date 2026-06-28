@@ -22,6 +22,7 @@ interface Profile {
   avatar_url: string;
   bio: string;
   brokerage: string;
+  trading_style: string;
   win_rate: number;
   pnl_month: number;
   verified: boolean;
@@ -151,7 +152,14 @@ export default function ProfilePage() {
                 )}
               </div>
               {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
-              {profile.brokerage && <p className="text-xs text-gray-500 mt-0.5">{profile.brokerage} verified</p>}
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {profile.trading_style && (
+                  <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">
+                    {profile.trading_style}
+                  </span>
+                )}
+                {profile.brokerage && <p className="text-xs text-gray-500">{profile.brokerage} verified</p>}
+              </div>
             </div>
           </div>
 
