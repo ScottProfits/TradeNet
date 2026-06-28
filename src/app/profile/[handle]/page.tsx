@@ -2,9 +2,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, X } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
+import Link from "next/link";
+
+interface FollowUser {
+  id: string;
+  handle: string;
+  avatar_url: string | null;
+  verified: boolean;
+}
 
 interface Profile {
   id: string;
@@ -47,6 +55,9 @@ export default function ProfilePage() {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [modal, setModal] = useState<"followers" | "following" | null>(null);
+  const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -78,6 +89,18 @@ export default function ProfilePage() {
       setFollowerCount((c) => c + (next ? -1 : 1));
     }
     setFollowLoading(false);
+  }
+
+  async function openModal(type: "followers" | "following") {
+    setModal(type);
+    setModalUsers([]);
+    setModalLoading(true);
+    const res = await fetch(`/api/profile/${handle}/followers`);
+    if (res.ok) {
+      const d = await res.json();
+      setModalUsers(type === "followers" ? d.followers : d.following);
+    }
+    setModalLoading(false);
   }
 
   if (notFound) {
@@ -150,14 +173,14 @@ export default function ProfilePage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-[var(--border)]">
-          <div className="text-center">
+          <button onClick={() => openModal("followers")} className="text-center hover:opacity-75 transition-opacity">
             <p className="font-bold text-white text-lg">{followerCount.toLocaleString()}</p>
             <p className="text-xs text-gray-500">Followers</p>
-          </div>
-          <div className="text-center">
+          </button>
+          <button onClick={() => openModal("following")} className="text-center hover:opacity-75 transition-opacity">
             <p className="font-bold text-white text-lg">{data.followingCount.toLocaleString()}</p>
             <p className="text-xs text-gray-500">Following</p>
-          </div>
+          </button>
           <div className="text-center">
             <p className={clsx("font-bold text-lg", totalPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
               {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -218,6 +241,47 @@ export default function ProfilePage() {
           );
         })}
       </div>
+
+      {/* Followers / Following modal */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setModal(null)}>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+              <h2 className="font-bold text-white capitalize">{modal}</h2>
+              <button onClick={() => setModal(null)} className="text-gray-500 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-2">
+              {modalLoading && <p className="text-center text-gray-500 text-sm py-6">Loading...</p>}
+              {!modalLoading && modalUsers.length === 0 && (
+                <p className="text-center text-gray-500 text-sm py-6">No {modal} yet.</p>
+              )}
+              {modalUsers.map((u) => (
+                <Link
+                  key={u.id}
+                  href={`/profile/${u.handle}`}
+                  onClick={() => setModal(null)}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg)] transition-colors"
+                >
+                  {u.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={u.avatar_url} alt={u.handle} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {u.handle.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-semibold text-white truncate">@{u.handle}</span>
+                    {u.verified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

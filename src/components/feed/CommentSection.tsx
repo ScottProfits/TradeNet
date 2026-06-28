@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -18,7 +18,7 @@ interface Comment {
 }
 
 export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: string; onCommentAdded?: () => void }) {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -48,6 +48,15 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
     setPosting(false);
   }
 
+  async function handleDelete(commentId: string) {
+    await fetch("/api/comments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commentId }),
+    });
+    setComments((c) => c.filter((x) => x.id !== commentId));
+  }
+
   return (
     <div className="space-y-3 pt-1 border-t border-[var(--border)]">
       {loading ? (
@@ -59,7 +68,7 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
           )}
           <div className="space-y-3">
             {comments.map((c) => (
-              <div key={c.id} className="flex gap-2.5">
+              <div key={c.id} className="flex gap-2.5 group">
                 <Link href={`/profile/${c.profiles?.handle}`} className="shrink-0">
                   {c.profiles?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -71,14 +80,23 @@ export default function CommentSection({ tradeId, onCommentAdded }: { tradeId: s
                   )}
                 </Link>
                 <div className="flex-1 bg-[var(--bg)] rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <Link href={`/profile/${c.profiles?.handle}`} className="text-xs font-semibold text-white hover:text-[var(--green)] transition-colors">
-                      @{c.profiles?.handle}
-                    </Link>
-                    {c.profiles?.verified && <VerifiedBadge className="w-3 h-3" />}
-                    <span className="text-xs text-gray-600">
-                      {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Link href={`/profile/${c.profiles?.handle}`} className="text-xs font-semibold text-white hover:text-[var(--green)] transition-colors">
+                        @{c.profiles?.handle}
+                      </Link>
+                      {c.profiles?.verified && <VerifiedBadge className="w-3 h-3" />}
+                      <span className="text-xs text-gray-600">
+                        {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      className="text-gray-500 hover:text-[var(--red)] transition-colors p-0.5"
+                      title={`uid:${c.user_id} me:${userId}`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                   <p className="text-sm text-gray-300">{c.content}</p>
                 </div>

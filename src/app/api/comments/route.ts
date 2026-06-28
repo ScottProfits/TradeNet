@@ -2,6 +2,27 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
+export async function DELETE(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const { commentId } = await req.json();
+
+  const { data: comment } = await supabase
+    .from("comments")
+    .select("user_id, trade_id")
+    .eq("id", commentId)
+    .single();
+
+  if (!comment) return new Response("Not found", { status: 404 });
+  if (comment.user_id !== userId) return new Response("Forbidden", { status: 403 });
+
+  await supabase.from("comments").delete().eq("id", commentId);
+  await supabase.rpc("decrement_comments", { trade_id_input: comment.trade_id });
+
+  return new Response("OK", { status: 200 });
+}
+
 export async function GET(req: NextRequest) {
   const tradeId = req.nextUrl.searchParams.get("tradeId");
   if (!tradeId) return new Response("Missing tradeId", { status: 400 });
