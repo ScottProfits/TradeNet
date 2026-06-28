@@ -41,7 +41,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://trade-mmp7ebhy1-trade-net.vercel.app/\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://www.ryzr.app)",
       "Bash(node generate-icons.js)",
-      "Bash(node /Users/a.scott/TradeNet/generate-icons.js)"
+      "Bash(node /Users/a.scott/TradeNet/generate-icons.js)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }
