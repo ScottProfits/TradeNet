@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
 
   if (error) return new Response(error.message, { status: 500 });
 
+  // Increment comments_count on the trade
+  await supabase.rpc("increment_comments", { trade_id_input: tradeId });
+
   // Notify trade owner
   const { data: trade } = await supabase
     .from("trades")
