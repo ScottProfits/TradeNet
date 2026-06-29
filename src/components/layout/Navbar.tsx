@@ -31,7 +31,18 @@ export default function Navbar() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [unreadDms, setUnreadDms] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    function loadUnread() {
+      fetch("/api/messages?unread=1").then((r) => r.ok ? r.json() : { count: 0 }).then((d) => setUnreadDms(d.count));
+    }
+    loadUnread();
+    const interval = setInterval(loadUnread, 30000);
+    return () => clearInterval(interval);
+  }, [isSignedIn]);
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); return; }
@@ -137,8 +148,13 @@ export default function Navbar() {
 
           {isSignedIn ? (
             <div className="flex items-center gap-2">
-              <Link href="/messages" className={clsx("p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
+              <Link href="/messages" onClick={() => setUnreadDms(0)} className={clsx("relative p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
                 <MessageSquare className="w-5 h-5" />
+                {unreadDms > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--red)] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unreadDms > 9 ? "9+" : unreadDms}
+                  </span>
+                )}
               </Link>
               <NotificationBell />
               <Link

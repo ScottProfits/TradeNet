@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Copy, Trash2, BarChart2 } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
+import TradingViewChart from "@/components/ui/TradingViewChart";
 
 interface TradeCardProps {
   trade: Trade;
@@ -27,6 +28,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showChart, setShowChart] = useState(false);
+  const [shared, setShared] = useState(false);
   const positive = trade.pnl >= 0;
   const isOwner = userId === trade.traderId;
 
@@ -47,6 +50,18 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       setLikeCount((c) => c + (next ? -1 : 1));
     }
     setLiking(false);
+  }
+
+  async function handleShare() {
+    const url = `${window.location.origin}/profile/${trader.handle}`;
+    const text = `Check out this ${trade.direction} trade on $${trade.ticker} — ${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()} on Ryzr`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `@${trader.handle} on Ryzr`, text, url }); } catch { /* dismissed */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
   }
 
   async function handleDelete() {
@@ -178,15 +193,23 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <Share2 className="w-4 h-4" />
-          Share
+          {shared ? "Copied!" : "Share"}
+        </button>
+        <button onClick={() => setShowChart((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showChart ? "text-white" : "text-gray-500 hover:text-gray-300")}>
+          <BarChart2 className="w-4 h-4" />
+          Chart
         </button>
         <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors ml-auto">
           <Copy className="w-4 h-4" />
           Copy trade
         </button>
       </div>
+
+      {showChart && (
+        <TradingViewChart ticker={trade.ticker} />
+      )}
 
       {showComments && (
         <CommentSection

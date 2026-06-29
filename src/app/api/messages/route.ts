@@ -7,6 +7,16 @@ export async function GET(req: NextRequest) {
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const withUser = req.nextUrl.searchParams.get("with");
+  const unreadOnly = req.nextUrl.searchParams.get("unread");
+
+  if (unreadOnly) {
+    const { count } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("receiver_id", userId)
+      .eq("read", false);
+    return Response.json({ count: count ?? 0 });
+  }
 
   if (withUser) {
     const { data } = await supabase
