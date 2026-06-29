@@ -9,6 +9,7 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import TradingViewChart from "@/components/ui/TradingViewChart";
+import PostTradeModal from "@/components/feed/PostTradeModal";
 
 interface TradeCardProps {
   trade: Trade;
@@ -38,6 +39,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [journalSaved, setJournalSaved] = useState(false);
   const [isVerified, setIsVerified] = useState(verifiedPnl ?? false);
   const [verifying, setVerifying] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
   const positive = trade.pnl >= 0;
   const isOwner = userId === trade.traderId;
 
@@ -251,7 +253,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
               <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify"}</span>
             </button>
           )}
-          <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
+          <button onClick={() => setShowCopyModal(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
             <Copy className="w-4 h-4" />
             <span className="hidden sm:inline">Copy</span>
           </button>
@@ -288,6 +290,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}
+        />
+      )}
+      {showCopyModal && (
+        <PostTradeModal
+          onClose={() => setShowCopyModal(false)}
+          onPosted={() => setShowCopyModal(false)}
+          prefill={{ ticker: trade.ticker, direction: trade.direction as "LONG" | "SHORT", shares: String(trade.shares ?? "") }}
         />
       )}
     </div>

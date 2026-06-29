@@ -10,14 +10,15 @@ import Image from "next/image";
 interface Props {
   onClose: () => void;
   onPosted: () => void;
+  prefill?: { ticker?: string; direction?: "LONG" | "SHORT"; shares?: string };
 }
 
-export default function PostTradeModal({ onClose, onPosted }: Props) {
+export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<"trade" | "post">("trade");
   const [postContent, setPostContent] = useState("");
-  const [ticker, setTicker] = useState("");
-  const [tickerName, setTickerName] = useState("");
+  const [ticker, setTicker] = useState(prefill?.ticker ?? "");
+  const [tickerName, setTickerName] = useState(prefill?.ticker ?? "");
   const [tickerResults, setTickerResults] = useState<{ symbol: string; fullName: string; name: string; exchange: string; type: string }[]>([]);
   const [showTickerDropdown, setShowTickerDropdown] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
@@ -29,10 +30,10 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     const rect = tickerInputRef.current.getBoundingClientRect();
     setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
   }, []);
-  const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
+  const [direction, setDirection] = useState<"LONG" | "SHORT">(prefill?.direction ?? "LONG");
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
-  const [shares, setShares] = useState("100");
+  const [shares, setShares] = useState(prefill?.shares ?? "100");
   const [qtyType, setQtyType] = useState<"shares" | "contracts">("shares");
   const [caption, setCaption] = useState("");
   const [strategy, setStrategy] = useState("");
