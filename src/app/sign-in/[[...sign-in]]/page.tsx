@@ -120,7 +120,7 @@ export default function SignInPage() {
       </div>
 
       {/* RIGHT — form */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-6 py-12 min-h-screen">
+      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-4 sm:px-8 py-12 min-h-screen overflow-hidden">
         {/* Mobile logo */}
         <div className="flex items-center gap-2 mb-8 lg:hidden">
           <VerifiedCandle className="w-7 h-7" />

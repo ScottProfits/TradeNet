@@ -131,14 +131,14 @@ export default function SignUpPage() {
       </div>
 
       {/* RIGHT — form panel */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-6 py-12 min-h-screen">
+      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-4 sm:px-8 py-12 min-h-screen overflow-hidden">
         {/* Mobile logo */}
         <div className="flex items-center gap-2 mb-8 lg:hidden">
           <VerifiedCandle className="w-7 h-7" />
           <span className="text-2xl font-black text-white">Ryzr</span>
         </div>
 
-        <div className="w-full max-w-sm space-y-6">
+        <div className="w-full max-w-sm space-y-5">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-white">Create your account</h2>
             <p className="text-gray-500 text-sm">Join thousands of traders posting real results.</p>
