@@ -17,7 +17,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [postContent, setPostContent] = useState("");
   const [ticker, setTicker] = useState("");
   const [tickerName, setTickerName] = useState("");
-  const [tickerResults, setTickerResults] = useState<{ symbol: string; name: string; type: string }[]>([]);
+  const [tickerResults, setTickerResults] = useState<{ symbol: string; fullName: string; name: string; exchange: string; type: string }[]>([]);
   const [showTickerDropdown, setShowTickerDropdown] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
@@ -227,14 +227,24 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
                   {tickerResults.map((r) => (
                     <button
-                      key={r.symbol}
+                      key={r.fullName}
                       type="button"
-                      onClick={() => { setTicker(r.symbol); setTickerName(r.name); setShowTickerDropdown(false); setTickerResults([]); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                      onClick={() => { setTicker(r.symbol); setTickerName(`${r.name} · ${r.exchange}`); setShowTickerDropdown(false); setTickerResults([]); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)] last:border-0"
                     >
-                      <span className="font-bold text-white text-sm w-16 shrink-0">{r.symbol}</span>
-                      <span className="text-xs text-gray-400 truncate">{r.name}</span>
-                      <span className="text-[10px] text-gray-600 shrink-0 ml-auto">{r.type}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white text-sm">{r.symbol}</span>
+                          <span className="text-[10px] text-gray-600 uppercase">{r.exchange}</span>
+                        </div>
+                        <span className="text-xs text-gray-400 truncate block">{r.name}</span>
+                      </div>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                        r.type === "futures" ? "bg-orange-500/20 text-orange-400" :
+                        r.type === "crypto" ? "bg-yellow-500/20 text-yellow-400" :
+                        r.type === "forex" ? "bg-blue-500/20 text-blue-400" :
+                        "bg-[var(--green)]/20 text-[var(--green)]"
+                      }`}>{r.type}</span>
                     </button>
                   ))}
                 </div>
