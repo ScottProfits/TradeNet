@@ -32,6 +32,10 @@ export default function TradingViewChart({ ticker }: Props) {
   }, [ticker]);
 
   return (
-    <div className="tradingview-widget-container rounded-lg overflow-hidden" ref={containerRef} />
+    <div className="relative rounded-lg overflow-hidden">
+      <div className="tradingview-widget-container" ref={containerRef} />
+      {/* Block clicks so symbol link doesn't navigate to TradingView */}
+      <div className="absolute inset-0" style={{ pointerEvents: "all" }} onClick={(e) => e.preventDefault()} />
+    </div>
   );
 }

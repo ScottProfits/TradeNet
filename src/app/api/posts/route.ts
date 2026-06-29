@@ -3,18 +3,24 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export async function GET() {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("posts")
-    .select("*, profiles!posts_user_id_fkey(id, handle, avatar_url, verified)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) {
-    // Try without join if FK doesn't exist
-    const { data: plain } = await supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(50);
-    return Response.json(plain ?? []);
-  }
-  return Response.json(data ?? []);
+  if (!data || data.length === 0) return Response.json([]);
+
+  // Fetch profiles separately (no FK constraint)
+  const userIds = [...new Set(data.map((p) => p.user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, handle, avatar_url, verified")
+    .in("id", userIds);
+
+  const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]));
+  const result = data.map((p) => ({ ...p, profiles: profileMap[p.user_id] ?? null }));
+  return Response.json(result);
 }
 
 export async function POST(req: NextRequest) {
