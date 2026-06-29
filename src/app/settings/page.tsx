@@ -190,7 +190,10 @@ export default function SettingsPage() {
             >
               <option value="">Select your trading style</option>
               <option value="Day Trader">Day Trader</option>
-              <option value="Options">Options</option>
+              <option value="Swing Trader">Swing Trader</option>
+              <option value="Scalper">Scalper</option>
+              <option value="Position Trader">Position Trader</option>
+              <option value="Options Trader">Options Trader</option>
               <option value="Investor">Investor</option>
             </select>
           </div>

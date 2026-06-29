@@ -72,7 +72,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   }
 
   return (
-    <div className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}>
+    <div className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}>
       <div className="flex items-start gap-3">
         {/* Avatar with verified badge overlay */}
         <Link href={`/profile/${trader.handle}`} className="flex-shrink-0 relative">
@@ -157,15 +157,15 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </div>
       )}
 
-      <div className="bg-[var(--bg)] rounded-lg p-3 flex items-center justify-between">
-        <div>
-          <p className="font-bold text-white text-lg">{trade.ticker} {trade.direction === "Short" ? "485P" : ""}</p>
-          <p className="text-xs text-gray-500">
-            {trade.direction} · {trade.shares} {trade.direction === "Long" ? "shares" : "contracts"} · {trade.time}
+      <div className="bg-[var(--bg)] rounded-lg p-3 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-bold text-white text-base sm:text-lg truncate">{trade.ticker}</p>
+          <p className="text-xs text-gray-500 truncate">
+            {trade.direction} · {trade.shares > 0 ? `${trade.shares} ${trade.direction === "Long" ? "shares" : "contracts"} · ` : ""}{trade.time}
           </p>
         </div>
-        <div className="text-right">
-          <p className={clsx("font-bold text-lg", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+        <div className="text-right shrink-0">
+          <p className={clsx("font-bold text-base sm:text-lg", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
             {positive ? "+" : ""}${trade.pnl.toLocaleString()}
           </p>
           <p className={clsx("text-sm", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>

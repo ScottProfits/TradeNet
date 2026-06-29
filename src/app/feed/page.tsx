@@ -114,15 +114,16 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4 lg:gap-6 pb-20 lg:pb-0">
       <aside className="hidden lg:block space-y-4">
         <SidebarProfile />
       </aside>
 
-      <section className="space-y-4">
+      <section className="space-y-3">
+        {/* Post button — hidden on mobile since nav bar has + button */}
         <button
           onClick={() => setShowModal(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--green)] text-black font-bold text-base rounded-xl hover:bg-[var(--green)]/90 transition-colors shadow-lg shadow-[var(--green)]/20"
+          className="hidden lg:flex w-full items-center justify-center gap-2 py-3 bg-[var(--green)] text-black font-bold text-base rounded-xl hover:bg-[var(--green)]/90 transition-colors shadow-lg shadow-[var(--green)]/20"
         >
           <Plus className="w-5 h-5" />
           Post a Trade
@@ -134,9 +135,9 @@ export default function FeedPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === t ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
+              className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${tab === t ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
             >
-              {t === "feed" ? "Live Feed" : t === "following" ? "Following" : "Explore"}
+              {t === "feed" ? "Feed" : t === "following" ? "Following" : "Explore"}
             </button>
           ))}
         </div>

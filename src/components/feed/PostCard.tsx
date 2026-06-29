@@ -59,7 +59,7 @@ export default function PostCard({ post }: { post: RealPost }) {
   }
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href={`/profile/${profile?.handle}`} className="shrink-0">
