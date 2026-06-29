@@ -105,11 +105,13 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          {/* Notification bell — mobile only, sits after nav links */}
+          {isSignedIn && <span className="lg:hidden"><NotificationBell /></span>}
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           {/* Search */}
-          <div ref={searchRef} className="relative w-64">
+          <div ref={searchRef} className="relative w-40 sm:w-52 lg:w-64">
             <div className="flex items-center gap-2 bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 py-1.5 focus-within:border-[var(--green)]/50 transition-colors">
               <Search className="w-4 h-4 text-gray-500 shrink-0" />
               <input
@@ -186,7 +188,7 @@ export default function Navbar() {
 
           {isSignedIn ? (
             <div className="flex items-center gap-2">
-              <Link href="/messages" onClick={() => setUnreadDms(0)} className={clsx("relative p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
+              <Link href="/messages" onClick={() => setUnreadDms(0)} className={clsx("hidden lg:flex relative p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
                 <MessageSquare className="w-5 h-5" />
                 {unreadDms > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--red)] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -194,8 +196,8 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
-              <NotificationBell />
-              <Link href="/settings" className="text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
+              <span className="hidden lg:block"><NotificationBell /></span>
+              <Link href="/settings" className="hidden lg:block text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
                 Settings
               </Link>
               <UserButton />
