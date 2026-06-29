@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Plus, MessageSquare, Trophy } from "lucide-react";
+import { Compass, Plus, MessageSquare, Trophy } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import PostTradeModal from "@/components/feed/PostTradeModal";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -13,6 +14,7 @@ export default function MobileNav() {
   const { user } = useUser();
   const [showModal, setShowModal] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
+  const [profileHandle, setProfileHandle] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -24,33 +26,44 @@ export default function MobileNav() {
     return () => clearInterval(interval);
   }, [isSignedIn]);
 
-  const handle = user?.username;
+  // Fetch the user's actual handle from profiles table
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`/api/profile/me`).then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d?.profile?.handle) setProfileHandle(d.profile.handle);
+      else setProfileHandle(user.username ?? null);
+    });
+  }, [user?.id, user?.username]);
 
-  const links = [
-    { href: "/feed", icon: Home, label: "Feed" },
-    { href: "/explore", icon: Compass, label: "Explore" },
-    { href: "/leaderboard", icon: Trophy, label: "Board" },
-    { href: handle ? `/profile/${handle}` : "/feed", icon: null, label: "Profile", isProfile: true },
-  ];
+  const profileHref = profileHandle ? `/profile/${profileHandle}` : "/feed";
 
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg)] border-t border-[var(--border)] flex items-center lg:hidden">
-        {links.slice(0, 2).map(({ href, icon: Icon, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className={clsx(
-              "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
-              pathname === href || pathname.startsWith(href + "/")
-                ? "text-[var(--green)]"
-                : "text-gray-500"
-            )}
-          >
-            {Icon && <Icon className="w-5 h-5" />}
-            {label}
-          </Link>
-        ))}
+
+        {/* Feed */}
+        <Link
+          href="/feed"
+          className={clsx(
+            "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
+            pathname === "/feed" ? "text-[var(--green)]" : "text-gray-500"
+          )}
+        >
+          <VerifiedBadge className="w-6 h-6" />
+          Feed
+        </Link>
+
+        {/* Explore */}
+        <Link
+          href="/explore"
+          className={clsx(
+            "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
+            pathname === "/explore" ? "text-[var(--green)]" : "text-gray-500"
+          )}
+        >
+          <Compass className="w-5 h-5" />
+          Explore
+        </Link>
 
         {/* Center post button */}
         <button
@@ -62,7 +75,7 @@ export default function MobileNav() {
           </span>
         </button>
 
-        {/* Messages */}
+        {/* PMs */}
         <Link
           href="/messages"
           className={clsx(
@@ -82,28 +95,32 @@ export default function MobileNav() {
         </Link>
 
         {/* Profile */}
-        {links[3] && (
-          <Link
-            href={links[3].href}
-            className={clsx(
-              "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
-              pathname.startsWith("/profile") ? "text-[var(--green)]" : "text-gray-500"
-            )}
-          >
-            {user?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.imageUrl} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
-              </div>
-            )}
-            Profile
-          </Link>
-        )}
+        <Link
+          href={profileHref}
+          className={clsx(
+            "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
+            pathname.startsWith("/profile") ? "text-[var(--green)]" : "text-gray-500"
+          )}
+        >
+          {user?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.imageUrl}
+              alt="Profile"
+              className={clsx(
+                "w-7 h-7 rounded-full object-cover",
+                pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : ""
+              )}
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+              {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
+            </div>
+          )}
+          Profile
+        </Link>
       </nav>
 
-      {/* Add padding so content doesn't hide behind nav */}
       <div className="h-16 lg:hidden" />
 
       {showModal && <PostTradeModal onClose={() => setShowModal(false)} onPosted={() => {}} />}
