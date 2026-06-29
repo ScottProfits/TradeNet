@@ -180,7 +180,7 @@ function CommentRow({ c, userId, onDelete, onReply, isReply }: {
               {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1">
             {!isReply && (
               <button
                 onClick={() => onReply(c.id, c.profiles?.handle)}

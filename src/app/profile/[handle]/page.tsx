@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { TrendingUp, TrendingDown, X, MessageSquare } from "lucide-react";
+import { X, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
+import TradeCard from "@/components/feed/TradeCard";
+import { Trade as TradeCardTrade, Trader } from "@/types";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import Link from "next/link";
@@ -225,39 +227,38 @@ export default function ProfilePage() {
         )}
 
         {trades.map((t) => {
-          const positive = t.pnl >= 0;
+          const tradeObj: TradeCardTrade = {
+            id: t.id,
+            traderId: profile.id,
+            ticker: t.ticker,
+            direction: t.direction === "LONG" ? "Long" : "Short",
+            shares: 0,
+            time: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            pnl: t.pnl,
+            pnlPct: t.pnl_percent,
+            notes: t.caption ?? "",
+            likes: (t as { likes_count?: number }).likes_count ?? 0,
+            comments: (t as { comments_count?: number }).comments_count ?? 0,
+          };
+          const traderObj: Trader = {
+            id: profile.id,
+            handle: profile.handle,
+            displayName: profile.full_name || profile.handle,
+            initials: profile.handle.slice(0, 2).toUpperCase(),
+            color: "#6366F1",
+            brokerage: profile.brokerage ?? "",
+            verified: profile.verified,
+            followers: 0, following: 0, winRate: 0, pnlMonth: 0, categories: [],
+          };
           return (
-            <div key={t.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {t.direction === "LONG"
-                    ? <TrendingUp className="w-4 h-4 text-[var(--green)]" />
-                    : <TrendingDown className="w-4 h-4 text-[var(--red)]" />}
-                  <span className="font-bold text-white">{t.ticker}</span>
-                  <span className="text-xs text-gray-500">{t.direction}</span>
-                </div>
-                <div className="text-right">
-                  <p className={clsx("font-bold", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
-                    {positive ? "+" : ""}${Math.abs(t.pnl).toLocaleString()}
-                  </p>
-                  <p className={clsx("text-xs", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
-                    {positive ? "+" : ""}{t.pnl_percent.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
-
-              {t.caption && <p className="text-sm text-gray-300">{t.caption}</p>}
-
-              {t.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={t.image_url} alt="Trade screenshot" className="w-full rounded-lg object-cover max-h-64" />
-              )}
-
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Entry ${t.entry} → Exit ${t.exit}</span>
-                <span>{new Date(t.created_at).toLocaleDateString()}</span>
-              </div>
-            </div>
+            <TradeCard
+              key={t.id}
+              trade={tradeObj}
+              trader={traderObj}
+              imageUrl={t.image_url ?? undefined}
+              avatarUrl={profile.avatar_url ?? undefined}
+              strategy={(t as { strategy?: string }).strategy ?? undefined}
+            />
           );
         })}
       </div>
