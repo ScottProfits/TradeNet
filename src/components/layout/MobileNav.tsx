@@ -1,31 +1,19 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Plus, MessageSquare, Trophy } from "lucide-react";
+import { Search, Plus, Bell, TrendingUp } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import PostTradeModal from "@/components/feed/PostTradeModal";
-import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 export default function MobileNav() {
   const pathname = usePathname();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const [showModal, setShowModal] = useState(false);
-  const [unreadDms, setUnreadDms] = useState(0);
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-    function load() {
-      fetch("/api/messages?unread=1").then((r) => r.ok ? r.json() : { count: 0 }).then((d) => setUnreadDms(d.count));
-    }
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [isSignedIn]);
 
   // Fetch the user's actual handle and avatar from profiles table
   useEffect(() => {
@@ -51,20 +39,20 @@ export default function MobileNav() {
             pathname === "/feed" ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
-          <VerifiedBadge className="w-6 h-6" />
+          <TrendingUp className="w-5 h-5" />
           Feed
         </Link>
 
-        {/* Explore */}
+        {/* Search */}
         <Link
-          href="/explore"
+          href="/search"
           className={clsx(
             "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
-            pathname === "/explore" ? "text-[var(--green)]" : "text-gray-500"
+            pathname === "/search" ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
-          <Compass className="w-5 h-5" />
-          Explore
+          <Search className="w-5 h-5" />
+          Search
         </Link>
 
         {/* Center post button */}
@@ -77,23 +65,18 @@ export default function MobileNav() {
           </span>
         </button>
 
-        {/* PMs */}
+        {/* Notifications */}
         <Link
-          href="/messages"
+          href="/notifications"
           className={clsx(
             "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors relative",
-            pathname.startsWith("/messages") ? "text-[var(--green)]" : "text-gray-500"
+            pathname === "/notifications" ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
           <div className="relative">
-            <MessageSquare className="w-5 h-5" />
-            {unreadDms > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
-                {unreadDms > 9 ? "9+" : unreadDms}
-              </span>
-            )}
+            <Bell className="w-5 h-5" />
           </div>
-          PMs
+          Alerts
         </Link>
 
         {/* Profile */}
