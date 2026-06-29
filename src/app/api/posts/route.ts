@@ -19,7 +19,7 @@ export async function GET() {
   const [{ data: profiles }, { data: myLikes }] = await Promise.all([
     supabase.from("profiles").select("id, handle, avatar_url, verified").in("id", userIds),
     userId
-      ? supabase.from("likes").select("post_id").eq("user_id", userId).in("post_id", postIds)
+      ? supabase.from("post_likes").select("post_id").eq("user_id", userId).in("post_id", postIds)
       : Promise.resolve({ data: [] }),
   ]);
 
