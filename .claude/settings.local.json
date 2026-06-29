@@ -55,7 +55,8 @@
       "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/messages/\\\\[handle\\\\])",
       "Bash(npx web-push *)",
       "Bash(node -e ' *)",
-      "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/ticker/\\\\[ticker\\\\])"
+      "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/ticker/\\\\[ticker\\\\])",
+      "Bash(npx next *)"
     ]
   }
 }
