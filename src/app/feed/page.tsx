@@ -34,6 +34,8 @@ interface RealPost {
   content: string;
   image_url: string | null;
   likes_count: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
   created_at: string;
   profiles: { id: string; handle: string; avatar_url: string; verified: boolean } | null;
 }

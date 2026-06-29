@@ -18,8 +18,9 @@ interface Comment {
   };
 }
 
-export default function CommentSection({ tradeId, onCommentAdded, onCommentDeleted, onCountLoaded }: {
-  tradeId: string;
+export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded }: {
+  tradeId?: string;
+  postId?: string;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onCountLoaded?: (n: number) => void;
@@ -32,11 +33,15 @@ export default function CommentSection({ tradeId, onCommentAdded, onCommentDelet
   const [posting, setPosting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const entityId = tradeId ?? postId ?? "";
+  const paramKey = tradeId ? "tradeId" : "postId";
+
   useEffect(() => {
-    fetch(`/api/comments?tradeId=${tradeId}`)
+    if (!entityId) return;
+    fetch(`/api/comments?${paramKey}=${entityId}`)
       .then((r) => r.ok ? r.json() : [])
       .then((d) => { setComments(d); setLoading(false); onCountLoaded?.(d.length); });
-  }, [tradeId]);
+  }, [entityId, paramKey]);
 
   function startReply(id: string, handle: string) {
     setReplyTo({ id, handle });
@@ -56,7 +61,7 @@ export default function CommentSection({ tradeId, onCommentAdded, onCommentDelet
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId, content: text, parentId: replyTo?.id ?? null }),
+      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId: replyTo?.id ?? null }),
     });
     if (res.ok) {
       const comment = await res.json();

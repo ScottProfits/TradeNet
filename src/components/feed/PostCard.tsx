@@ -1,10 +1,11 @@
 "use client";
-import { Heart, Share2 } from "lucide-react";
+import { Heart, Share2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import CommentSection from "@/components/feed/CommentSection";
 import { clsx } from "clsx";
 
 interface RealPost {
@@ -13,6 +14,8 @@ interface RealPost {
   content: string;
   image_url: string | null;
   likes_count: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
   created_at: string;
   profiles: {
     id: string;
@@ -24,8 +27,10 @@ interface RealPost {
 
 export default function PostCard({ post }: { post: RealPost }) {
   const { isSignedIn } = useAuth();
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.liked_by_me ?? false);
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
+  const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
+  const [showComments, setShowComments] = useState(false);
   const [shared, setShared] = useState(false);
   const profile = post.profiles;
   const initials = profile?.handle?.slice(0, 2).toUpperCase() ?? "?";
@@ -83,7 +88,7 @@ export default function PostCard({ post }: { post: RealPost }) {
       {/* Content */}
       <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
 
-      {/* Image */}
+      {/* Image/Video */}
       {post.image_url && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {/\.(mp4|mov|webm)/i.test(post.image_url) ? (
@@ -103,11 +108,28 @@ export default function PostCard({ post }: { post: RealPost }) {
           <Heart className={clsx("w-4 h-4", liked && "fill-current")} />
           {likeCount}
         </button>
+        <button
+          onClick={() => setShowComments((s) => !s)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-400 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          {commentCount}
+        </button>
         <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}
         </button>
       </div>
+
+      {/* Comments */}
+      {showComments && (
+        <CommentSection
+          postId={post.id}
+          onCommentAdded={() => setCommentCount((c) => c + 1)}
+          onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
+          onCountLoaded={(n) => setCommentCount(n)}
+        />
+      )}
     </div>
   );
 }

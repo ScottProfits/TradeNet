@@ -10,7 +10,7 @@ export async function DELETE(req: NextRequest) {
 
   const { data: comment } = await supabase
     .from("comments")
-    .select("user_id, trade_id")
+    .select("user_id, trade_id, post_id")
     .eq("id", commentId)
     .single();
 
@@ -18,7 +18,7 @@ export async function DELETE(req: NextRequest) {
   if (comment.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
   const { error } = await supabase.from("comments").delete().eq("id", commentId);
-  if (!error) {
+  if (!error && comment.trade_id) {
     await supabase.rpc("decrement_comments", { trade_id_input: comment.trade_id });
   }
 
@@ -27,14 +27,19 @@ export async function DELETE(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const tradeId = req.nextUrl.searchParams.get("tradeId");
-  if (!tradeId) return new Response("Missing tradeId", { status: 400 });
+  const postId = req.nextUrl.searchParams.get("postId");
 
-  const { data } = await supabase
+  if (!tradeId && !postId) return new Response("Missing tradeId or postId", { status: 400 });
+
+  const query = supabase
     .from("comments")
     .select(`*, profiles!comments_user_id_fkey (handle, avatar_url, verified)`)
-    .eq("trade_id", tradeId)
     .order("created_at", { ascending: true });
 
+  if (tradeId) query.eq("trade_id", tradeId);
+  if (postId) query.eq("post_id", postId);
+
+  const { data } = await query;
   return Response.json(data ?? []);
 }
 
@@ -42,10 +47,9 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { tradeId, content, parentId } = await req.json();
+  const { tradeId, postId, content, parentId } = await req.json();
   if (!content?.trim()) return new Response("Empty comment", { status: 400 });
 
-  // Create profile only if it doesn't exist — never overwrite handle set in Settings
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
   if (!existing) {
     const user = await currentUser();
@@ -58,29 +62,30 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("comments")
-    .insert({ user_id: userId, trade_id: tradeId, content: content.trim(), parent_id: parentId ?? null })
+    .insert({
+      user_id: userId,
+      trade_id: tradeId ?? null,
+      post_id: postId ?? null,
+      content: content.trim(),
+      parent_id: parentId ?? null,
+    })
     .select(`*, profiles!comments_user_id_fkey (handle, avatar_url, verified)`)
     .single();
 
   if (error) return new Response(error.message, { status: 500 });
 
-  // Increment comments_count on the trade
-  await supabase.rpc("increment_comments", { trade_id_input: tradeId });
+  if (tradeId) {
+    await supabase.rpc("increment_comments", { trade_id_input: tradeId });
+    const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
+    if (trade && trade.user_id !== userId) {
+      await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+    }
+  }
 
-  // Notify trade owner
-  const { data: trade } = await supabase
-    .from("trades")
-    .select("user_id")
-    .eq("id", tradeId)
-    .single();
-
-  if (trade && trade.user_id !== userId) {
-    await supabase.from("notifications").insert({
-      user_id: trade.user_id,
-      type: "comment",
-      actor_id: userId,
-      trade_id: tradeId,
-    });
+  if (postId) {
+    // Increment post comments_count
+    const { data: post } = await supabase.from("posts").select("comments_count").eq("id", postId).single();
+    if (post) await supabase.from("posts").update({ comments_count: (post.comments_count ?? 0) + 1 }).eq("id", postId);
   }
 
   return Response.json(data, { status: 201 });

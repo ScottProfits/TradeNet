@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export async function GET() {
+  const { userId } = await auth();
+
   const { data } = await supabase
     .from("posts")
     .select("*")
@@ -11,15 +13,24 @@ export async function GET() {
 
   if (!data || data.length === 0) return Response.json([]);
 
-  // Fetch profiles separately (no FK constraint)
   const userIds = [...new Set(data.map((p) => p.user_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, handle, avatar_url, verified")
-    .in("id", userIds);
+  const postIds = data.map((p) => p.id);
+
+  const [{ data: profiles }, { data: myLikes }] = await Promise.all([
+    supabase.from("profiles").select("id, handle, avatar_url, verified").in("id", userIds),
+    userId
+      ? supabase.from("likes").select("post_id").eq("user_id", userId).in("post_id", postIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]));
-  const result = data.map((p) => ({ ...p, profiles: profileMap[p.user_id] ?? null }));
+  const likedSet = new Set((myLikes ?? []).map((l: { post_id: string }) => l.post_id));
+
+  const result = data.map((p) => ({
+    ...p,
+    profiles: profileMap[p.user_id] ?? null,
+    liked_by_me: likedSet.has(p.id),
+  }));
   return Response.json(result);
 }
 
