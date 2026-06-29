@@ -3,11 +3,11 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import MobileNav from "@/components/layout/MobileNav";
 
-const AUTH_ROUTES = ["/sign-in", "/sign-up"];
+const AUTH_ROUTES = ["/sign-in", "/sign-up", "/"];
 
 export default function ConditionalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuth = AUTH_ROUTES.some((r) => pathname.startsWith(r));
+  const isAuth = pathname === "/" || AUTH_ROUTES.some((r) => r !== "/" && pathname.startsWith(r));
 
   if (isAuth) {
     return <>{children}</>;
