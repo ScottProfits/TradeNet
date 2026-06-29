@@ -29,9 +29,9 @@ const LEADERBOARD = [
 ];
 
 const clerkAppearance = {
-  variables: { colorPrimary: "#22c55e", colorBackground: "#111317", colorDanger: "#ef4444" },
+  variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" },
   elements: {
-    card: { background: "#111317", boxShadow: "none", width: "100%", maxWidth: "100%" },
+    card: { background: "#1a1d27", border: "1px solid #2a2d3a", boxShadow: "none", width: "100%", maxWidth: "100%", minWidth: "0" },
     headerTitle: { color: "#ffffff" },
     headerSubtitle: { color: "#9ca3af" },
     formFieldLabel: { color: "#d1d5db" },
