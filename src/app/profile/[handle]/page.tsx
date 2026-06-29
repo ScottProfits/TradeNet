@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText } from "lucide-react";
+import FounderBadge from "@/components/ui/FounderBadge";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
@@ -178,6 +179,7 @@ export default function ProfilePage() {
                     <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
                   </span>
                 )}
+                {profile.handle === "scottprofits" && <FounderBadge />}
               </div>
               {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">

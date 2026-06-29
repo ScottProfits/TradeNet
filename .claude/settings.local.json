@@ -61,7 +61,8 @@
       "Bash(curl -s \"https://query1.finance.yahoo.com/v1/finance/search?q=ES&lang=en-US&region=US&quotesCount=8&newsCount=0\" -H \"User-Agent: Mozilla/5.0\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(q.get\\('symbol'\\), q.get\\('shortname'\\), q.get\\('quoteType'\\)\\) for q in d.get\\('quotes',[]\\)]\")",
       "Bash(curl -s \"https://query1.finance.yahoo.com/v1/finance/search?q=AAPL&lang=en-US&region=US&quotesCount=5&newsCount=0\" -H \"User-Agent: Mozilla/5.0\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('quotes',[]\\)[:3], indent=2\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('quotes',[]\\)[:3], indent=2\\)\\)\")",
+      "Bash(curl -s https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/profiles?select=id,handle,bio -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')"
     ]
   }
 }
