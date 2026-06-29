@@ -22,11 +22,11 @@ export async function GET() {
 
   const trades = (likedTrades ?? [])
     .filter((r) => r.trades)
-    .map((r) => ({ type: "trade" as const, ...(r.trades as object), created_at: (r.trades as { created_at: string }).created_at }));
+    .map((r) => ({ type: "trade" as const, ...((r.trades as unknown) as Record<string, unknown>) })) as ({ type: "trade"; created_at: string } & Record<string, unknown>)[];
 
   const posts = (likedPosts ?? [])
     .filter((r) => r.posts)
-    .map((r) => ({ type: "post" as const, ...(r.posts as object), created_at: (r.posts as { created_at: string }).created_at }));
+    .map((r) => ({ type: "post" as const, ...((r.posts as unknown) as Record<string, unknown>) })) as ({ type: "post"; created_at: string } & Record<string, unknown>)[];
 
   const merged = [...trades, ...posts].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

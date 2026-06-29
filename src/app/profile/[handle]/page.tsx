@@ -81,7 +81,6 @@ export default function ProfilePage() {
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
-  const [showLiked, setShowLiked] = useState(false);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -193,77 +192,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex gap-2 flex-shrink-0">
-            {isOwnProfile ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowLiked((s) => !s)}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--border)] text-gray-400 hover:text-pink-400 hover:border-pink-400/30 rounded-lg transition-colors text-sm"
-                  title="Posts you liked"
-                >
-                  <Heart className="w-4 h-4" />
-                  Liked
-                </button>
-
-                {showLiked && (
-                  <div className="absolute right-0 top-10 w-80 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-                      <span className="text-sm font-semibold text-white">Posts you liked</span>
-                      <button onClick={() => setShowLiked(false)} className="text-gray-500 hover:text-white">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {likedItems.length === 0 ? (
-                        <p className="text-center text-gray-500 text-sm py-8">Nothing liked yet</p>
-                      ) : (
-                        likedItems.map((item) => (
-                          <div key={item.id} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0 hover:bg-white/[0.02] transition-colors">
-                            {item.profiles?.avatar_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={item.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-                                {item.profiles?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5">
-                                <Link href={`/profile/${item.profiles?.handle}`} onClick={() => setShowLiked(false)} className="text-xs font-semibold text-gray-300 hover:text-white">
-                                  @{item.profiles?.handle}
-                                </Link>
-                                {item.type === "trade" ? (
-                                  <span className={clsx("text-[10px] px-1.5 py-0.5 rounded font-semibold", (item.pnl ?? 0) >= 0 ? "bg-[var(--green)]/20 text-[var(--green)]" : "bg-[var(--red)]/20 text-[var(--red)]")}>
-                                    {(item.pnl ?? 0) >= 0 ? "+" : ""}${Math.abs(item.pnl ?? 0).toLocaleString()}
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
-                                    <FileText className="w-2.5 h-2.5 inline" /> post
-                                  </span>
-                                )}
-                              </div>
-                              {item.type === "trade" ? (
-                                <div className="flex items-center gap-1.5">
-                                  {(item.direction === "LONG" || item.direction === "Long") ? (
-                                    <TrendingUp className="w-3 h-3 text-[var(--green)]" />
-                                  ) : (
-                                    <TrendingDown className="w-3 h-3 text-[var(--red)]" />
-                                  )}
-                                  <p className="text-xs text-gray-400">${item.ticker} · {item.caption ? item.caption.slice(0, 40) + (item.caption.length > 40 ? "…" : "") : item.direction}</p>
-                                </div>
-                              ) : (
-                                <p className="text-xs text-gray-400 truncate">{item.content?.slice(0, 60)}{(item.content?.length ?? 0) > 60 ? "…" : ""}</p>
-                              )}
-                              <p className="text-[10px] text-gray-600 mt-0.5">{new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
-                            </div>
-                            <Heart className="w-3.5 h-3.5 text-pink-400 fill-current shrink-0 mt-1" />
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
+            {!isOwnProfile && (
               <>
                 <button
                   onClick={handleFollow}
@@ -364,6 +293,64 @@ export default function ProfilePage() {
           );
         })}
       </div>
+
+      {/* Liked posts — only visible to profile owner */}
+      {isOwnProfile && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-white flex items-center gap-2">
+            <Heart className="w-4 h-4 text-pink-400 fill-current" /> Liked ({likedItems.length})
+          </h2>
+
+          {likedItems.length === 0 ? (
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center">
+              <p className="text-gray-500 text-sm">Nothing liked yet.</p>
+            </div>
+          ) : (
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+              {likedItems.map((item) => (
+                <div key={item.id} className="flex items-start gap-3 p-4 hover:bg-white/[0.02] transition-colors">
+                  {item.profiles?.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.profiles.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {item.profiles?.handle?.slice(0, 2).toUpperCase() ?? "?"}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <Link href={`/profile/${item.profiles?.handle}`} className="text-sm font-semibold text-white hover:text-[var(--green)] transition-colors">
+                        @{item.profiles?.handle}
+                      </Link>
+                      {item.type === "trade" ? (
+                        <span className={clsx("text-xs px-2 py-0.5 rounded-full font-semibold", (item.pnl ?? 0) >= 0 ? "bg-[var(--green)]/20 text-[var(--green)]" : "bg-[var(--red)]/20 text-[var(--red)]")}>
+                          {(item.pnl ?? 0) >= 0 ? "+" : ""}${Math.abs(item.pnl ?? 0).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-500 flex items-center gap-1">
+                          <FileText className="w-3 h-3" /> post
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-600 ml-auto">{new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    </div>
+                    {item.type === "trade" ? (
+                      <div className="flex items-center gap-1.5">
+                        {(item.direction === "LONG" || item.direction === "Long")
+                          ? <TrendingUp className="w-3.5 h-3.5 text-[var(--green)]" />
+                          : <TrendingDown className="w-3.5 h-3.5 text-[var(--red)]" />}
+                        <p className="text-sm text-gray-400">${item.ticker}{item.caption ? ` · ${item.caption.slice(0, 60)}${item.caption.length > 60 ? "…" : ""}` : ""}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">{item.content?.slice(0, 80)}{(item.content?.length ?? 0) > 80 ? "…" : ""}</p>
+                    )}
+                  </div>
+                  <Heart className="w-4 h-4 text-pink-400 fill-current shrink-0 mt-0.5" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Followers / Following modal */}
       {modal && (
