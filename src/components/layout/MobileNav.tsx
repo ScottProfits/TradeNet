@@ -31,13 +31,13 @@ export default function MobileNav() {
   useEffect(() => {
     if (!user?.id) return;
     fetch(`/api/profile/me`).then((r) => r.ok ? r.json() : null).then((d) => {
-      if (d?.profile?.handle) setProfileHandle(d.profile.handle);
+      if (d?.handle) setProfileHandle(d.handle);
       else setProfileHandle(user.username ?? null);
-      if (d?.profile?.avatar_url) setProfileAvatar(d.profile.avatar_url);
+      if (d?.avatar_url) setProfileAvatar(d.avatar_url);
     });
   }, [user?.id, user?.username]);
 
-  const profileHref = profileHandle ? `/profile/${profileHandle}` : "/feed";
+  const profileHref = profileHandle ? `/profile/${profileHandle}` : (user?.username ? `/profile/${user.username}` : "/feed");
 
   return (
     <>
