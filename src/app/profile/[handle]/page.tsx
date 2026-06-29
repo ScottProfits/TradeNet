@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { X, MessageSquare, Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
@@ -51,29 +51,21 @@ interface ProfileData {
   followingCount: number;
 }
 
-interface Notification {
+interface LikedItem {
+  type: "trade" | "post";
   id: string;
-  type: string;
-  read: boolean;
   created_at: string;
-  actor: { handle: string; avatar_url: string; verified: boolean } | null;
-}
-
-function NotificationIcon({ type }: { type: string }) {
-  if (type === "like") return <Heart className="w-3.5 h-3.5 text-pink-400" />;
-  if (type === "follow") return <UserPlus className="w-3.5 h-3.5 text-blue-400" />;
-  if (type === "comment") return <MessageCircle className="w-3.5 h-3.5 text-[var(--green)]" />;
-  if (type === "explore") return <Star className="w-3.5 h-3.5 text-yellow-400" />;
-  return <Bell className="w-3.5 h-3.5 text-gray-400" />;
-}
-
-function notifText(n: Notification): string {
-  const actor = n.actor?.handle ? `@${n.actor.handle}` : "Someone";
-  if (n.type === "like") return `${actor} liked your trade`;
-  if (n.type === "follow") return `${actor} followed you`;
-  if (n.type === "comment") return `${actor} commented on your trade`;
-  if (n.type === "explore") return "You were featured on Explore";
-  return "You have a new notification";
+  // trade fields
+  ticker?: string;
+  direction?: string;
+  pnl?: number;
+  pnl_percent?: number;
+  caption?: string;
+  // post fields
+  content?: string;
+  image_url?: string | null;
+  likes_count?: number;
+  profiles?: { handle: string; avatar_url: string; verified: boolean };
 }
 
 export default function ProfilePage() {
@@ -88,9 +80,8 @@ export default function ProfilePage() {
   const [modal, setModal] = useState<"followers" | "following" | null>(null);
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showNotifs, setShowNotifs] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
+  const [showLiked, setShowLiked] = useState(false);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -108,20 +99,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!data || !userId || userId !== data.profile.id) return;
-    fetch("/api/notifications")
+    fetch("/api/liked")
       .then((r) => r.ok ? r.json() : [])
-      .then((ns: Notification[]) => {
-        setNotifications(ns);
-        setUnreadCount(ns.filter((n) => !n.read).length);
-      });
+      .then(setLikedItems);
   }, [data, userId]);
-
-  async function markRead() {
-    if (unreadCount === 0) return;
-    setUnreadCount(0);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    await fetch("/api/notifications", { method: "PATCH" });
-  }
 
   async function handleFollow() {
     if (!userId || followLoading) return;
@@ -215,47 +196,66 @@ export default function ProfilePage() {
             {isOwnProfile ? (
               <div className="relative">
                 <button
-                  onClick={() => { setShowNotifs((s) => !s); if (!showNotifs) markRead(); }}
-                  className="relative p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
-                  title="Notifications"
+                  onClick={() => setShowLiked((s) => !s)}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--border)] text-gray-400 hover:text-pink-400 hover:border-pink-400/30 rounded-lg transition-colors text-sm"
+                  title="Posts you liked"
                 >
-                  <Bell className="w-4 h-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
+                  <Heart className="w-4 h-4" />
+                  Liked
                 </button>
 
-                {showNotifs && (
+                {showLiked && (
                   <div className="absolute right-0 top-10 w-80 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-                      <span className="text-sm font-semibold text-white">Notifications</span>
-                      <button onClick={() => setShowNotifs(false)} className="text-gray-500 hover:text-white">
+                      <span className="text-sm font-semibold text-white">Posts you liked</span>
+                      <button onClick={() => setShowLiked(false)} className="text-gray-500 hover:text-white">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <p className="text-center text-gray-500 text-sm py-8">No notifications yet</p>
+                    <div className="max-h-96 overflow-y-auto">
+                      {likedItems.length === 0 ? (
+                        <p className="text-center text-gray-500 text-sm py-8">Nothing liked yet</p>
                       ) : (
-                        notifications.map((n) => (
-                          <div key={n.id} className={clsx("flex items-start gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0", !n.read && "bg-white/[0.03]")}>
-                            <div className="w-8 h-8 shrink-0">
-                              {n.actor?.avatar_url ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={n.actor.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center">
-                                  <NotificationIcon type={n.type} />
-                                </div>
-                              )}
-                            </div>
+                        likedItems.map((item) => (
+                          <div key={item.id} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0 hover:bg-white/[0.02] transition-colors">
+                            {item.profiles?.avatar_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+                                {item.profiles?.handle?.slice(0, 2).toUpperCase() ?? "?"}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-200">{notifText(n)}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">{new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <Link href={`/profile/${item.profiles?.handle}`} onClick={() => setShowLiked(false)} className="text-xs font-semibold text-gray-300 hover:text-white">
+                                  @{item.profiles?.handle}
+                                </Link>
+                                {item.type === "trade" ? (
+                                  <span className={clsx("text-[10px] px-1.5 py-0.5 rounded font-semibold", (item.pnl ?? 0) >= 0 ? "bg-[var(--green)]/20 text-[var(--green)]" : "bg-[var(--red)]/20 text-[var(--red)]")}>
+                                    {(item.pnl ?? 0) >= 0 ? "+" : ""}${Math.abs(item.pnl ?? 0).toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
+                                    <FileText className="w-2.5 h-2.5 inline" /> post
+                                  </span>
+                                )}
+                              </div>
+                              {item.type === "trade" ? (
+                                <div className="flex items-center gap-1.5">
+                                  {(item.direction === "LONG" || item.direction === "Long") ? (
+                                    <TrendingUp className="w-3 h-3 text-[var(--green)]" />
+                                  ) : (
+                                    <TrendingDown className="w-3 h-3 text-[var(--red)]" />
+                                  )}
+                                  <p className="text-xs text-gray-400">${item.ticker} · {item.caption ? item.caption.slice(0, 40) + (item.caption.length > 40 ? "…" : "") : item.direction}</p>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-400 truncate">{item.content?.slice(0, 60)}{(item.content?.length ?? 0) > 60 ? "…" : ""}</p>
+                              )}
+                              <p className="text-[10px] text-gray-600 mt-0.5">{new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
                             </div>
-                            {!n.read && <div className="w-2 h-2 rounded-full bg-[var(--green)] shrink-0 mt-1" />}
+                            <Heart className="w-3.5 h-3.5 text-pink-400 fill-current shrink-0 mt-1" />
                           </div>
                         ))
                       )}
