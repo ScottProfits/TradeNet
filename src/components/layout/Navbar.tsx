@@ -105,8 +105,20 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          {/* Notification bell — mobile only, sits after nav links */}
-          {isSignedIn && <span className="lg:hidden"><NotificationBell /></span>}
+          {/* Mobile only: bell + PM indicator */}
+          {isSignedIn && (
+            <span className="lg:hidden flex items-center gap-1">
+              <NotificationBell />
+              <Link href="/messages" className="relative p-1.5 text-gray-400 hover:text-white transition-colors">
+                <MessageSquare className="w-5 h-5" />
+                {unreadDms > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--red)] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unreadDms > 9 ? "9+" : unreadDms}
+                  </span>
+                )}
+              </Link>
+            </span>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-3">
