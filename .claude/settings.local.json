@@ -59,7 +59,9 @@
       "Bash(npx next *)",
       "Bash(curl -s \"https://symbol-search.tradingview.com/symbol_search/v3/?text=ES&hl=1&exchange=&lang=en&domain=production&type=\" -H \"Referer: https://www.tradingview.com/\")",
       "Bash(curl -s \"https://query1.finance.yahoo.com/v1/finance/search?q=ES&lang=en-US&region=US&quotesCount=8&newsCount=0\" -H \"User-Agent: Mozilla/5.0\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(q.get\\('symbol'\\), q.get\\('shortname'\\), q.get\\('quoteType'\\)\\) for q in d.get\\('quotes',[]\\)]\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(q.get\\('symbol'\\), q.get\\('shortname'\\), q.get\\('quoteType'\\)\\) for q in d.get\\('quotes',[]\\)]\")",
+      "Bash(curl -s \"https://query1.finance.yahoo.com/v1/finance/search?q=AAPL&lang=en-US&region=US&quotesCount=5&newsCount=0\" -H \"User-Agent: Mozilla/5.0\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('quotes',[]\\)[:3], indent=2\\)\\)\")"
     ]
   }
 }

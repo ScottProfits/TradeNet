@@ -1,5 +1,6 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, TrendingUp, TrendingDown, ImagePlus, Video, Search } from "lucide-react";
 import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +21,14 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [tickerResults, setTickerResults] = useState<{ symbol: string; fullName: string; name: string; exchange: string; type: string }[]>([]);
   const [showTickerDropdown, setShowTickerDropdown] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
+  const tickerInputRef = useRef<HTMLInputElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const updateDropdownPos = useCallback(() => {
+    if (!tickerInputRef.current) return;
+    const rect = tickerInputRef.current.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
@@ -156,7 +165,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-5 max-h-[90vh] overflow-y-auto overflow-x-visible"  style={{ overflowY: 'auto', overflowX: 'visible' }}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Create Post</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
@@ -211,9 +220,10 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
                 <input
+                  ref={tickerInputRef}
                   value={ticker}
-                  onChange={(e) => { setTicker(e.target.value.toUpperCase()); setTickerName(""); setShowTickerDropdown(true); }}
-                  onFocus={() => setShowTickerDropdown(true)}
+                  onChange={(e) => { setTicker(e.target.value.toUpperCase()); setTickerName(""); setShowTickerDropdown(true); updateDropdownPos(); }}
+                  onFocus={() => { setShowTickerDropdown(true); updateDropdownPos(); }}
                   placeholder="Search ticker..."
                   maxLength={12}
                   required
@@ -223,13 +233,16 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
               {tickerName && (
                 <p className="text-[10px] text-gray-500 mt-0.5 truncate">{tickerName}</p>
               )}
-              {showTickerDropdown && tickerResults.length > 0 && (
-                <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+              {showTickerDropdown && tickerResults.length > 0 && dropdownPos && createPortal(
+                <div
+                  className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-2xl overflow-y-auto"
+                  style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, maxHeight: 220, zIndex: 9999 }}
+                >
                   {tickerResults.map((r) => (
                     <button
-                      key={r.fullName}
+                      key={r.symbol}
                       type="button"
-                      onClick={() => { setTicker(r.symbol); setTickerName(`${r.name} · ${r.exchange}`); setShowTickerDropdown(false); setTickerResults([]); }}
+                      onMouseDown={(e) => { e.preventDefault(); setTicker(r.symbol); setTickerName(`${r.name} · ${r.exchange}`); setShowTickerDropdown(false); setTickerResults([]); }}
                       className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)] last:border-0"
                     >
                       <div className="flex-1 min-w-0">
@@ -247,7 +260,8 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
                       }`}>{r.type}</span>
                     </button>
                   ))}
-                </div>
+                </div>,
+                document.body
               )}
             </div>
             <div>

@@ -105,7 +105,7 @@ export default function Navbar() {
             </div>
 
             {showResults && results.length > 0 && (
-              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200]">
                 {results.map((r) => (
                   <button
                     key={r.id}
@@ -135,7 +135,7 @@ export default function Navbar() {
             )}
 
             {showResults && query.trim() && results.length === 0 && (
-              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-50">
+              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-[200]">
                 <p className="text-sm text-gray-500">No traders found</p>
               </div>
             )}
