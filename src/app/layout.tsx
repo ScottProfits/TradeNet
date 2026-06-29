@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import Navbar from "@/components/layout/Navbar";
-import MobileNav from "@/components/layout/MobileNav";
+import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
 
 export const metadata: Metadata = {
@@ -24,9 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
           <PushNotificationSetup />
-          <Navbar />
-          <main className="max-w-7xl mx-auto px-4 pt-6 pb-6">{children}</main>
-          <MobileNav />
+          <ConditionalShell>{children}</ConditionalShell>
         </body>
       </html>
     </ClerkProvider>
