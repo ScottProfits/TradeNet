@@ -12,8 +12,7 @@ interface Conversation {
   content: string;
   read: boolean;
   created_at: string;
-  sender: { id: string; handle: string; avatar_url: string; verified: boolean };
-  receiver: { id: string; handle: string; avatar_url: string; verified: boolean };
+  partner: { id: string; handle: string; avatar_url: string; verified: boolean };
 }
 
 export default function MessagesPage() {
@@ -43,17 +42,17 @@ export default function MessagesPage() {
         )}
 
         {convos.map((c) => {
-          const partner = c.sender_id === userId ? c.receiver : c.sender;
+          const partner = c.partner;
           const unread = !c.read && c.receiver_id === userId;
-          const initials = partner.handle.slice(0, 2).toUpperCase();
+          const initials = partner?.handle?.slice(0, 2).toUpperCase() ?? "?";
 
           return (
             <Link
               key={c.id}
-              href={`/messages/${partner.handle}`}
+              href={`/messages/${partner?.handle}`}
               className="flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0"
             >
-              {partner.avatar_url ? (
+              {partner?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={partner.avatar_url} alt={partner.handle} className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
               ) : (
@@ -63,8 +62,8 @@ export default function MessagesPage() {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className={`font-semibold text-sm ${unread ? "text-white" : "text-gray-300"}`}>@{partner.handle}</span>
-                  {partner.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
+                  <span className={`font-semibold text-sm ${unread ? "text-white" : "text-gray-300"}`}>@{partner?.handle}</span>
+                  {partner?.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
                 </div>
                 <p className={`text-xs truncate mt-0.5 ${unread ? "text-gray-200 font-medium" : "text-gray-500"}`}>{c.content}</p>
               </div>

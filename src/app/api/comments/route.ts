@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { tradeId, content } = await req.json();
+  const { tradeId, content, parentId } = await req.json();
   if (!content?.trim()) return new Response("Empty comment", { status: 400 });
 
   // Create profile only if it doesn't exist — never overwrite handle set in Settings
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("comments")
-    .insert({ user_id: userId, trade_id: tradeId, content: content.trim() })
+    .insert({ user_id: userId, trade_id: tradeId, content: content.trim(), parent_id: parentId ?? null })
     .select(`*, profiles!comments_user_id_fkey (handle, avatar_url, verified)`)
     .single();
 

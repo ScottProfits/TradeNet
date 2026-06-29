@@ -13,6 +13,8 @@ interface Props {
 
 export default function PostTradeModal({ onClose, onPosted }: Props) {
   const { userId } = useAuth();
+  const [tab, setTab] = useState<"trade" | "post">("trade");
+  const [postContent, setPostContent] = useState("");
   const [ticker, setTicker] = useState("");
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
   const [entry, setEntry] = useState("");
@@ -56,6 +58,31 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
     setMediaPreview(null);
     setMediaType(null);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function handlePostSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!postContent.trim()) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      let image_url: string | null = null;
+      if (media && userId) {
+        const ext = media.name.split(".").pop();
+        const path = `${userId}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, media, { contentType: media.type });
+        if (uploadError) { setError("Upload failed: " + uploadError.message); setSubmitting(false); return; }
+        const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+        image_url = data.publicUrl;
+      }
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: postContent, image_url }),
+      });
+      if (!res.ok) { setError(await res.text()); } else { onPosted(); onClose(); }
+    } catch { setError("Something went wrong."); }
+    setSubmitting(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -107,13 +134,52 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Post a Trade</h2>
+          <h2 className="text-lg font-bold text-white">Create Post</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Tabs */}
+        <div className="flex bg-[var(--bg)] rounded-lg p-1 gap-1">
+          <button type="button" onClick={() => setTab("trade")} className={clsx("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", tab === "trade" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white")}>
+            📈 Trade
+          </button>
+          <button type="button" onClick={() => setTab("post")} className={clsx("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", tab === "post" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white")}>
+            💬 Post
+          </button>
+        </div>
+
+        {/* Regular post form */}
+        {tab === "post" && (
+          <form onSubmit={handlePostSubmit} className="space-y-4">
+            <textarea
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+              placeholder="Share your thoughts, market analysis, news..."
+              rows={4}
+              maxLength={500}
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
+            />
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaPick} />
+            {mediaPreview ? (
+              <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
+                {mediaType === "video" ? <video src={mediaPreview} controls className="w-full max-h-48" /> : <Image src={mediaPreview} alt="preview" width={400} height={200} className="w-full object-cover max-h-48" unoptimized />}
+                <button type="button" onClick={clearMedia} className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white"><X className="w-3.5 h-3.5" /></button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
+                <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add photo or video
+              </button>
+            )}
+            {error && <p className="text-[var(--red)] text-sm">{error}</p>}
+            <button type="submit" disabled={submitting || !postContent.trim()} className="w-full py-2.5 bg-[var(--green)] text-black font-bold rounded-lg hover:bg-[var(--green)]/90 transition-colors disabled:opacity-50">
+              {submitting ? "Posting..." : "Post"}
+            </button>
+          </form>
+        )}
+
+        {tab === "trade" && <form onSubmit={handleSubmit} className="space-y-4">
           {/* Ticker + Direction */}
           <div className="flex gap-3">
             <div className="flex-1">
@@ -302,7 +368,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
           >
             {submitting ? "Posting..." : "Post Trade"}
           </button>
-        </form>
+        </form>}
       </div>
     </div>
   );
