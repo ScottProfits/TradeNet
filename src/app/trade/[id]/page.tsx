@@ -215,17 +215,19 @@ export default function TradePage() {
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" /> Share
           </button>
-          <button
-            onClick={() => setShowChart((s) => !s)}
-            className={clsx("flex items-center gap-1.5 text-sm ml-auto transition-colors", showChart ? "text-[var(--green)]" : "text-gray-500 hover:text-gray-300")}
-          >
-            <BarChart2 className="w-4 h-4" /> {showChart ? "Hide chart" : "Show chart"}
-          </button>
+          {isSignedIn && (
+            <button
+              onClick={() => setShowChart((s) => !s)}
+              className={clsx("flex items-center gap-1.5 text-sm ml-auto transition-colors", showChart ? "text-[var(--green)]" : "text-gray-500 hover:text-gray-300")}
+            >
+              <BarChart2 className="w-4 h-4" /> {showChart ? "Hide chart" : "Show chart"}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Chart */}
-      {showChart && (
+      {/* Chart — only for signed-in users */}
+      {isSignedIn && showChart && (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <TradingViewChart ticker={trade.ticker} />
         </div>
