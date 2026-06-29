@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
     return new Response(error.message, { status: 500 });
   }
 
-  // Notify trade owner
   if (!error) {
+    await supabase.rpc("increment_likes", { trade_id_input: tradeId });
+
     const { data: trade } = await supabase
       .from("trades")
       .select("user_id")
@@ -44,10 +45,8 @@ export async function DELETE(req: NextRequest) {
 
   const { tradeId } = await req.json();
 
-  await supabase.from("likes").delete().match({
-    user_id: userId,
-    trade_id: tradeId,
-  });
+  await supabase.from("likes").delete().match({ user_id: userId, trade_id: tradeId });
+  await supabase.rpc("decrement_likes", { trade_id_input: tradeId });
 
   return new Response("OK", { status: 200 });
 }

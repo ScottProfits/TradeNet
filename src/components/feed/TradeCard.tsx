@@ -15,12 +15,13 @@ interface TradeCardProps {
   imageUrl?: string;
   avatarUrl?: string;
   strategy?: string;
+  likedByMe?: boolean;
   onDelete?: (id: string) => void;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, onDelete }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, likedByMe, onDelete }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(trade.likes);
   const [commentCount, setCommentCount] = useState(trade.comments);
   const [liking, setLiking] = useState(false);

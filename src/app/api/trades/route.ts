@@ -3,17 +3,28 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export async function GET() {
+  const { userId } = await auth();
+
   const { data, error } = await supabase
     .from("trades")
-    .select(`
-      *,
-      profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)
-    `)
+    .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
     .order("created_at", { ascending: false })
     .limit(50);
 
   if (error) return new Response(error.message, { status: 500 });
-  return Response.json(data);
+
+  // Fetch which trades the current user has liked
+  let likedIds = new Set<string>();
+  if (userId) {
+    const { data: likes } = await supabase
+      .from("likes")
+      .select("trade_id")
+      .eq("user_id", userId);
+    if (likes) likedIds = new Set(likes.map((l) => l.trade_id));
+  }
+
+  const result = (data ?? []).map((t) => ({ ...t, liked_by_me: likedIds.has(t.id) }));
+  return Response.json(result);
 }
 
 export async function POST(req: NextRequest) {
