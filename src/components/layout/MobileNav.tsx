@@ -15,6 +15,7 @@ export default function MobileNav() {
   const [showModal, setShowModal] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -26,12 +27,13 @@ export default function MobileNav() {
     return () => clearInterval(interval);
   }, [isSignedIn]);
 
-  // Fetch the user's actual handle from profiles table
+  // Fetch the user's actual handle and avatar from profiles table
   useEffect(() => {
     if (!user?.id) return;
     fetch(`/api/profile/me`).then((r) => r.ok ? r.json() : null).then((d) => {
       if (d?.profile?.handle) setProfileHandle(d.profile.handle);
       else setProfileHandle(user.username ?? null);
+      if (d?.profile?.avatar_url) setProfileAvatar(d.profile.avatar_url);
     });
   }, [user?.id, user?.username]);
 
@@ -102,10 +104,10 @@ export default function MobileNav() {
             pathname.startsWith("/profile") ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
-          {user?.imageUrl ? (
+          {profileAvatar || user?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={user.imageUrl}
+              src={(profileAvatar || user?.imageUrl) as string}
               alt="Profile"
               className={clsx(
                 "w-7 h-7 rounded-full object-cover",
