@@ -1,6 +1,5 @@
-const CACHE_NAME = 'ryzr-v3';
+const CACHE_NAME = 'ryzr-v4';
 
-// On install, clear old caches
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -14,7 +13,24 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Always go to network — never serve stale cached pages
 self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(event.request));
+});
+
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'Ryzr';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: data.url || '/feed' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/feed';
+  event.waitUntil(clients.openWindow(url));
 });

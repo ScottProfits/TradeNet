@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function DELETE(req: NextRequest) {
@@ -79,6 +80,14 @@ export async function POST(req: NextRequest) {
     const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
     if (trade && trade.user_id !== userId) {
       await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+      const { data: actor } = await supabase.from("profiles").select("handle").eq("id", userId).single();
+      if (actor) {
+        await sendPushToUser(trade.user_id, {
+          title: "New comment",
+          body: `@${actor.handle} commented on your trade`,
+          url: `/feed`,
+        });
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -25,13 +26,16 @@ export async function POST(req: NextRequest) {
     return new Response(error.message, { status: 500 });
   }
 
-  // Notify the person being followed (don't notify yourself)
   if (target.id !== userId) {
-    await supabase.from("notifications").insert({
-      user_id: target.id,
-      type: "follow",
-      actor_id: userId,
-    });
+    await supabase.from("notifications").insert({ user_id: target.id, type: "follow", actor_id: userId });
+    const { data: actor } = await supabase.from("profiles").select("handle").eq("id", userId).single();
+    if (actor) {
+      await sendPushToUser(target.id, {
+        title: "New follower",
+        body: `@${actor.handle} started following you`,
+        url: `/profile/${actor.handle}`,
+      });
+    }
   }
 
   return new Response("OK", { status: 200 });

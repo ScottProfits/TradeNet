@@ -52,7 +52,9 @@
       "Bash(curl -s https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/profiles?select=id,handle -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')",
       "Bash(npm ls *)",
       "Bash(vercel env *)",
-      "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/messages/\\\\[handle\\\\])"
+      "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/messages/\\\\[handle\\\\])",
+      "Bash(npx web-push *)",
+      "Bash(node -e ' *)"
     ]
   }
 }
