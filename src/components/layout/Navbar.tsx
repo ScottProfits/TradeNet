@@ -8,12 +8,18 @@ import { useState, useEffect, useRef } from "react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import NotificationBell from "@/components/layout/NotificationBell";
 
-interface SearchResult {
+interface UserResult {
   id: string;
   handle: string;
   full_name: string;
   avatar_url: string;
   verified: boolean;
+}
+
+interface SearchResponse {
+  type: "users" | "ticker";
+  ticker?: string;
+  results: UserResult[];
 }
 
 const links = [
@@ -26,7 +32,7 @@ export default function Navbar() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -42,10 +48,10 @@ export default function Navbar() {
   }, [isSignedIn]);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
+    if (!query.trim()) { setSearchData(null); return; }
     const timer = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      if (res.ok) setResults(await res.json());
+      if (res.ok) setSearchData(await res.json());
     }, 200);
     return () => clearTimeout(timer);
   }, [query]);
@@ -61,11 +67,17 @@ export default function Navbar() {
   }, []);
 
   function goToProfile(handle: string) {
-    setQuery("");
-    setResults([]);
-    setShowResults(false);
+    setQuery(""); setSearchData(null); setShowResults(false);
     router.push(`/profile/${handle}`);
   }
+
+  function goToTicker(ticker: string) {
+    setQuery(""); setSearchData(null); setShowResults(false);
+    router.push(`/ticker/${ticker}`);
+  }
+
+  const hasResults = searchData && searchData.results.length > 0;
+  const noResults = searchData && query.trim() && searchData.results.length === 0;
 
   return (
     <nav className="border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
@@ -101,14 +113,33 @@ export default function Navbar() {
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setShowResults(true); }}
                 onFocus={() => setShowResults(true)}
-                placeholder="Search traders..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchData?.type === "ticker" && searchData.ticker) {
+                    goToTicker(searchData.ticker);
+                  }
+                }}
+                placeholder="Search traders or $AAPL..."
                 className="bg-transparent text-sm text-gray-300 placeholder-gray-500 outline-none w-full"
               />
             </div>
 
-            {showResults && results.length > 0 && (
+            {showResults && hasResults && (
               <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-50">
-                {results.map((r) => (
+                {searchData?.type === "ticker" && searchData.ticker && (
+                  <button
+                    onClick={() => goToTicker(searchData.ticker!)}
+                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)]"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[var(--green)]/20 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-4 h-4 text-[var(--green)]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">${searchData.ticker}</p>
+                      <p className="text-xs text-gray-500">{searchData.results.length} trade{searchData.results.length !== 1 ? "s" : ""} posted</p>
+                    </div>
+                  </button>
+                )}
+                {searchData?.type === "users" && searchData.results.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => goToProfile(r.handle)}
@@ -136,9 +167,9 @@ export default function Navbar() {
               </div>
             )}
 
-            {showResults && query.trim() && results.length === 0 && (
+            {showResults && noResults && (
               <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-50">
-                <p className="text-sm text-gray-500">No traders found</p>
+                <p className="text-sm text-gray-500">No results found</p>
               </div>
             )}
           </div>
@@ -154,10 +185,7 @@ export default function Navbar() {
                 )}
               </Link>
               <NotificationBell />
-              <Link
-                href="/settings"
-                className="text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5"
-              >
+              <Link href="/settings" className="text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
                 Settings
               </Link>
               <UserButton />

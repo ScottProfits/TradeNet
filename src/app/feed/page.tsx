@@ -63,8 +63,9 @@ function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
 export default function FeedPage() {
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<"feed" | "explore">("feed");
+  const [tab, setTab] = useState<"feed" | "following" | "explore">("feed");
 
   const loadFeed = useCallback(async () => {
     try {
@@ -84,7 +85,20 @@ export default function FeedPage() {
     } catch { /* silently fail */ }
   }, []);
 
-  useEffect(() => { loadFeed(); }, [loadFeed]);
+  const loadFollowing = useCallback(async () => {
+    try {
+      const res = await fetch("/api/following-feed");
+      if (!res.ok) return;
+      const { trades, posts } = await res.json();
+      const merged: FeedItem[] = [
+        ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
+        ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setFollowingItems(merged);
+    } catch { /* silently fail */ }
+  }, []);
+
+  useEffect(() => { loadFeed(); loadFollowing(); }, [loadFeed, loadFollowing]);
 
   function handleDelete(id: string) {
     setDeletedIds((s) => new Set(s).add(id));
@@ -107,21 +121,30 @@ export default function FeedPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
-          <button
-            onClick={() => setTab("feed")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "feed" ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
-          >
-            Live Feed
-          </button>
-          <button
-            onClick={() => setTab("explore")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "explore" ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
-          >
-            Explore
-          </button>
+          {(["feed", "following", "explore"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === t ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
+            >
+              {t === "feed" ? "Live Feed" : t === "following" ? "Following" : "Explore"}
+            </button>
+          ))}
         </div>
 
         {tab === "explore" && <ExploreTab />}
+
+        {tab === "following" && (
+          followingItems.length === 0
+            ? <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
+            : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+                if (item.type === "trade") {
+                  const { trade, trader } = realTradeToCardProps(item);
+                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} onDelete={handleDelete} />;
+                }
+                return <PostCard key={item.id} post={item} />;
+              })
+        )}
 
         {tab === "feed" && feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
           if (item.type === "trade") {
