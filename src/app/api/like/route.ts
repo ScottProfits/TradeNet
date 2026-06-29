@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -20,19 +21,26 @@ export async function POST(req: NextRequest) {
   if (!error) {
     await supabase.rpc("increment_likes", { trade_id_input: tradeId });
 
-    const { data: trade } = await supabase
-      .from("trades")
-      .select("user_id")
-      .eq("id", tradeId)
-      .single();
+    const [{ data: trade }, { data: actor }] = await Promise.all([
+      supabase.from("trades").select("user_id, ticker, pnl").eq("id", tradeId).single(),
+      supabase.from("profiles").select("handle").eq("id", userId).single(),
+    ]);
 
     if (trade && trade.user_id !== userId) {
+      const pnlStr = trade.pnl >= 0 ? `+$${trade.pnl.toLocaleString()}` : `-$${Math.abs(trade.pnl).toLocaleString()}`;
       await supabase.from("notifications").insert({
         user_id: trade.user_id,
         type: "like",
         actor_id: userId,
         trade_id: tradeId,
       });
+      if (actor) {
+        void sendPushToUser(trade.user_id, {
+          title: "❤️ New like",
+          body: `@${actor.handle} liked your ${trade.ticker} trade (${pnlStr})`,
+          url: `/trade/${tradeId}`,
+        });
+      }
     }
   }
 

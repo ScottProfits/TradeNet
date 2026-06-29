@@ -112,7 +112,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
                       c={r}
                       userId={userId}
                       onDelete={handleDelete}
-                      onReply={startReply}
+                      onReply={(_, handle) => startReply(c.id, handle)}
                       isReply
                     />
                   </div>
@@ -186,14 +186,12 @@ function CommentRow({ c, userId, onDelete, onReply, isReply }: {
             </span>
           </div>
           <div className="flex items-center gap-1">
-            {!isReply && (
-              <button
-                onClick={() => onReply(c.id, c.profiles?.handle)}
-                className="text-xs text-gray-600 hover:text-[var(--green)] transition-colors px-1"
-              >
-                Reply
-              </button>
-            )}
+            <button
+              onClick={() => onReply(c.id, c.profiles?.handle)}
+              className="text-xs text-gray-600 hover:text-[var(--green)] transition-colors px-1"
+            >
+              Reply
+            </button>
             {c.user_id === userId && (
               <button onClick={() => onDelete(c.id)} className="text-gray-600 hover:text-[var(--red)] transition-colors p-0.5">
                 <Trash2 className="w-3 h-3" />

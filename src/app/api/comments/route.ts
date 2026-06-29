@@ -80,12 +80,16 @@ export async function POST(req: NextRequest) {
     const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
     if (trade && trade.user_id !== userId) {
       await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
-      const { data: actor } = await supabase.from("profiles").select("handle").eq("id", userId).single();
+      const [{ data: actor }, { data: full }] = await Promise.all([
+        supabase.from("profiles").select("handle").eq("id", userId).single(),
+        supabase.from("trades").select("ticker, pnl").eq("id", tradeId).single(),
+      ]);
       if (actor) {
-        await sendPushToUser(trade.user_id, {
-          title: "New comment",
-          body: `@${actor.handle} commented on your trade`,
-          url: `/feed`,
+        const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
+        void sendPushToUser(trade.user_id, {
+          title: `💬 @${actor.handle} commented`,
+          body: `"${snippet}" on your ${full?.ticker ?? ""} trade`,
+          url: `/trade/${tradeId}`,
         });
       }
     }
