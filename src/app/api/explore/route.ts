@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push";
 
 export async function GET() {
   const { userId } = await auth();
@@ -107,5 +108,31 @@ export async function GET() {
     .filter((t) => !followingSet.has(t.id))
     .slice(0, 5);
 
+  // Explore notifications — fire-and-forget, once per user per category per day
+  const todayStr = new Date().toISOString().slice(0, 10);
+  void notifyExplore(topToday.map((e) => e.profile?.id).filter(Boolean) as string[], "top_today", todayStr, "🏆 You're Top Today!", "You're one of today's top performing traders on Ryzr.");
+  void notifyExplore(mostImproved.map((e) => (e.profile as { id: string })?.id).filter(Boolean) as string[], "most_improved", todayStr, "📈 Most Improved!", "You're one of the most improved traders this week on Ryzr.");
+  void notifyExplore((topTraders ?? []).slice(0, 5).map((t) => t.id), "top_traders", todayStr, "⭐ You're a Top Trader!", "You're featured in the Top Traders list on Ryzr.");
+
   return Response.json({ topTraders: topTraders ?? [], trending, hotStrategies, topToday, mostImproved, suggested });
+}
+
+async function notifyExplore(userIds: string[], category: string, date: string, title: string, body: string) {
+  if (userIds.length === 0) return;
+  // Check who was already notified today
+  const { data: already } = await supabase
+    .from("explore_notifications")
+    .select("user_id")
+    .eq("category", category)
+    .eq("date", date)
+    .in("user_id", userIds);
+
+  const alreadySet = new Set((already ?? []).map((r: { user_id: string }) => r.user_id));
+  const toNotify = userIds.filter((id) => !alreadySet.has(id));
+  if (toNotify.length === 0) return;
+
+  // Insert notification records and send pushes
+  await supabase.from("explore_notifications").insert(toNotify.map((user_id) => ({ user_id, category, date })));
+  await supabase.from("notifications").insert(toNotify.map((user_id) => ({ user_id, type: "explore", actor_id: user_id })));
+  await Promise.all(toNotify.map((uid) => sendPushToUser(uid, { title, body, url: "/feed" })));
 }
