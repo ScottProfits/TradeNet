@@ -29,57 +29,39 @@ const LEADERBOARD = [
 ];
 
 const clerkAppearance = {
-  variables: {
-    colorBackground: "transparent",
-    colorInputBackground: "#0f0f0f",
-    colorInputText: "#ffffff",
-    colorText: "#ffffff",
-    colorTextSecondary: "#9ca3af",
-    colorPrimary: "#22c55e",
-    colorDanger: "#ef4444",
-    borderRadius: "0.75rem",
-    fontFamily: "inherit",
-  },
+  variables: { colorPrimary: "#22c55e", colorBackground: "#111317", colorDanger: "#ef4444" },
   elements: {
-    card: "shadow-none bg-transparent border-0 !p-0",
-    headerTitle: "text-white text-xl font-bold",
-    headerSubtitle: "text-gray-400 text-sm",
-    socialButtonsBlockButton: "bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors",
-    socialButtonsBlockButtonText: "text-white font-medium",
-    dividerLine: "bg-white/10",
-    dividerText: "text-gray-600 text-xs",
-    formFieldLabel: "text-gray-400 text-xs font-medium uppercase tracking-wide",
-    formFieldInput: "bg-[#0f0f0f] border border-white/10 text-white rounded-xl focus:border-green-500",
-    formButtonPrimary: "bg-green-500 hover:bg-green-400 text-black font-bold rounded-xl transition-colors",
-    footerActionLink: "text-green-400 hover:text-green-300 font-semibold",
-    footerActionText: "text-gray-500",
-    identityPreviewText: "text-white",
-    identityPreviewEditButton: "text-green-400",
-    formResendCodeLink: "text-green-400",
-    otpCodeFieldInput: "bg-[#0f0f0f] border border-white/10 text-white",
-    alertText: "text-red-400",
+    card: { background: "#111317", boxShadow: "none", width: "100%", maxWidth: "100%" },
+    headerTitle: { color: "#ffffff" },
+    headerSubtitle: { color: "#9ca3af" },
+    formFieldLabel: { color: "#d1d5db" },
+    formFieldInput: { background: "#1e2130", border: "1px solid #2a2d3a", color: "#f9fafb" },
+    formButtonPrimary: { background: "#22c55e", color: "#000000", fontWeight: "700", width: "100%" },
+    footerActionLink: { color: "#22c55e" },
+    footerActionText: { color: "#6b7280" },
+    socialButtonsBlockButton: { background: "#1e2130", border: "1px solid #2a2d3a", color: "#f9fafb" },
+    socialButtonsBlockButtonText: { color: "#f9fafb" },
+    dividerLine: { background: "#2a2d3a" },
+    dividerText: { color: "#6b7280" },
+    identityPreviewText: { color: "#f9fafb" },
+    identityPreviewEditButton: { color: "#22c55e" },
   },
-};
+} as const;
 
 export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-[#080808] flex flex-col lg:flex-row">
 
-      {/* LEFT — social proof panel */}
+      {/* LEFT — social proof panel, desktop only */}
       <div className="relative hidden lg:flex flex-col justify-between w-1/2 p-12 overflow-hidden border-r border-white/5">
-        {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent" />
-        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-green-500/20 to-transparent" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(34,197,94,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(34,197,94,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
         <div className="relative z-10 space-y-12">
-          {/* Logo */}
           <div className="flex items-center gap-2.5">
             <VerifiedCandle className="w-8 h-8" />
             <span className="text-2xl font-black text-white tracking-tight">Ryzr</span>
           </div>
-
-          {/* Hero copy */}
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -94,8 +76,6 @@ export default function SignUpPage() {
               The only trading platform where your results do the talking. Post trades, climb the leaderboard, build a track record that can&apos;t be faked.
             </p>
           </div>
-
-          {/* Live trade feed */}
           <div className="space-y-2">
             <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">Live trades</p>
             {TRADES.map((t, i) => (
@@ -105,16 +85,13 @@ export default function SignUpPage() {
                 </div>
                 <span className="text-sm text-gray-400 flex-1">@{t.handle}</span>
                 <span className="text-xs text-gray-600 font-mono">${t.ticker}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/10 text-green-400">
-                  {t.dir}
-                </span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.dir === "LONG" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>{t.dir}</span>
                 <span className="text-sm font-bold text-green-400">+${t.pnl.toLocaleString()}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom leaderboard */}
         <div className="relative z-10 space-y-3">
           <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold">Top traders this month</p>
           {LEADERBOARD.map((t) => (
@@ -130,39 +107,35 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      {/* RIGHT — form panel */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 px-4 sm:px-8 py-12 min-h-screen overflow-hidden">
+      {/* RIGHT — form */}
+      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 min-h-screen px-4 py-12">
         {/* Mobile logo */}
-        <div className="flex items-center gap-2 mb-8 lg:hidden">
+        <div className="flex items-center gap-2 mb-6 lg:hidden">
           <VerifiedCandle className="w-7 h-7" />
           <span className="text-2xl font-black text-white">Ryzr</span>
         </div>
 
         <div className="w-full max-w-sm space-y-5">
-          <div className="space-y-1">
+          <div>
             <h2 className="text-2xl font-bold text-white">Create your account</h2>
-            <p className="text-gray-500 text-sm">Join thousands of traders posting real results.</p>
+            <p className="text-gray-500 text-sm mt-1">Join thousands of traders posting real results.</p>
           </div>
 
-          {/* Social proof numbers */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-2">
             {[
               { label: "Traders", value: "2.4K+" },
               { label: "Trades posted", value: "18K+" },
               { label: "Avg win rate", value: "67%" },
             ].map((s) => (
-              <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-green-400">{s.value}</p>
-                <p className="text-[10px] text-gray-600 mt-0.5">{s.label}</p>
+              <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-xl p-3 text-center">
+                <p className="text-base font-bold text-green-400">{s.value}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 overflow-hidden w-full">
-            <div className="w-full overflow-hidden">
-              <SignUp appearance={clerkAppearance} />
-            </div>
-          </div>
+          <SignUp appearance={clerkAppearance} />
         </div>
       </div>
     </div>
