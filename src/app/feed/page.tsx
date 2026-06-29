@@ -67,6 +67,15 @@ export default function FeedPage() {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<"feed" | "following" | "explore">("feed");
 
+  // Redirect new users to onboarding if no trading style set
+  useEffect(() => {
+    fetch("/api/profile/me").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d && !d.trading_style) {
+        window.location.href = "/onboarding";
+      }
+    });
+  }, []);
+
   const loadFeed = useCallback(async () => {
     try {
       const [tradesRes, postsRes] = await Promise.all([

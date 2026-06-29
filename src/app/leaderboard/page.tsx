@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { clsx } from "clsx";
 import Link from "next/link";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface LeaderEntry {
@@ -16,6 +17,7 @@ interface LeaderEntry {
   pnl: number;
   tradeCount: number;
   winRate: number;
+  rankChange: number | null;
 }
 
 const tabs = [
@@ -24,6 +26,21 @@ const tabs = [
   { label: "This month", period: "month" },
   { label: "All time", period: "all" },
 ];
+
+function RankChange({ delta }: { delta: number | null }) {
+  if (delta === null) return <Minus className="w-3 h-3 text-gray-600" />;
+  if (delta > 0) return (
+    <span className="flex items-center gap-0.5 text-[var(--green)] text-xs font-semibold">
+      <TrendingUp className="w-3 h-3" />{delta}
+    </span>
+  );
+  if (delta < 0) return (
+    <span className="flex items-center gap-0.5 text-[var(--red)] text-xs font-semibold">
+      <TrendingDown className="w-3 h-3" />{Math.abs(delta)}
+    </span>
+  );
+  return <Minus className="w-3 h-3 text-gray-600" />;
+}
 
 export default function LeaderboardPage() {
   const [period, setPeriod] = useState("today");
@@ -73,6 +90,7 @@ export default function LeaderboardPage() {
             <thead>
               <tr className="border-b border-[var(--border)]">
                 <th className="text-left text-xs text-gray-500 px-4 py-3 w-10">#</th>
+                <th className="text-xs text-gray-500 px-2 py-3 w-8"></th>
                 <th className="text-left text-xs text-gray-500 px-4 py-3">Trader</th>
                 <th className="text-right text-xs text-gray-500 px-4 py-3">Trades</th>
                 <th className="text-right text-xs text-gray-500 px-4 py-3">Win %</th>
@@ -87,6 +105,9 @@ export default function LeaderboardPage() {
                 >
                   <td className="px-4 py-3 text-sm font-mono text-gray-400">
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  </td>
+                  <td className="px-2 py-3">
+                    <RankChange delta={entry.rankChange} />
                   </td>
                   <td className="px-4 py-3">
                     <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-3 group">

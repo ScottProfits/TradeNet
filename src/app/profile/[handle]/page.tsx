@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { X, MessageSquare } from "lucide-react";
+import { X, MessageSquare, Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
@@ -51,6 +51,31 @@ interface ProfileData {
   followingCount: number;
 }
 
+interface Notification {
+  id: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+  actor: { handle: string; avatar_url: string; verified: boolean } | null;
+}
+
+function NotificationIcon({ type }: { type: string }) {
+  if (type === "like") return <Heart className="w-3.5 h-3.5 text-pink-400" />;
+  if (type === "follow") return <UserPlus className="w-3.5 h-3.5 text-blue-400" />;
+  if (type === "comment") return <MessageCircle className="w-3.5 h-3.5 text-[var(--green)]" />;
+  if (type === "explore") return <Star className="w-3.5 h-3.5 text-yellow-400" />;
+  return <Bell className="w-3.5 h-3.5 text-gray-400" />;
+}
+
+function notifText(n: Notification): string {
+  const actor = n.actor?.handle ? `@${n.actor.handle}` : "Someone";
+  if (n.type === "like") return `${actor} liked your trade`;
+  if (n.type === "follow") return `${actor} followed you`;
+  if (n.type === "comment") return `${actor} commented on your trade`;
+  if (n.type === "explore") return "You were featured on Explore";
+  return "You have a new notification";
+}
+
 export default function ProfilePage() {
   const { handle } = useParams<{ handle: string }>();
   const { userId } = useAuth();
@@ -63,6 +88,9 @@ export default function ProfilePage() {
   const [modal, setModal] = useState<"followers" | "following" | null>(null);
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -77,6 +105,23 @@ export default function ProfilePage() {
         setFollowing(d.isFollowing ?? false);
       });
   }, [handle]);
+
+  useEffect(() => {
+    if (!data || !userId || userId !== data.profile.id) return;
+    fetch("/api/notifications")
+      .then((r) => r.ok ? r.json() : [])
+      .then((ns: Notification[]) => {
+        setNotifications(ns);
+        setUnreadCount(ns.filter((n) => !n.read).length);
+      });
+  }, [data, userId]);
+
+  async function markRead() {
+    if (unreadCount === 0) return;
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await fetch("/api/notifications", { method: "PATCH" });
+  }
 
   async function handleFollow() {
     if (!userId || followLoading) return;
@@ -166,29 +211,82 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {!isOwnProfile && (
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={clsx(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                  following
-                    ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
-                    : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+          <div className="flex gap-2 flex-shrink-0">
+            {isOwnProfile ? (
+              <div className="relative">
+                <button
+                  onClick={() => { setShowNotifs((s) => !s); if (!showNotifs) markRead(); }}
+                  className="relative p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                  title="Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifs && (
+                  <div className="absolute right-0 top-10 w-80 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                      <span className="text-sm font-semibold text-white">Notifications</span>
+                      <button onClick={() => setShowNotifs(false)} className="text-gray-500 hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="text-center text-gray-500 text-sm py-8">No notifications yet</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <div key={n.id} className={clsx("flex items-start gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0", !n.read && "bg-white/[0.03]")}>
+                            <div className="w-8 h-8 shrink-0">
+                              {n.actor?.avatar_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={n.actor.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center">
+                                  <NotificationIcon type={n.type} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-200">{notifText(n)}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+                            </div>
+                            {!n.read && <div className="w-2 h-2 rounded-full bg-[var(--green)] shrink-0 mt-1" />}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
-              >
-                {following ? "Following ✓" : "Follow"}
-              </button>
-              <button
-                onClick={() => router.push(`/messages/${handle}`)}
-                className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
-                title="Send message"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={clsx(
+                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                    following
+                      ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                      : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+                  )}
+                >
+                  {following ? "Following ✓" : "Follow"}
+                </button>
+                <button
+                  onClick={() => router.push(`/messages/${handle}`)}
+                  className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                  title="Send message"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
