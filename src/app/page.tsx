@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 
 function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
   return (
@@ -13,36 +13,12 @@ function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
 }
 
 const FEATURES = [
-  {
-    emoji: "📊",
-    title: "Post Your Trades",
-    desc: "Share ticker, direction, P&L, and charts. Your track record, public and permanent.",
-  },
-  {
-    emoji: "✅",
-    title: "Verified P&L",
-    desc: "Connect Alpaca to verify real trades. Verified traders earn a badge that can't be faked.",
-  },
-  {
-    emoji: "🏆",
-    title: "Leaderboard",
-    desc: "Ranked by actual returns. Not followers. Not hype. Real performance, updated live.",
-  },
-  {
-    emoji: "📈",
-    title: "Live Ticker",
-    desc: "Watch real trades from real traders scroll by in real time. Feel the pulse of the market.",
-  },
-  {
-    emoji: "🎯",
-    title: "Earned Badges",
-    desc: "Win Streak, Sharpshooter, Whale, Six Figures — badges you earn, not buy.",
-  },
-  {
-    emoji: "📓",
-    title: "Private Journal",
-    desc: "Attach notes to any trade. Build a private journal only you can see.",
-  },
+  { emoji: "📊", title: "Post Your Trades", desc: "Share ticker, direction, P&L, and charts. Your track record, public and permanent." },
+  { emoji: "✅", title: "Verified P&L", desc: "Connect Alpaca to verify real trades. Verified traders earn a badge that can't be faked." },
+  { emoji: "🏆", title: "Leaderboard", desc: "Ranked by actual returns. Not followers. Not hype. Real performance, updated live." },
+  { emoji: "📈", title: "Live Ticker", desc: "Watch real trades from real traders scroll by in real time. Feel the pulse of the market." },
+  { emoji: "🎯", title: "Earned Badges", desc: "Win Streak, Sharpshooter, Whale, Six Figures — badges you earn, not buy." },
+  { emoji: "📓", title: "Private Journal", desc: "Attach notes to any trade. Build a private journal only you can see." },
 ];
 
 const SOCIAL_PROOF = [
@@ -51,7 +27,10 @@ const SOCIAL_PROOF = [
   { handle: "scalperking", style: "Scalper", quote: "Verified P&L changed everything. No more fake gurus." },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+  const isLoggedIn = !!userId;
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Nav */}
@@ -62,19 +41,18 @@ export default function LandingPage() {
             <span className="font-bold text-lg tracking-tight">Ryzr</span>
           </div>
           <div className="flex items-center gap-3">
-            <SignedIn>
+            {isLoggedIn ? (
               <Link href="/feed" className="px-4 py-1.5 bg-green-500 text-black text-sm font-bold rounded-full hover:bg-green-400 transition-colors">
                 Go to Feed
               </Link>
-            </SignedIn>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="text-sm text-gray-400 hover:text-white transition-colors">Sign In</button>
-              </SignInButton>
-              <Link href="/sign-up" className="px-4 py-1.5 bg-green-500 text-black text-sm font-bold rounded-full hover:bg-green-400 transition-colors">
-                Join Free
-              </Link>
-            </SignedOut>
+            ) : (
+              <>
+                <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors">Sign In</Link>
+                <Link href="/sign-up" className="px-4 py-1.5 bg-green-500 text-black text-sm font-bold rounded-full hover:bg-green-400 transition-colors">
+                  Join Free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -94,32 +72,31 @@ export default function LandingPage() {
             Post your trades. Build your track record. Get ranked by real returns — not follower count.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <SignedOut>
-              <Link href="/sign-up" className="px-8 py-3.5 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors w-full sm:w-auto text-center">
-                Start Posting Trades →
-              </Link>
-              <SignInButton mode="modal">
-                <button className="px-8 py-3.5 border border-white/10 text-white font-medium text-base rounded-full hover:border-white/30 transition-colors w-full sm:w-auto">
-                  Sign In
-                </button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
+            {isLoggedIn ? (
               <Link href="/feed" className="px-8 py-3.5 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors">
                 Go to Your Feed →
               </Link>
-            </SignedIn>
+            ) : (
+              <>
+                <Link href="/sign-up" className="px-8 py-3.5 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors w-full sm:w-auto text-center">
+                  Start Posting Trades →
+                </Link>
+                <Link href="/sign-in" className="px-8 py-3.5 border border-white/10 text-white font-medium text-base rounded-full hover:border-white/30 transition-colors w-full sm:w-auto text-center">
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
           <p className="text-xs text-gray-600">Free to join. No credit card required.</p>
         </div>
       </section>
 
-      {/* Fake ticker for social proof */}
+      {/* Ticker strip */}
       <div className="border-y border-white/5 bg-white/[0.02] py-3 overflow-hidden">
         <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap">
           {["@markv +$2,400 TSLA LONG", "@tradewithjess +$880 AAPL LONG", "@scalperking +$1,200 SPY SHORT", "@daytrader99 +$3,100 NVDA LONG", "@wavetrader -$240 META SHORT", "@swingkid +$5,500 AMZN LONG", "@markv +$2,400 TSLA LONG", "@tradewithjess +$880 AAPL LONG", "@scalperking +$1,200 SPY SHORT", "@daytrader99 +$3,100 NVDA LONG"].map((item, i) => (
             <span key={i} className="text-xs text-gray-500 font-mono shrink-0">
-              {item.startsWith("@") && <span className="text-green-400">{item.split(" ")[0]}</span>}
+              <span className="text-green-400">{item.split(" ")[0]}</span>
               {" "}{item.split(" ").slice(1).join(" ")}
             </span>
           ))}
@@ -144,7 +121,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Divider */}
       <div className="max-w-5xl mx-auto border-t border-white/5" />
 
       {/* Social proof */}
@@ -176,16 +152,15 @@ export default function LandingPage() {
           <VerifiedCandle className="w-10 h-10 mx-auto" />
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Your track record starts today.</h2>
           <p className="text-gray-500">Post your first trade. Get on the leaderboard. Build something real.</p>
-          <SignedOut>
-            <Link href="/sign-up" className="inline-block mt-2 px-10 py-4 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors">
-              Join Ryzr Free →
-            </Link>
-          </SignedOut>
-          <SignedIn>
+          {isLoggedIn ? (
             <Link href="/feed" className="inline-block mt-2 px-10 py-4 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors">
               Go to Feed →
             </Link>
-          </SignedIn>
+          ) : (
+            <Link href="/sign-up" className="inline-block mt-2 px-10 py-4 bg-green-500 text-black font-bold text-base rounded-full hover:bg-green-400 transition-colors">
+              Join Ryzr Free →
+            </Link>
+          )}
         </div>
       </section>
 
