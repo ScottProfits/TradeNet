@@ -16,15 +16,17 @@ const FEATURES = [
   { emoji: "📊", title: "Post Your Trades", desc: "Share ticker, direction, P&L, and charts. Your track record, public and permanent." },
   { emoji: "✅", title: "Verified P&L", desc: "Connect Alpaca to verify real trades. Verified traders earn a badge that can't be faked." },
   { emoji: "🏆", title: "Leaderboard", desc: "Ranked by actual returns. Not followers. Not hype. Real performance, updated live." },
+  { emoji: "🤝", title: "Trader Network", desc: "Follow traders who match your style. DM them, copy their setups, debate the market — build real connections with people who actually trade." },
+  { emoji: "💬", title: "Market Talk", desc: "Comment on any trade, share your take on a ticker, post market opinions. A live conversation between people with real skin in the game." },
   { emoji: "📈", title: "Live Ticker", desc: "Watch real trades from real traders scroll by in real time. Feel the pulse of the market." },
   { emoji: "🎯", title: "Earned Badges", desc: "Win Streak, Sharpshooter, Whale, Six Figures — badges you earn, not buy." },
   { emoji: "📓", title: "Private Journal", desc: "Attach notes to any trade. Build a private journal only you can see." },
 ];
 
 const SOCIAL_PROOF = [
-  { handle: "markv", style: "Day Trader", quote: "Finally a place where results matter more than follower count." },
-  { handle: "tradewithjess", style: "Swing Trader", quote: "The leaderboard keeps me honest. I post every trade, good and bad." },
-  { handle: "scalperking", style: "Scalper", quote: "Verified P&L changed everything. No more fake gurus." },
+  { handle: "markv", style: "Day Trader", quote: "Finally a place where results matter more than follower count. I've connected with traders I actually learn from." },
+  { handle: "tradewithjess", style: "Swing Trader", quote: "The DMs and comment threads are where the real alpha is. People sharing setups, calling out bad entries — it's like a trading desk." },
+  { handle: "scalperking", style: "Scalper", quote: "Verified P&L changed everything. No more fake gurus flexing screenshots." },
 ];
 
 export default async function LandingPage() {
@@ -117,6 +119,65 @@ export default async function LandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-5xl mx-auto border-t border-white/5" />
+
+      {/* Networking section */}
+      <section className="py-20 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-500/15 rounded-3xl p-8 sm:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div className="space-y-5">
+                <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+                  🤝 Built for connection
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+                  More than a feed.<br />
+                  <span className="text-green-400">A trading community.</span>
+                </h2>
+                <p className="text-gray-400 leading-relaxed">
+                  Follow traders who match your style. Slide into DMs to talk setups. Comment on trades, debate entries, share your market thesis. Ryzr is where traders actually talk to each other — not just post into the void.
+                </p>
+                <ul className="space-y-3">
+                  {[
+                    "Follow traders by style — day, swing, scalp, options",
+                    "Direct messages with any trader on the platform",
+                    "Comment threads on every trade and post",
+                    "Copy trades from traders you trust",
+                    "Get notified when traders you follow post",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
+                      <span className="text-green-400 mt-0.5 shrink-0">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { handle: "markv", msg: "TSLA looking weak at resistance, targeting $180 puts", time: "2m ago" },
+                  { handle: "tradewithjess", msg: "Anyone else watching NVDA earnings play? Long into close", time: "8m ago" },
+                  { handle: "scalperking", msg: "SPY rejected off VWAP again — classic. Already short.", time: "14m ago" },
+                  { handle: "swingkid", msg: "Closed AMZN for +$7,200. Thesis played out perfectly.", time: "21m ago" },
+                ].map((m) => (
+                  <div key={m.handle} className="flex items-start gap-3 bg-white/[0.04] border border-white/5 rounded-2xl p-4">
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0 mt-0.5">
+                      {m.handle[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-white">@{m.handle}</span>
+                        <span className="text-[10px] text-gray-600 shrink-0">{m.time}</span>
+                      </div>
+                      <p className="text-sm text-gray-400 leading-relaxed">{m.msg}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
