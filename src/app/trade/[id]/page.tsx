@@ -35,6 +35,17 @@ interface TradeDetail {
   };
 }
 
+function VerifiedCandle({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <rect x="14" y="2" width="4" height="6" rx="1" fill="#22c55e" />
+      <rect x="10" y="8" width="12" height="16" rx="2" fill="#22c55e" />
+      <rect x="14" y="24" width="4" height="6" rx="1" fill="#22c55e" />
+      <path d="M6 12h4M22 12h4" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function TradePage() {
   const { id } = useParams<{ id: string }>();
   const { userId, isSignedIn } = useAuth();
@@ -45,7 +56,6 @@ export default function TradePage() {
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [showChart, setShowChart] = useState(true);
-  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     fetch(`/api/trades/${id}`)
@@ -77,19 +87,15 @@ export default function TradePage() {
 
   async function handleShare() {
     const url = window.location.href;
-    if (navigator.share) {
-      try { await navigator.share({ title: `Trade on Ryzr`, url }); } catch { /* dismissed */ }
-    } else {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 2000);
-    }
+    const pnlStr = trade ? `${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()}` : "";
+    const tweetText = trade ? `${pnlStr} $${trade.ticker} ${trade.direction} trade on Ryzr 📈` : "Check out this trade on Ryzr";
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer,width=550,height=420");
   }
 
   if (notFound) return (
     <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
       <p className="text-gray-400">Trade not found.</p>
-      <Link href="/feed" className="text-[var(--green)] hover:underline text-sm">Back to feed</Link>
+      <Link href="/" className="text-[var(--green)] hover:underline text-sm">Go to Ryzr</Link>
     </div>
   );
 
@@ -102,16 +108,23 @@ export default function TradePage() {
   const isOwner = userId === trade.user_id;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 pb-24">
       {/* Back */}
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm pt-2">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+      {isSignedIn ? (
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm pt-2">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+      ) : (
+        <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm pt-2">
+          <VerifiedCandle className="w-5 h-5" />
+          <span className="font-bold text-white">Ryzr</span>
+        </Link>
+      )}
 
       {/* Trader header */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <Link href={`/profile/${profile.handle}`}>
+          <Link href={isSignedIn ? `/profile/${profile.handle}` : "/sign-up"}>
             {profile.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatar_url} alt={profile.handle} className="w-11 h-11 rounded-full object-cover" />
@@ -123,7 +136,7 @@ export default function TradePage() {
           </Link>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
-              <Link href={`/profile/${profile.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
+              <Link href={isSignedIn ? `/profile/${profile.handle}` : "/sign-up"} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
                 @{profile.handle}
               </Link>
               {profile.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
@@ -137,7 +150,7 @@ export default function TradePage() {
 
         {trade.caption && <p className="text-sm text-gray-300 leading-relaxed">{trade.caption}</p>}
 
-        {/* Trade stats box */}
+        {/* Trade stats */}
         <div className="bg-[var(--bg)] rounded-xl p-4 grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-gray-500 mb-1">Ticker</p>
@@ -199,11 +212,8 @@ export default function TradePage() {
           >
             <Heart className={clsx("w-4 h-4", liked && "fill-current")} /> {likeCount}
           </button>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            <Share2 className="w-4 h-4" /> {shared ? "Copied!" : "Share"}
+          <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
+            <Share2 className="w-4 h-4" /> Share
           </button>
           <button
             onClick={() => setShowChart((s) => !s)}
@@ -221,16 +231,43 @@ export default function TradePage() {
         </div>
       )}
 
-      {/* Comments */}
+      {/* Comments — blurred for logged-out */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-white mb-4">Comments</h2>
-        <CommentSection
-          tradeId={trade.id}
-          onCommentAdded={() => setCommentCount((c) => c + 1)}
-          onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
-          onCountLoaded={(n) => setCommentCount(n)}
-        />
+        <h2 className="text-sm font-semibold text-white mb-4">Comments ({commentCount})</h2>
+        {isSignedIn ? (
+          <CommentSection
+            tradeId={trade.id}
+            onCommentAdded={() => setCommentCount((c) => c + 1)}
+            onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
+            onCountLoaded={(n) => setCommentCount(n)}
+          />
+        ) : (
+          <div className="text-center py-6 space-y-2">
+            <p className="text-gray-500 text-sm">Sign up to read and post comments.</p>
+            <Link href="/sign-up" className="inline-block px-4 py-2 bg-[var(--green)] text-black text-sm font-bold rounded-full hover:bg-[var(--green)]/90 transition-colors">
+              Join Ryzr Free
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* Sticky CTA for logged-out visitors */}
+      {!isSignedIn && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/10 px-4 py-4">
+          <div className="max-w-2xl mx-auto flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white">Track trades like this one.</p>
+              <p className="text-xs text-gray-500 truncate">Post your P&L. Build your track record. Get ranked.</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
+              <Link href="/sign-up" className="px-4 py-2 bg-[var(--green)] text-black text-sm font-bold rounded-full hover:bg-[var(--green)]/90 transition-colors whitespace-nowrap">
+                Join Free →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
