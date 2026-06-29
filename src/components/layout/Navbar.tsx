@@ -19,7 +19,6 @@ interface SearchResult {
 const links = [
   { href: "/feed", label: "Feed" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/explore", label: "Explore" },
 ];
 
 export default function Navbar() {
