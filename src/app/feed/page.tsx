@@ -109,13 +109,13 @@ export default function FeedPage() {
         <div className="flex gap-1 bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
           <button
             onClick={() => setTab("feed")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "feed" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white"}`}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "feed" ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
           >
             Live Feed
           </button>
           <button
             onClick={() => setTab("explore")}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "explore" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white"}`}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "explore" ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
           >
             Explore
           </button>
