@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, Users, Flame } from "lucide-react";
+import { TrendingUp, Users, Flame, Zap } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface Trader {
@@ -18,15 +18,23 @@ interface TrendingTicker {
   count: number;
 }
 
+interface HotStrategy {
+  name: string;
+  count: number;
+  winRate: number;
+  avgPnl: number;
+}
+
 export default function ExploreTab() {
   const [topTraders, setTopTraders] = useState<Trader[]>([]);
   const [trending, setTrending] = useState<TrendingTicker[]>([]);
+  const [hotStrategies, setHotStrategies] = useState<HotStrategy[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/explore")
-      .then((r) => r.ok ? r.json() : { topTraders: [], trending: [] })
-      .then((d) => { setTopTraders(d.topTraders); setTrending(d.trending); setLoading(false); });
+      .then((r) => r.ok ? r.json() : { topTraders: [], trending: [], hotStrategies: [] })
+      .then((d) => { setTopTraders(d.topTraders); setTrending(d.trending); setHotStrategies(d.hotStrategies ?? []); setLoading(false); });
   }, []);
 
   return (
@@ -60,6 +68,39 @@ export default function ExploreTab() {
           </div>
         )}
       </section>
+
+      {/* Hot Strategies */}
+      {(loading || hotStrategies.length > 0) && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="w-5 h-5 text-yellow-400" />
+            <h2 className="font-semibold text-white">Hot Strategies This Week</h2>
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 bg-[var(--card)] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {hotStrategies.map((s) => (
+                <div key={s.name} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 space-y-1 hover:border-yellow-400/30 transition-colors">
+                  <p className="font-semibold text-white text-sm truncate">{s.name}</p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>{s.count} {s.count === 1 ? "trade" : "trades"}</span>
+                    <span>·</span>
+                    <span className="text-[var(--green)]">{s.winRate}% win</span>
+                  </div>
+                  <p className={`text-xs font-semibold ${s.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+                    {s.avgPnl >= 0 ? "+" : ""}${Math.abs(s.avgPnl).toLocaleString()} avg
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Top Traders */}
       <section>

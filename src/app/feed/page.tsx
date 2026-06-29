@@ -121,7 +121,7 @@ export default function FeedPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
-          {(["feed", "following", "explore"] as const).map((t) => (
+          {(["feed", "explore", "following"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
