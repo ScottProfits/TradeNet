@@ -158,8 +158,10 @@ export default function SignUpPage() {
             ))}
           </div>
 
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6">
-            <SignUp appearance={clerkAppearance} />
+          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 overflow-hidden w-full">
+            <div className="w-full overflow-hidden">
+              <SignUp appearance={clerkAppearance} />
+            </div>
           </div>
         </div>
       </div>
