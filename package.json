@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.9",
+    "@clerk/ui": "^1.23.1",
     "@supabase/supabase-js": "^2.108.2",
     "canvas": "^3.2.3",
     "clsx": "^2.1.1",

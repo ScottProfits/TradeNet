@@ -66,7 +66,9 @@
       "Bash(curl -s https://nxcjjpfiubjrnlribnma.supabase.co/rest/v1/trades?limit=1 -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Y2pqcGZpdWJqcm5scmlibm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MDY0MTUsImV4cCI6MjA5ODE4MjQxNX0.cLGLTcq9kG-le1TKJblZklfkaQR8J4ZQPDdwDekCOyw')",
       "Bash(python3 -m json.tool)",
       "Bash(grep -n \"cropSrc && \\\\|AvatarCropModal\\\\|<\\\\/div>\\\\s*$\" /Users/a.scott/TradeNet/src/app/settings/page.tsx)",
-      "Bash(grep -n \"positive ? \\\\\"+\\\\\" : \\\\\"\\\\\"\\\\|\\\\$\\\\{trade.pnl\\\\}\\\\|today\\\\|Copy trade\\\\|showChart\" /Users/a.scott/TradeNet/src/components/feed/TradeCard.tsx)"
+      "Bash(grep -n \"positive ? \\\\\"+\\\\\" : \\\\\"\\\\\"\\\\|\\\\$\\\\{trade.pnl\\\\}\\\\|today\\\\|Copy trade\\\\|showChart\" /Users/a.scott/TradeNet/src/components/feed/TradeCard.tsx)",
+      "Skill(clerk-custom-ui)",
+      "Skill(clerk-custom-ui:*)"
     ]
   }
 }

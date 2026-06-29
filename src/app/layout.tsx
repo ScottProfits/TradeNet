@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/ui/themes";
 import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{ variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" }, elements: { formButtonPrimary: "bg-green-500 hover:bg-green-400 text-black font-bold", footerActionLink: "text-green-400 font-semibold" } }}>
+    <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
       <html lang="en">
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
