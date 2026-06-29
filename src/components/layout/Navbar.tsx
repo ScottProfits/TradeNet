@@ -16,6 +16,13 @@ interface SearchResult {
   verified: boolean;
 }
 
+interface TickerResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  type: string;
+}
+
 const links = [
   { href: "/feed", label: "Feed" },
   { href: "/leaderboard", label: "Leaderboard" },
@@ -27,6 +34,7 @@ export default function Navbar() {
   const { isSignedIn } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [tickerResults, setTickerResults] = useState<TickerResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -42,10 +50,14 @@ export default function Navbar() {
   }, [isSignedIn]);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
+    if (!query.trim()) { setResults([]); setTickerResults([]); return; }
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      if (res.ok) setResults(await res.json());
+      const [usersRes, tickersRes] = await Promise.all([
+        fetch(`/api/search?q=${encodeURIComponent(query)}`),
+        fetch(`/api/ticker-search?q=${encodeURIComponent(query)}`),
+      ]);
+      if (usersRes.ok) setResults(await usersRes.json());
+      if (tickersRes.ok) setTickerResults(await tickersRes.json());
     }, 200);
     return () => clearTimeout(timer);
   }, [query]);
@@ -61,8 +73,13 @@ export default function Navbar() {
   }, []);
 
   function goToProfile(handle: string) {
-    setQuery(""); setResults([]); setShowResults(false);
+    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false);
     router.push(`/profile/${handle}`);
+  }
+
+  function goToTicker(symbol: string) {
+    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false);
+    router.push(`/ticker/${encodeURIComponent(symbol)}`);
   }
 
   return (
@@ -104,8 +121,34 @@ export default function Navbar() {
               />
             </div>
 
-            {showResults && results.length > 0 && (
-              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200]">
+            {showResults && (results.length > 0 || tickerResults.length > 0) && (
+              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200] max-h-80 overflow-y-auto">
+                {/* Tickers */}
+                {tickerResults.slice(0, 4).map((r) => (
+                  <button
+                    key={r.symbol}
+                    onClick={() => goToTicker(r.symbol)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)]/50"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[var(--green)]/10 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-4 h-4 text-[var(--green)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{r.symbol}</span>
+                        <span className="text-[10px] text-gray-600 uppercase">{r.exchange}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{r.name}</p>
+                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                      r.type === "futures" ? "bg-orange-500/20 text-orange-400" :
+                      r.type === "crypto" ? "bg-yellow-500/20 text-yellow-400" :
+                      r.type === "forex" ? "bg-blue-500/20 text-blue-400" :
+                      "bg-[var(--green)]/20 text-[var(--green)]"
+                    }`}>{r.type}</span>
+                  </button>
+                ))}
+                {/* Users */}
                 {results.map((r) => (
                   <button
                     key={r.id}
@@ -134,9 +177,9 @@ export default function Navbar() {
               </div>
             )}
 
-            {showResults && query.trim() && results.length === 0 && (
+            {showResults && query.trim() && results.length === 0 && tickerResults.length === 0 && (
               <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-[200]">
-                <p className="text-sm text-gray-500">No traders found</p>
+                <p className="text-sm text-gray-500">No results found</p>
               </div>
             )}
           </div>
