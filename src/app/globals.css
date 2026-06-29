@@ -36,11 +36,51 @@ body {
 .cl-rootBox,
 .cl-signUp-root,
 .cl-signIn-root { width: 100% !important; max-width: 100% !important; }
-.cl-card { min-width: 0 !important; width: 100% !important; max-width: 100% !important; }
+.cl-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  background-color: #111317 !important;
+  box-shadow: none !important;
+}
 .cl-formButtonPrimary,
-.cl-formFieldInput,
 .cl-form,
 .cl-main { width: 100% !important; box-sizing: border-box !important; }
+
+/* Clerk — force form fields to be visible on dark background */
+[class^="cl-formFieldInput"],
+[class*=" cl-formFieldInput"],
+.cl-formFieldInput {
+  background-color: #1e2130 !important;
+  border: 1px solid #2a2d3a !important;
+  color: #f9fafb !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+[class^="cl-formFieldLabel"],
+[class*=" cl-formFieldLabel"],
+.cl-formFieldLabel { color: #d1d5db !important; }
+[class^="cl-headerTitle"],
+[class*=" cl-headerTitle"],
+.cl-headerTitle { color: #ffffff !important; }
+[class^="cl-headerSubtitle"],
+[class*=" cl-headerSubtitle"],
+.cl-headerSubtitle { color: #9ca3af !important; }
+[class^="cl-socialButtonsBlockButton"],
+[class*=" cl-socialButtonsBlockButton"],
+.cl-socialButtonsBlockButton {
+  background-color: #1e2130 !important;
+  border: 1px solid #2a2d3a !important;
+  color: #f9fafb !important;
+}
+[class^="cl-dividerLine"],
+[class*=" cl-dividerLine"],
+.cl-dividerLine { background-color: #2a2d3a !important; }
+[class^="cl-dividerText"],
+[class*=" cl-dividerText"],
+.cl-dividerText { color: #6b7280 !important; }
+[class^="cl-internal"],
+[class*=" cl-internal"] { color: #f9fafb !important; }
 
 /* Clerk — dark user dropdown (target by attribute to catch hashed names) */
 [class^="cl-userButtonPopoverCard"],
