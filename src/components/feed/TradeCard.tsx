@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy, Trash2, BarChart2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Copy, Trash2, BarChart2, ShieldCheck, BookOpen, Check } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -17,10 +17,12 @@ interface TradeCardProps {
   avatarUrl?: string;
   strategy?: string;
   likedByMe?: boolean;
+  verifiedPnl?: boolean;
+  journalNote?: string;
   onDelete?: (id: string) => void;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, likedByMe, onDelete }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, likedByMe, verifiedPnl, journalNote: initialJournal, onDelete }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(trade.likes);
@@ -30,6 +32,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [showComments, setShowComments] = useState(false);
   const [showChart, setShowChart] = useState(false);
   const [shared, setShared] = useState(false);
+  const [showJournal, setShowJournal] = useState(false);
+  const [journalNote, setJournalNote] = useState(initialJournal ?? "");
+  const [savingJournal, setSavingJournal] = useState(false);
+  const [journalSaved, setJournalSaved] = useState(false);
+  const [isVerified, setIsVerified] = useState(verifiedPnl ?? false);
+  const [verifying, setVerifying] = useState(false);
   const positive = trade.pnl >= 0;
   const isOwner = userId === trade.traderId;
 
@@ -62,6 +70,30 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       setShared(true);
       setTimeout(() => setShared(false), 2000);
     }
+  }
+
+  async function saveJournal() {
+    setSavingJournal(true);
+    await fetch("/api/journal", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tradeId: trade.id, note: journalNote }),
+    });
+    setSavingJournal(false);
+    setJournalSaved(true);
+    setTimeout(() => setJournalSaved(false), 2000);
+  }
+
+  async function handleVerify() {
+    setVerifying(true);
+    const res = await fetch("/api/verify-trade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tradeId: trade.id }),
+    });
+    if (res.ok) setIsVerified(true);
+    else alert(await res.text());
+    setVerifying(false);
   }
 
   async function handleDelete() {
@@ -115,9 +147,14 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
             >
               {positive ? "+" : ""}${trade.pnl.toLocaleString()} today
             </span>
+            {isVerified && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--green)] bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
+                <ShieldCheck className="w-3 h-3" /> Verified P&L
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            {trade.time} {trader.brokerage && `· ${trader.brokerage} verified`}
+            {trade.time} {trader.brokerage && `· ${trader.brokerage}`}
           </p>
         </div>
 
@@ -201,11 +238,45 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <BarChart2 className="w-4 h-4" />
           Chart
         </button>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors ml-auto">
-          <Copy className="w-4 h-4" />
-          Copy trade
-        </button>
+        <div className="ml-auto flex items-center gap-3">
+          {isOwner && (
+            <button onClick={() => setShowJournal((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showJournal ? "text-white" : "text-gray-500 hover:text-yellow-400")}>
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Journal</span>
+            </button>
+          )}
+          {isOwner && !isVerified && (
+            <button onClick={handleVerify} disabled={verifying} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors disabled:opacity-50">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify"}</span>
+            </button>
+          )}
+          <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
+            <Copy className="w-4 h-4" />
+            <span className="hidden sm:inline">Copy</span>
+          </button>
+        </div>
       </div>
+
+      {showJournal && isOwner && (
+        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-semibold text-yellow-400 flex items-center gap-1"><BookOpen className="w-3 h-3" /> Private Journal — only you can see this</p>
+          <textarea
+            value={journalNote}
+            onChange={(e) => setJournalNote(e.target.value)}
+            placeholder="What went right? What went wrong? How were you feeling?"
+            rows={3}
+            className="w-full bg-transparent text-sm text-gray-300 placeholder-gray-600 focus:outline-none resize-none"
+          />
+          <button
+            onClick={saveJournal}
+            disabled={savingJournal}
+            className="flex items-center gap-1.5 text-xs font-semibold text-yellow-400 hover:text-yellow-300 transition-colors disabled:opacity-50"
+          >
+            {journalSaved ? <><Check className="w-3 h-3" /> Saved!</> : savingJournal ? "Saving..." : "Save note"}
+          </button>
+        </div>
+      )}
 
       {showChart && (
         <TradingViewChart ticker={trade.ticker} />

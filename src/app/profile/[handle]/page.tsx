@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
+import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
@@ -225,6 +226,7 @@ export default function ProfilePage() {
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
+        <BadgeDisplay handle={profile.handle} />
 
         {/* Stats row */}
         <div className="grid grid-cols-5 gap-2 mt-5 pt-5 border-t border-[var(--border)]">

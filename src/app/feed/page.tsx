@@ -6,6 +6,7 @@ import SidebarProfile from "@/components/feed/SidebarProfile";
 import SidebarRight from "@/components/feed/SidebarRight";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 import ExploreTab from "@/components/feed/ExploreTab";
+import LiveTicker from "@/components/feed/LiveTicker";
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
@@ -25,6 +26,8 @@ interface RealTrade {
   image_url: string | null;
   strategy: string | null;
   liked_by_me: boolean;
+  verified_pnl: boolean;
+  journal_note: string | null;
   created_at: string;
   profiles: { id: string; handle: string; avatar_url: string; brokerage: string; verified: boolean };
 }
@@ -120,6 +123,7 @@ export default function FeedPage() {
       </aside>
 
       <section className="space-y-3">
+        <LiveTicker />
         {/* Post button — hidden on mobile since nav bar has + button */}
         <button
           onClick={() => setShowModal(true)}
@@ -150,7 +154,7 @@ export default function FeedPage() {
             : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
                 if (item.type === "trade") {
                   const { trade, trader } = realTradeToCardProps(item);
-                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} onDelete={handleDelete} />;
+                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} onDelete={handleDelete} />;
                 }
                 return <PostCard key={item.id} post={item} />;
               })
@@ -168,6 +172,8 @@ export default function FeedPage() {
                 avatarUrl={item.profiles?.avatar_url ?? undefined}
                 strategy={item.strategy ?? undefined}
                 likedByMe={item.liked_by_me}
+                verifiedPnl={item.verified_pnl}
+                journalNote={item.journal_note ?? undefined}
                 onDelete={handleDelete}
               />
             );

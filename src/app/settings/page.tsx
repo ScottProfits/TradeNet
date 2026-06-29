@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Camera } from "lucide-react";
+import { CheckCircle, Camera, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -19,6 +19,11 @@ export default function SettingsPage() {
   const [tradingStyle, setTradingStyle] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [alpacaKey, setAlpacaKey] = useState("");
+  const [alpacaSecret, setAlpacaSecret] = useState("");
+  const [showAlpacaSecret, setShowAlpacaSecret] = useState(false);
+  const [savingAlpaca, setSavingAlpaca] = useState(false);
+  const [alpacaSaved, setAlpacaSaved] = useState(false);
   const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
   const [verifyReason, setVerifyReason] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
@@ -40,6 +45,8 @@ export default function SettingsPage() {
           setBrokerage(d.brokerage ?? "");
           setTradingStyle(d.trading_style ?? "");
           setAvatarPreview(d.avatar_url ?? "");
+          setAlpacaKey(d.alpaca_key ?? "");
+          setAlpacaSecret(d.alpaca_secret ? "••••••••" : "");
         }
         setLoading(false);
       });
@@ -320,6 +327,61 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Alpaca Brokerage Verification */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-[var(--green)]" />
+          <h2 className="font-bold text-white">Brokerage Verification</h2>
+        </div>
+        <p className="text-sm text-gray-400">
+          Connect your Alpaca account to verify your trades. Verified trades show a ✅ badge so followers know your P&L is real.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Alpaca API Key</label>
+            <input
+              value={alpacaKey}
+              onChange={(e) => setAlpacaKey(e.target.value)}
+              placeholder="PK..."
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] font-mono"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Alpaca Secret Key</label>
+            <div className="relative">
+              <input
+                value={alpacaSecret}
+                onChange={(e) => setAlpacaSecret(e.target.value)}
+                type={showAlpacaSecret ? "text" : "password"}
+                placeholder="••••••••"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] font-mono pr-10"
+              />
+              <button type="button" onClick={() => setShowAlpacaSecret((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                {showAlpacaSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600">Keys are stored securely and only used to verify your trades. Use paper or live Alpaca keys.</p>
+          <button
+            onClick={async () => {
+              if (!userId || !alpacaKey.trim()) return;
+              setSavingAlpaca(true);
+              await supabase.from("profiles").update({
+                alpaca_key: alpacaKey.trim(),
+                alpaca_secret: alpacaSecret.startsWith("•") ? undefined : alpacaSecret.trim(),
+              }).eq("id", userId);
+              setSavingAlpaca(false);
+              setAlpacaSaved(true);
+              setTimeout(() => setAlpacaSaved(false), 3000);
+            }}
+            disabled={savingAlpaca || !alpacaKey.trim()}
+            className="w-full py-2.5 bg-[var(--green)] text-black font-bold rounded-lg hover:bg-[var(--green)]/90 transition-colors disabled:opacity-50 text-sm"
+          >
+            {savingAlpaca ? "Saving..." : alpacaSaved ? "✓ Keys saved!" : "Save Alpaca Keys"}
+          </button>
+        </div>
       </div>
 
       {cropSrc && (
