@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider publishableKey="pk_live_Y2xlcmsucnl6ci5hcHAk" appearance={{ variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" }, elements: { formButtonPrimary: "bg-green-500 hover:bg-green-400 text-black font-bold", footerActionLink: "text-green-400 font-semibold" } }}>
+    <ClerkProvider appearance={{ variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" }, elements: { formButtonPrimary: "bg-green-500 hover:bg-green-400 text-black font-bold", footerActionLink: "text-green-400 font-semibold" } }}>
       <html lang="en">
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
