@@ -20,6 +20,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
   const [shares, setShares] = useState("100");
+  const [qtyType, setQtyType] = useState<"shares" | "contracts">("shares");
   const [caption, setCaption] = useState("");
   const [strategy, setStrategy] = useState("");
   const [media, setMedia] = useState<File | null>(null);
@@ -32,15 +33,17 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const entryNum = parseFloat(entry);
   const exitNum = parseFloat(exit);
   const sharesNum = parseFloat(shares) || 100;
+  // Contracts = 100 shares each (standard options multiplier)
+  const effectiveShares = qtyType === "contracts" ? sharesNum * 100 : sharesNum;
 
   let preview: number | null = null;
   let previewPct: number | null = null;
   if (!isNaN(entryNum) && !isNaN(exitNum) && entryNum > 0) {
     if (direction === "LONG") {
-      preview = (exitNum - entryNum) * sharesNum;
+      preview = (exitNum - entryNum) * effectiveShares;
       previewPct = ((exitNum - entryNum) / entryNum) * 100;
     } else {
-      preview = (entryNum - exitNum) * sharesNum;
+      preview = (entryNum - exitNum) * effectiveShares;
       previewPct = ((entryNum - exitNum) / entryNum) * 100;
     }
   }
@@ -113,7 +116,7 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
       const res = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy, image_url }),
+        body: JSON.stringify({ ticker, direction, entry, exit, shares: String(effectiveShares), caption, strategy, image_url }),
       });
 
       if (!res.ok) {
@@ -253,15 +256,28 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Shares</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-gray-500">{qtyType === "shares" ? "Shares" : "Contracts"}</label>
+                <div className="flex bg-[var(--bg)] border border-[var(--border)] rounded-md overflow-hidden text-[10px]">
+                  <button type="button" onClick={() => setQtyType("shares")}
+                    className={clsx("px-1.5 py-0.5 transition-colors", qtyType === "shares" ? "bg-[var(--green)] text-black font-semibold" : "text-gray-500")}>
+                    Shrs
+                  </button>
+                  <button type="button" onClick={() => setQtyType("contracts")}
+                    className={clsx("px-1.5 py-0.5 transition-colors", qtyType === "contracts" ? "bg-[var(--green)] text-black font-semibold" : "text-gray-500")}>
+                    Cts
+                  </button>
+                </div>
+              </div>
               <input
                 value={shares}
                 onChange={(e) => setShares(e.target.value)}
-                placeholder="100"
+                placeholder={qtyType === "shares" ? "100" : "1"}
                 type="number"
                 min="1"
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
               />
+              {qtyType === "contracts" && <p className="text-[10px] text-gray-600 mt-0.5">×100 shares each</p>}
             </div>
           </div>
 

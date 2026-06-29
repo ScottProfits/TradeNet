@@ -78,7 +78,7 @@ export default function MobileNav() {
               </span>
             )}
           </div>
-          DMs
+          PMs
         </Link>
 
         {/* Profile */}
