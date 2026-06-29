@@ -46,7 +46,7 @@ export default function SettingsPage() {
           setTradingStyle(d.trading_style ?? "");
           setAvatarPreview(d.avatar_url ?? "");
           setAlpacaKey(d.alpaca_key ?? "");
-          setAlpacaSecret(d.alpaca_secret ? "••••••••" : "");
+          setAlpacaSecret(d.alpaca_secret ?? "");
         }
         setLoading(false);
       });
@@ -370,7 +370,7 @@ export default function SettingsPage() {
               setSavingAlpaca(true);
               await supabase.from("profiles").update({
                 alpaca_key: alpacaKey.trim(),
-                alpaca_secret: alpacaSecret.startsWith("•") ? undefined : alpacaSecret.trim(),
+                alpaca_secret: alpacaSecret.trim() || undefined,
               }).eq("id", userId);
               setSavingAlpaca(false);
               setAlpacaSaved(true);

@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
+import JournalSection from "@/components/profile/JournalSection";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
@@ -359,6 +360,9 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+
+      {/* Private journal — own profile only */}
+      {isOwnProfile && <JournalSection />}
 
       {/* Followers / Following modal */}
       {modal && (
