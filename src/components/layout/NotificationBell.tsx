@@ -31,7 +31,12 @@ export default function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/notifications").then((r) => r.ok ? r.json() : []).then(setNotifs);
+    function load() {
+      fetch("/api/notifications").then((r) => r.ok ? r.json() : []).then(setNotifs);
+    }
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

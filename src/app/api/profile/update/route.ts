@@ -29,8 +29,7 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabase
     .from("profiles")
-    .update({ handle: clean, full_name, bio, brokerage, trading_style })
-    .eq("id", userId);
+    .upsert({ id: userId, handle: clean, full_name, bio, brokerage, trading_style }, { onConflict: "id" });
 
   if (error) return new Response(error.message, { status: 500 });
   return new Response("OK", { status: 200 });
