@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
-import { X, TrendingUp, TrendingDown, ImagePlus, Video } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, TrendingUp, TrendingDown, ImagePlus, Video, Search } from "lucide-react";
 import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
@@ -16,6 +16,10 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [tab, setTab] = useState<"trade" | "post">("trade");
   const [postContent, setPostContent] = useState("");
   const [ticker, setTicker] = useState("");
+  const [tickerName, setTickerName] = useState("");
+  const [tickerResults, setTickerResults] = useState<{ symbol: string; name: string; type: string }[]>([]);
+  const [showTickerDropdown, setShowTickerDropdown] = useState(false);
+  const tickerRef = useRef<HTMLDivElement>(null);
   const [direction, setDirection] = useState<"LONG" | "SHORT">("LONG");
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
@@ -29,6 +33,23 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!ticker || ticker.length < 1) { setTickerResults([]); return; }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/ticker-search?q=${encodeURIComponent(ticker)}`);
+      if (res.ok) setTickerResults(await res.json());
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [ticker]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (tickerRef.current && !tickerRef.current.contains(e.target as Node)) setShowTickerDropdown(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const entryNum = parseFloat(entry);
   const exitNum = parseFloat(exit);
@@ -185,16 +206,39 @@ export default function PostTradeModal({ onClose, onPosted }: Props) {
         {tab === "trade" && <form onSubmit={handleSubmit} className="space-y-4">
           {/* Ticker + Direction */}
           <div className="flex gap-3">
-            <div className="flex-1">
+            <div className="flex-1 relative" ref={tickerRef}>
               <label className="text-xs text-gray-500 mb-1 block">Ticker</label>
-              <input
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="AAPL"
-                maxLength={10}
-                required
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
-              />
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+                <input
+                  value={ticker}
+                  onChange={(e) => { setTicker(e.target.value.toUpperCase()); setTickerName(""); setShowTickerDropdown(true); }}
+                  onFocus={() => setShowTickerDropdown(true)}
+                  placeholder="Search ticker..."
+                  maxLength={12}
+                  required
+                  className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg pl-7 pr-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+                />
+              </div>
+              {tickerName && (
+                <p className="text-[10px] text-gray-500 mt-0.5 truncate">{tickerName}</p>
+              )}
+              {showTickerDropdown && tickerResults.length > 0 && (
+                <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-50 max-h-48 overflow-y-auto">
+                  {tickerResults.map((r) => (
+                    <button
+                      key={r.symbol}
+                      type="button"
+                      onClick={() => { setTicker(r.symbol); setTickerName(r.name); setShowTickerDropdown(false); setTickerResults([]); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                    >
+                      <span className="font-bold text-white text-sm w-16 shrink-0">{r.symbol}</span>
+                      <span className="text-xs text-gray-400 truncate">{r.name}</span>
+                      <span className="text-[10px] text-gray-600 shrink-0 ml-auto">{r.type}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Direction</label>
