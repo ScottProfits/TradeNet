@@ -72,6 +72,7 @@ export default function ProfilePage() {
         if (!d) return;
         setData(d);
         setFollowerCount(d.followersCount);
+        setFollowing(d.isFollowing ?? false);
       });
   }, [handle]);
 

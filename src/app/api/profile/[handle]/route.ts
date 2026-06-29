@@ -1,7 +1,9 @@
+import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
+  const { userId } = await auth();
 
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -28,10 +30,23 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
     .select("*", { count: "exact", head: true })
     .eq("follower_id", profile.id);
 
+  // Check if the current user already follows this profile
+  let isFollowing = false;
+  if (userId && userId !== profile.id) {
+    const { data: followRow } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("follower_id", userId)
+      .eq("following_id", profile.id)
+      .single();
+    isFollowing = !!followRow;
+  }
+
   return Response.json({
     profile,
     trades: trades ?? [],
     followersCount: followersCount ?? 0,
     followingCount: followingCount ?? 0,
+    isFollowing,
   });
 }

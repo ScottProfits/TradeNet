@@ -99,7 +99,12 @@ export default function NotificationBell() {
               <p className="text-gray-500 text-sm text-center py-8">No notifications yet</p>
             ) : (
               notifs.map((n) => (
-                <div key={n.id} className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 ${!n.read ? "bg-[var(--green)]/5" : ""}`}>
+                <Link
+                  key={n.id}
+                  href={`/profile/${n.actor?.handle}`}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-white/5 transition-colors ${!n.read ? "bg-[var(--green)]/5" : ""}`}
+                >
                   <div className="relative shrink-0">
                     {n.actor?.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -115,16 +120,14 @@ export default function NotificationBell() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-200">
-                      <Link href={`/profile/${n.actor?.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
-                        @{n.actor?.handle}
-                      </Link>
+                      <span className="font-semibold text-white">@{n.actor?.handle}</span>
                       {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
                       {" "}{message(n)}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
                   </div>
                   {!n.read && <div className="w-2 h-2 bg-[var(--green)] rounded-full mt-1.5 shrink-0" />}
-                </div>
+                </Link>
               ))
             )}
           </div>
