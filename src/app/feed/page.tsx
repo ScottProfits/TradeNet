@@ -5,6 +5,7 @@ import PostCard from "@/components/feed/PostCard";
 import SidebarProfile from "@/components/feed/SidebarProfile";
 import SidebarRight from "@/components/feed/SidebarRight";
 import PostTradeModal from "@/components/feed/PostTradeModal";
+import ExploreTab from "@/components/feed/ExploreTab";
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
@@ -63,6 +64,7 @@ export default function FeedPage() {
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<"feed" | "explore">("feed");
 
   const loadFeed = useCallback(async () => {
     try {
@@ -103,15 +105,25 @@ export default function FeedPage() {
           Post a Trade
         </button>
 
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-white">Live feed</h2>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-            <span className="text-xs text-gray-500">Live</span>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-1 bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
+          <button
+            onClick={() => setTab("feed")}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "feed" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white"}`}
+          >
+            Live Feed
+          </button>
+          <button
+            onClick={() => setTab("explore")}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${tab === "explore" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white"}`}
+          >
+            Explore
+          </button>
         </div>
 
-        {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+        {tab === "explore" && <ExploreTab />}
+
+        {tab === "feed" && feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
           if (item.type === "trade") {
             const { trade, trader } = realTradeToCardProps(item);
             return (
@@ -130,7 +142,7 @@ export default function FeedPage() {
           return <PostCard key={item.id} post={item} />;
         })}
 
-        {feedTrades.map((trade) => {
+        {tab === "feed" && feedTrades.map((trade) => {
           const trader = traders.find((t) => t.id === trade.traderId)!;
           return <TradeCard key={trade.id} trade={trade} trader={trader} />;
         })}

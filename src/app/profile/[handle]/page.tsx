@@ -194,7 +194,7 @@ export default function ProfilePage() {
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-[var(--border)]">
+        <div className="grid grid-cols-5 gap-2 mt-5 pt-5 border-t border-[var(--border)]">
           <button onClick={() => openModal("followers")} className="text-center hover:opacity-75 transition-opacity">
             <p className="font-bold text-white text-lg">{followerCount.toLocaleString()}</p>
             <p className="text-xs text-gray-500">Followers</p>
@@ -204,10 +204,14 @@ export default function ProfilePage() {
             <p className="text-xs text-gray-500">Following</p>
           </button>
           <div className="text-center">
+            <p className="font-bold text-white text-lg">{trades.length}</p>
+            <p className="text-xs text-gray-500">Trades</p>
+          </div>
+          <div className="text-center">
             <p className={clsx("font-bold text-lg", totalPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
               {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-gray-500">Total P&L</p>
+            <p className="text-xs text-gray-500">P&L</p>
           </div>
           <div className="text-center">
             <p className="font-bold text-white text-lg">{winRate}%</p>
