@@ -32,7 +32,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showChart, setShowChart] = useState(false);
-  const [shared, setShared] = useState(false);
+
   const [showJournal, setShowJournal] = useState(false);
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
   const [savingJournal, setSavingJournal] = useState(false);
@@ -63,15 +63,11 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   }
 
   async function handleShare() {
-    const url = `${window.location.origin}/profile/${trader.handle}`;
-    const text = `Check out this ${trade.direction} trade on $${trade.ticker} — ${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()} on Ryzr`;
-    if (navigator.share) {
-      try { await navigator.share({ title: `@${trader.handle} on Ryzr`, text, url }); } catch { /* dismissed */ }
-    } else {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 2000);
-    }
+    const tradeUrl = `${window.location.origin}/trade/${trade.id}`;
+    const pnlStr = `${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()}`;
+    const tweetText = `Just posted a ${pnlStr} $${trade.ticker} ${trade.direction} trade on Ryzr 📈`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(tradeUrl)}`;
+    window.open(twitterUrl, "_blank", "noopener,noreferrer,width=550,height=420");
   }
 
   async function saveJournal() {
@@ -232,9 +228,9 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
-        <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
           <Share2 className="w-4 h-4" />
-          {shared ? "Copied!" : "Share"}
+          <span className="hidden sm:inline">Share</span>
         </button>
         <button onClick={() => setShowChart((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showChart ? "text-white" : "text-gray-500 hover:text-gray-300")}>
           <BarChart2 className="w-4 h-4" />

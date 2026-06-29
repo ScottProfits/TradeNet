@@ -1,7 +1,8 @@
-import { leaderboard, strategies, traders } from "@/lib/mock-data";
+import { leaderboard, strategies } from "@/lib/mock-data";
 import Avatar from "@/components/ui/Avatar";
 import Tag from "@/components/ui/Tag";
 import { TrendingUp, ArrowUpRight } from "lucide-react";
+import SuggestedTraders from "@/components/feed/SuggestedTraders";
 
 export default function SidebarRight() {
   return (
@@ -60,24 +61,7 @@ export default function SidebarRight() {
         </div>
       </div>
 
-      {/* Suggested traders */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
-        <h3 className="font-semibold text-white text-sm mb-3">Suggested traders</h3>
-        <div className="space-y-3">
-          {traders.slice(1, 4).map((t) => (
-            <div key={t.id} className="flex items-center gap-2">
-              <Avatar initials={t.initials} color={t.color} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-300">@{t.handle}</p>
-                <p className="text-xs text-gray-500">{t.categories[0]}</p>
-              </div>
-              <button className="text-xs text-[var(--green)] border border-[var(--green)]/30 px-2 py-0.5 rounded-full hover:bg-[var(--green)]/10 transition-colors">
-                Follow
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <SuggestedTraders />
     </div>
   );
 }

@@ -158,6 +158,8 @@ export default function ProfilePage() {
   const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
   const winningTrades = trades.filter((t) => t.pnl > 0).length;
   const winRate = trades.length > 0 ? Math.round((winningTrades / trades.length) * 100) : 0;
+  const avgPnl = trades.length > 0 ? totalPnl / trades.length : 0;
+  const bestTrade = trades.length > 0 ? trades.reduce((best, t) => t.pnl > best.pnl ? t : best, trades[0]) : null;
   const isOwnProfile = userId === profile.id;
 
   return (
@@ -230,28 +232,40 @@ export default function ProfilePage() {
         <BadgeDisplay handle={profile.handle} />
 
         {/* Stats row */}
-        <div className="grid grid-cols-5 gap-2 mt-5 pt-5 border-t border-[var(--border)]">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-5 pt-5 border-t border-[var(--border)]">
           <button onClick={() => openModal("followers")} className="text-center hover:opacity-75 transition-opacity">
-            <p className="font-bold text-white text-lg">{followerCount.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">Followers</p>
+            <p className="font-bold text-white text-base sm:text-lg">{followerCount.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Followers</p>
           </button>
           <button onClick={() => openModal("following")} className="text-center hover:opacity-75 transition-opacity">
-            <p className="font-bold text-white text-lg">{data.followingCount.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">Following</p>
+            <p className="font-bold text-white text-base sm:text-lg">{data.followingCount.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Following</p>
           </button>
           <div className="text-center">
-            <p className="font-bold text-white text-lg">{trades.length}</p>
-            <p className="text-xs text-gray-500">Trades</p>
+            <p className="font-bold text-white text-base sm:text-lg">{trades.length}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Trades</p>
           </div>
           <div className="text-center">
-            <p className={clsx("font-bold text-lg", totalPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+            <p className={clsx("font-bold text-base sm:text-lg", totalPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
               {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-gray-500">P&L</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Total P&L</p>
           </div>
           <div className="text-center">
-            <p className="font-bold text-white text-lg">{winRate}%</p>
-            <p className="text-xs text-gray-500">Win rate</p>
+            <p className="font-bold text-white text-base sm:text-lg">{winRate}%</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Win Rate</p>
+          </div>
+          <div className="text-center">
+            <p className={clsx("font-bold text-base sm:text-lg", avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+              {trades.length > 0 ? `${avgPnl >= 0 ? "+" : ""}$${Math.abs(avgPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Avg P&L</p>
+          </div>
+          <div className="text-center">
+            <p className={clsx("font-bold text-base sm:text-lg", bestTrade && bestTrade.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+              {bestTrade ? `+$${Math.abs(bestTrade.pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Best Trade</p>
           </div>
         </div>
       </div>
