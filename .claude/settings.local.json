@@ -68,7 +68,8 @@
       "Bash(grep -n \"cropSrc && \\\\|AvatarCropModal\\\\|<\\\\/div>\\\\s*$\" /Users/a.scott/TradeNet/src/app/settings/page.tsx)",
       "Bash(grep -n \"positive ? \\\\\"+\\\\\" : \\\\\"\\\\\"\\\\|\\\\$\\\\{trade.pnl\\\\}\\\\|today\\\\|Copy trade\\\\|showChart\" /Users/a.scott/TradeNet/src/components/feed/TradeCard.tsx)",
       "Skill(clerk-custom-ui)",
-      "Skill(clerk-custom-ui:*)"
+      "Skill(clerk-custom-ui:*)",
+      "Bash(xargs ls -1)"
     ]
   }
 }

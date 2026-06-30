@@ -118,9 +118,17 @@ export default function SettingsPage() {
 
   const initials = handle.slice(0, 2).toUpperCase() || "?";
 
+  const isNewUser = handle.startsWith("user_");
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
+      {isNewUser && (
+        <div className="bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-xl px-4 py-3">
+          <p className="text-green-400 text-sm font-semibold">Welcome to Ryzr! 👋</p>
+          <p className="text-gray-400 text-sm mt-0.5">Set your handle and display name to complete your profile.</p>
+        </div>
+      )}
+      <h1 className="text-2xl font-bold text-white">{isNewUser ? "Complete Your Profile" : "Profile Settings"}</h1>
 
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-6">
 

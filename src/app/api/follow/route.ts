@@ -1,11 +1,23 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
+async function ensureProfile(userId: string) {
+  const { data } = await supabase.from("profiles").select("id").eq("id", userId).single();
+  if (data) return;
+  const clerkUser = await currentUser();
+  if (!clerkUser) return;
+  const handle = clerkUser.username || `user_${userId.slice(-8)}`;
+  const full_name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || handle;
+  await supabase.from("profiles").upsert({ id: userId, handle, full_name, avatar_url: clerkUser.imageUrl }, { onConflict: "id" });
+}
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  await ensureProfile(userId);
 
   const { targetHandle } = await req.json();
 

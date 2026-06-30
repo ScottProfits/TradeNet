@@ -25,7 +25,7 @@ export default function MobileNav() {
     });
   }, [user?.id, user?.username]);
 
-  const profileHref = profileHandle ? `/profile/${profileHandle}` : (user?.username ? `/profile/${user.username}` : "/feed");
+  const profileHref = profileHandle ? `/profile/${profileHandle}` : "/settings";
 
   return (
     <>
