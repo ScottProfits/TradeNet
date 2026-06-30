@@ -13,6 +13,10 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Ryzr",
+    startupImage: "/apple-touch-icon.png",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
   },
   themeColor: "#00C896",
 };
