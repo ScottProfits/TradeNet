@@ -100,6 +100,7 @@ export default function ProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [modal, setModal] = useState<"followers" | "following" | null>(null);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
@@ -187,12 +188,15 @@ export default function ProfilePage() {
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+            <button
+              onClick={() => profile.avatar_url && setAvatarOpen(true)}
+              className={`w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
+            >
               {profile.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profile.avatar_url} alt={profile.handle} className="w-16 h-16 rounded-full object-cover" />
               ) : initials}
-            </div>
+            </button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
@@ -464,6 +468,22 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Avatar lightbox */}
+      {avatarOpen && profile.avatar_url && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setAvatarOpen(false)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={profile.avatar_url}
+            alt={profile.handle}
+            className="w-72 h-72 sm:w-96 sm:h-96 rounded-full object-cover shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
