@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { TrendingUp, TrendingDown, Bell, Clock, AlertTriangle, Newspaper, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Clock, AlertTriangle, Newspaper, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 interface MarketStatus {
@@ -9,6 +9,12 @@ interface MarketStatus {
   isAfterHours: boolean;
   minutesUntilOpen: number;
   minutesUntilClose: number;
+  openMarkets: string[];
+  isLondonOpen: boolean;
+  isTokyoOpen: boolean;
+  nyTime: string;
+  lonTime: string;
+  tokyoTime: string;
 }
 
 interface CalendarEvent {
@@ -17,13 +23,6 @@ interface CalendarEvent {
   type: string;
   impact: "high" | "medium";
   detail?: string;
-}
-
-interface TrendingTicker {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
 }
 
 interface NewsItem {
@@ -37,15 +36,13 @@ interface MarketData {
   marketStatus: MarketStatus;
   upcomingEvents: CalendarEvent[];
   todayEvents: CalendarEvent[];
-  trending: TrendingTicker[];
   news: NewsItem[];
 }
 
 function formatCountdown(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 function timeAgo(iso: string) {
@@ -64,17 +61,12 @@ const EVENT_COLORS: Record<string, string> = {
 };
 
 const EVENT_ICONS: Record<string, string> = {
-  fomc: "🏦",
-  cpi: "📊",
-  nfp: "💼",
-  ppi: "🏭",
-  event: "📅",
+  fomc: "🏦", cpi: "📊", nfp: "💼", ppi: "🏭", event: "📅",
 };
 
 export default function MarketPulse() {
   const [data, setData] = useState<MarketData | null>(null);
-  const [activeTab, setActiveTab] = useState<"events" | "trending" | "news">("events");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"events" | "news">("events");
 
   useEffect(() => {
     function load() {
@@ -89,7 +81,8 @@ export default function MarketPulse() {
 
   if (!data) return null;
 
-  const { marketStatus, upcomingEvents, todayEvents, trending, news } = data;
+  const { marketStatus, upcomingEvents, todayEvents, news } = data;
+  const ms = marketStatus;
 
   function daysUntil(dateStr: string) {
     const d = new Date(dateStr + "T00:00:00");
@@ -103,45 +96,53 @@ export default function MarketPulse() {
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden mb-4">
 
-      {/* Header row */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+      {/* Market clocks row */}
+      <div className="grid grid-cols-3 divide-x divide-[var(--border)] border-b border-[var(--border)]">
+        {[
+          { name: "Tokyo", time: ms.tokyoTime, open: ms.isTokyoOpen, flag: "🇯🇵" },
+          { name: "London", time: ms.lonTime, open: ms.isLondonOpen, flag: "🇬🇧" },
+          { name: "New York", time: ms.nyTime, open: ms.isOpen, flag: "🇺🇸" },
+        ].map((m) => (
+          <div key={m.name} className="flex flex-col items-center py-2.5 px-2">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-sm">{m.flag}</span>
+              <span className="text-xs font-semibold text-gray-400">{m.name}</span>
+            </div>
+            <span className="text-xs font-mono text-gray-300">{m.time}</span>
+            <span className={`text-[10px] font-bold mt-0.5 ${m.open ? "text-green-400" : "text-gray-600"}`}>
+              {m.open ? "● OPEN" : "● CLOSED"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Status bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]">
         <div className="flex items-center gap-2">
-          {/* Market status pill */}
-          {marketStatus.isOpen ? (
+          {ms.openMarkets.length > 0 ? (
             <span className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              MARKET OPEN
-            </span>
-          ) : marketStatus.isPremarket ? (
-            <span className="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-              PRE-MARKET
-            </span>
-          ) : marketStatus.isAfterHours ? (
-            <span className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              AFTER HOURS
+              {ms.openMarkets.join(" · ")} OPEN
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 text-gray-400 text-xs font-bold px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
-              MARKET CLOSED
+            <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 text-gray-500 text-xs font-bold px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+              ALL MARKETS CLOSED
             </span>
           )}
-
-          {/* Countdown */}
-          <span className="text-xs text-gray-500 flex items-center gap-1">
+          <span className="text-xs text-gray-600 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {marketStatus.isOpen
-              ? `Closes in ${formatCountdown(marketStatus.minutesUntilClose)}`
-              : `Opens in ${formatCountdown(marketStatus.minutesUntilOpen)}`}
+            {ms.isOpen
+              ? `NY closes in ${formatCountdown(ms.minutesUntilClose)}`
+              : ms.isPremarket
+              ? `NY opens in ${formatCountdown(ms.minutesUntilOpen)}`
+              : `NY opens in ${formatCountdown(ms.minutesUntilOpen)}`}
           </span>
         </div>
-
         {todayEvents.length > 0 && (
-          <span className="flex items-center gap-1 text-red-400 text-xs font-semibold animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            {todayEvents.length} high-impact event{todayEvents.length > 1 ? "s" : ""} today
+          <span className="flex items-center gap-1 text-red-400 text-xs font-semibold">
+            <AlertTriangle className="w-3 h-3" />
+            {todayEvents.length} event{todayEvents.length > 1 ? "s" : ""} today
           </span>
         )}
       </div>
@@ -150,7 +151,6 @@ export default function MarketPulse() {
       <div className="flex border-b border-[var(--border)]">
         {([
           { key: "events", label: "📅 Events" },
-          { key: "trending", label: "🔥 Trending" },
           { key: "news", label: "📰 News" },
         ] as const).map((t) => (
           <button
@@ -169,7 +169,7 @@ export default function MarketPulse() {
 
       {/* Events tab */}
       {activeTab === "events" && (
-        <div ref={scrollRef} className="divide-y divide-[var(--border)]">
+        <div className="divide-y divide-[var(--border)]">
           {upcomingEvents.length === 0 ? (
             <p className="text-center text-gray-600 text-sm py-6">No major events in the next 14 days</p>
           ) : (
@@ -186,11 +186,9 @@ export default function MarketPulse() {
                   {e.detail && <p className="text-xs text-gray-500 mt-0.5">{e.detail}</p>}
                 </div>
                 <span className={`text-[10px] font-bold shrink-0 px-2 py-1 rounded ${
-                  daysUntil(e.date) === "TODAY"
-                    ? "bg-red-500/20 text-red-400"
-                    : daysUntil(e.date) === "TOMORROW"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-white/5 text-gray-500"
+                  daysUntil(e.date) === "TODAY" ? "bg-red-500/20 text-red-400" :
+                  daysUntil(e.date) === "TOMORROW" ? "bg-yellow-500/20 text-yellow-400" :
+                  "bg-white/5 text-gray-500"
                 }`}>
                   {daysUntil(e.date)}
                 </span>
@@ -203,36 +201,6 @@ export default function MarketPulse() {
         </div>
       )}
 
-      {/* Trending tab */}
-      {activeTab === "trending" && (
-        <div className="divide-y divide-[var(--border)]">
-          {trending.length === 0 ? (
-            <p className="text-center text-gray-600 text-sm py-6">Loading tickers…</p>
-          ) : (
-            trending.map((t, i) => (
-              <Link
-                key={t.symbol}
-                href={`/ticker/${encodeURIComponent(t.symbol)}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
-              >
-                <span className="text-xs text-gray-600 w-4 font-mono shrink-0">#{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white">{t.symbol}</p>
-                  <p className="text-xs text-gray-500 truncate">{t.name}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-mono text-gray-300">${t.price.toFixed(2)}</p>
-                  <p className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${t.change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {t.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {t.change >= 0 ? "+" : ""}{t.change.toFixed(2)}%
-                  </p>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      )}
-
       {/* News tab */}
       {activeTab === "news" && (
         <div className="divide-y divide-[var(--border)]">
@@ -240,13 +208,8 @@ export default function MarketPulse() {
             <p className="text-center text-gray-600 text-sm py-6">Loading news…</p>
           ) : (
             news.map((n, i) => (
-              <a
-                key={i}
-                href={n.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
-              >
+              <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+                className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors">
                 <Newspaper className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-200 leading-snug">{n.title}</p>

@@ -34,41 +34,74 @@ const CALENDAR: { date: string; label: string; type: "fomc" | "cpi" | "nfp" | "p
   { date: "2026-12-10", label: "PPI Report", type: "ppi", impact: "medium", detail: "Producer Price Index 8:30 AM ET" },
 ];
 
-// ── Market hours helpers (ET) ─────────────────────────────────────────────
+// ── Market hours helpers ──────────────────────────────────────────────────
+function getMinutesInTZ(tz: string) {
+  const now = new Date();
+  const local = new Date(now.toLocaleString("en-US", { timeZone: tz }));
+  return { day: local.getDay(), total: local.getHours() * 60 + local.getMinutes() };
+}
+
 function getMarketStatus() {
   const now = new Date();
-  const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const day = et.getDay(); // 0=Sun, 6=Sat
-  const hours = et.getHours();
-  const minutes = et.getMinutes();
-  const totalMinutes = hours * 60 + minutes;
-  const openMinutes = 9 * 60 + 30;  // 9:30 AM
-  const closeMinutes = 16 * 60;     // 4:00 PM
 
-  const isWeekday = day >= 1 && day <= 5;
-  const isOpen = isWeekday && totalMinutes >= openMinutes && totalMinutes < closeMinutes;
-  const isPremarket = isWeekday && totalMinutes >= 4 * 60 && totalMinutes < openMinutes;
-  const isAfterHours = isWeekday && totalMinutes >= closeMinutes && totalMinutes < 20 * 60;
+  // New York (NYSE/NASDAQ): Mon-Fri 9:30–16:00 ET, pre-market 4:00–9:30
+  const et = getMinutesInTZ("America/New_York");
+  const nyOpen = 9 * 60 + 30;
+  const nyClose = 16 * 60;
+  const nyWeekday = et.day >= 1 && et.day <= 5;
+  const isNYOpen = nyWeekday && et.total >= nyOpen && et.total < nyClose;
+  const isPremarket = nyWeekday && et.total >= 4 * 60 && et.total < nyOpen;
+  const isAfterHours = nyWeekday && et.total >= nyClose && et.total < 20 * 60;
 
+  // London (LSE): Mon-Fri 8:00–16:30 GMT
+  const gmt = getMinutesInTZ("Europe/London");
+  const lonOpen = 8 * 60;
+  const lonClose = 16 * 60 + 30;
+  const isLondonOpen = gmt.day >= 1 && gmt.day <= 5 && gmt.total >= lonOpen && gmt.total < lonClose;
+
+  // Tokyo (TSE): Mon-Fri 9:00–15:30 JST (with lunch 11:30–12:30)
+  const jst = getMinutesInTZ("Asia/Tokyo");
+  const tkOpen = 9 * 60;
+  const tkClose = 15 * 60 + 30;
+  const tkLunchStart = 11 * 60 + 30;
+  const tkLunchEnd = 12 * 60 + 30;
+  const isTokyoOpen = jst.day >= 1 && jst.day <= 5 &&
+    jst.total >= tkOpen && jst.total < tkClose &&
+    !(jst.total >= tkLunchStart && jst.total < tkLunchEnd);
+
+  // Countdown for NY
   let minutesUntilOpen = 0;
   let minutesUntilClose = 0;
-
-  if (isOpen) {
-    minutesUntilClose = closeMinutes - totalMinutes;
+  if (isNYOpen) {
+    minutesUntilClose = nyClose - et.total;
   } else if (isPremarket) {
-    minutesUntilOpen = openMinutes - totalMinutes;
+    minutesUntilOpen = nyOpen - et.total;
   } else {
-    // Calculate minutes until next open
     let daysUntilOpen = 0;
-    let nextDay = day;
-    do {
-      daysUntilOpen++;
-      nextDay = (nextDay + 1) % 7;
-    } while (nextDay === 0 || nextDay === 6);
-    minutesUntilOpen = daysUntilOpen * 24 * 60 - totalMinutes + openMinutes;
+    let nextDay = et.day;
+    do { daysUntilOpen++; nextDay = (nextDay + 1) % 7; } while (nextDay === 0 || nextDay === 6);
+    minutesUntilOpen = daysUntilOpen * 24 * 60 - et.total + nyOpen;
   }
 
-  return { isOpen, isPremarket, isAfterHours, minutesUntilOpen, minutesUntilClose };
+  // Which markets are open right now
+  const openMarkets: string[] = [];
+  if (isTokyoOpen) openMarkets.push("Tokyo");
+  if (isLondonOpen) openMarkets.push("London");
+  if (isNYOpen) openMarkets.push("New York");
+
+  return {
+    isOpen: isNYOpen,
+    isPremarket,
+    isAfterHours,
+    minutesUntilOpen,
+    minutesUntilClose,
+    openMarkets,
+    isLondonOpen,
+    isTokyoOpen,
+    nyTime: new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" })).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    lonTime: new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" })).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    tokyoTime: new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" })).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+  };
 }
 
 export async function GET(req: NextRequest) {
