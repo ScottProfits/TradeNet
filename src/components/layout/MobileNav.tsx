@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Plus, Bell, TrendingUp } from "lucide-react";
+import { BarChart2, Plus, Bell, Home, Search } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
@@ -31,7 +31,7 @@ export default function MobileNav() {
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg)] border-t border-[var(--border)] flex items-center lg:hidden">
 
-        {/* Feed */}
+        {/* Home */}
         <Link
           href="/feed"
           className={clsx(
@@ -39,20 +39,20 @@ export default function MobileNav() {
             pathname === "/feed" ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
-          <TrendingUp className="w-5 h-5" />
-          Feed
+          <Home className="w-5 h-5" />
+          Home
         </Link>
 
-        {/* Search */}
+        {/* Market */}
         <Link
-          href="/search"
+          href="/market"
           className={clsx(
             "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
-            pathname === "/search" ? "text-[var(--green)]" : "text-gray-500"
+            pathname === "/market" ? "text-[var(--green)]" : "text-gray-500"
           )}
         >
-          <Search className="w-5 h-5" />
-          Search
+          <BarChart2 className="w-5 h-5" />
+          Market
         </Link>
 
         {/* Center post button */}

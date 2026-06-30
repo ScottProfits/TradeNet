@@ -13,6 +13,20 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import Link from "next/link";
 
+function extractHandle(val: string): string {
+  // Strip common domain prefixes and extract just the username/handle
+  try {
+    const url = val.includes("://") ? new URL(val) : new URL(`https://${val}`);
+    // pathname is like "/@scottprofits" or "/scottprofits" or "/channel/UCxxx"
+    const parts = url.pathname.replace(/^\//, "").split("/");
+    const handle = parts[0].replace(/^@/, "") || val;
+    return `@${handle}`;
+  } catch {
+    // Not a URL — treat as bare username
+    return `@${val.replace(/^@/, "")}`;
+  }
+}
+
 interface FollowUser {
   id: string;
   handle: string;
@@ -236,34 +250,33 @@ export default function ProfilePage() {
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
 
         {/* Social links */}
-        {[
-          { key: "instagram", icon: "📸", label: "Instagram", base: "https://" },
-          { key: "tiktok", icon: "🎵", label: "TikTok", base: "https://" },
-          { key: "discord", icon: "🎮", label: "Discord", base: "https://" },
-          { key: "youtube", icon: "▶️", label: "YouTube", base: "https://" },
-          { key: "website", icon: "🌐", label: "Website", base: "https://" },
-        ].some((s) => profile[s.key as keyof typeof profile]) && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {[
-              { key: "instagram", icon: "📸", label: "Instagram" },
-              { key: "tiktok", icon: "🎵", label: "TikTok" },
-              { key: "discord", icon: "🎮", label: "Discord" },
-              { key: "youtube", icon: "▶️", label: "YouTube" },
-              { key: "website", icon: "🌐", label: "Website" },
-            ].map((s) => {
-              const val = profile[s.key as keyof typeof profile] as string | undefined;
-              if (!val) return null;
-              const href = val.startsWith("http") ? val : `https://${val}`;
-              return (
-                <a key={s.key} href={href} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-[var(--green)]/30 hover:bg-[var(--green)]/5 text-gray-400 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors">
-                  <span>{s.icon}</span>
-                  {s.label}
-                </a>
-              );
-            })}
-          </div>
-        )}
+        {(() => {
+          const SOCIALS = [
+            { key: "instagram", icon: "📸", prefix: "IG", buildUrl: (v: string) => `https://instagram.com/${extractHandle(v)}` },
+            { key: "tiktok", icon: "🎵", prefix: "TT", buildUrl: (v: string) => `https://tiktok.com/@${extractHandle(v).replace(/^@/, "")}` },
+            { key: "discord", icon: "🎮", prefix: "Discord", buildUrl: (v: string) => v.startsWith("http") ? v : `https://${v}` },
+            { key: "youtube", icon: "▶️", prefix: "YT", buildUrl: (v: string) => `https://youtube.com/@${extractHandle(v).replace(/^@/, "")}` },
+            { key: "website", icon: "🌐", prefix: "", buildUrl: (v: string) => v.startsWith("http") ? v : `https://${v}` },
+          ];
+          const active = SOCIALS.filter((s) => profile[s.key as keyof typeof profile]);
+          if (!active.length) return null;
+          return (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {active.map((s) => {
+                const val = profile[s.key as keyof typeof profile] as string;
+                const handle = extractHandle(val);
+                const label = s.prefix ? `${s.prefix}/${handle.replace(/^@/, "")}` : handle;
+                return (
+                  <a key={s.key} href={s.buildUrl(val)} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-[var(--green)]/30 hover:bg-[var(--green)]/5 text-gray-400 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors">
+                    <span>{s.icon}</span>
+                    {label}
+                  </a>
+                );
+              })}
+            </div>
+          );
+        })()}
         <BadgeDisplay handle={profile.handle} />
 
         {/* Stats row */}

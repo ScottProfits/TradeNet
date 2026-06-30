@@ -69,7 +69,15 @@
       "Bash(grep -n \"positive ? \\\\\"+\\\\\" : \\\\\"\\\\\"\\\\|\\\\$\\\\{trade.pnl\\\\}\\\\|today\\\\|Copy trade\\\\|showChart\" /Users/a.scott/TradeNet/src/components/feed/TradeCard.tsx)",
       "Skill(clerk-custom-ui)",
       "Skill(clerk-custom-ui:*)",
-      "Bash(xargs ls -1)"
+      "Bash(xargs ls -1)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" status --short)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" log --oneline -5)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" show --name-only 66d8815)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" show --name-only 1c1eb51)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" log --oneline --all)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" remote -v)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" log origin/main..HEAD --oneline)",
+      "Bash(git -C \"/Users/a.scott/TradeNet\" fetch --dry-run)"
     ]
   }
 }

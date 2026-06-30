@@ -24,7 +24,7 @@ interface TickerResult {
 }
 
 const links = [
-  { href: "/feed", label: "Feed" },
+  { href: "/feed", label: "Home" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/market", label: "Market" },
 ];
