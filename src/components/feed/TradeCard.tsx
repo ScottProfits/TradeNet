@@ -65,9 +65,17 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   async function handleShare() {
     const tradeUrl = `${window.location.origin}/trade/${trade.id}`;
     const pnlStr = `${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()}`;
-    const tweetText = `Just posted a ${pnlStr} $${trade.ticker} ${trade.direction} trade on Ryzr 📈`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(tradeUrl)}`;
-    window.open(twitterUrl, "_blank", "noopener,noreferrer,width=550,height=420");
+    const text = `${pnlStr} $${trade.ticker} ${trade.direction} trade on Ryzr 📈`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Trade on Ryzr", text, url: tradeUrl });
+        return;
+      } catch { /* user cancelled */ return; }
+    }
+    // Fallback: copy link to clipboard
+    await navigator.clipboard.writeText(tradeUrl);
+    alert("Link copied to clipboard!");
   }
 
   async function saveJournal() {

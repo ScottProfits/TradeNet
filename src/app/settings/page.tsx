@@ -17,6 +17,11 @@ export default function SettingsPage() {
   const [bio, setBio] = useState("");
   const [brokerage, setBrokerage] = useState("");
   const [tradingStyle, setTradingStyle] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [tiktok, setTiktok] = useState("");
+  const [discord, setDiscord] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [website, setWebsite] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [alpacaKey, setAlpacaKey] = useState("");
@@ -45,6 +50,11 @@ export default function SettingsPage() {
           setBrokerage(d.brokerage ?? "");
           setTradingStyle(d.trading_style ?? "");
           setAvatarPreview(d.avatar_url ?? "");
+          setInstagram(d.instagram ?? "");
+          setTiktok(d.tiktok ?? "");
+          setDiscord(d.discord ?? "");
+          setYoutube(d.youtube ?? "");
+          setWebsite(d.website ?? "");
           setAlpacaKey(d.alpaca_key ?? "");
           setAlpacaSecret(d.alpaca_secret ?? "");
         }
@@ -96,7 +106,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/profile/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle }),
+      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle, instagram, tiktok, discord, youtube, website }),
     });
 
     if (res.ok) {
@@ -245,6 +255,30 @@ export default function SettingsPage() {
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
             />
             <p className="text-xs text-gray-600 mt-1">{bio.length}/160</p>
+          </div>
+
+          {/* Social Links */}
+          <div className="space-y-3 pt-2">
+            <p className="text-sm font-semibold text-white">Social Links</p>
+            {[
+              { label: "Instagram", icon: "📸", value: instagram, set: setInstagram, placeholder: "instagram.com/yourhandle" },
+              { label: "TikTok", icon: "🎵", value: tiktok, set: setTiktok, placeholder: "tiktok.com/@yourhandle" },
+              { label: "Discord", icon: "🎮", value: discord, set: setDiscord, placeholder: "discord.gg/yourserver" },
+              { label: "YouTube", icon: "▶️", value: youtube, set: setYoutube, placeholder: "youtube.com/@yourchannel" },
+              { label: "Website", icon: "🌐", value: website, set: setWebsite, placeholder: "yoursite.com" },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="text-lg w-7 shrink-0">{s.icon}</span>
+                <div className="flex-1">
+                  <input
+                    value={s.value}
+                    onChange={(e) => s.set(e.target.value)}
+                    placeholder={s.placeholder}
+                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
           {error && <p className="text-[var(--red)] text-sm">{error}</p>}
