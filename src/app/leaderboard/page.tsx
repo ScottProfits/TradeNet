@@ -86,15 +86,16 @@ export default function LeaderboardPage() {
             <p className="text-gray-600 text-sm">Be the first to post a trade and claim the #1 spot.</p>
           </div>
         ) : (
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[420px]">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="text-left text-xs text-gray-500 px-4 py-3 w-10">#</th>
-                <th className="text-xs text-gray-500 px-2 py-3 w-8"></th>
-                <th className="text-left text-xs text-gray-500 px-4 py-3">Trader</th>
-                <th className="text-right text-xs text-gray-500 px-4 py-3">Trades</th>
-                <th className="text-right text-xs text-gray-500 px-4 py-3">Win %</th>
-                <th className="text-right text-xs text-gray-500 px-4 py-3">P&L</th>
+                <th className="text-left text-xs text-gray-500 px-3 py-3 w-8">#</th>
+                <th className="text-xs text-gray-500 px-1 py-3 w-6"></th>
+                <th className="text-left text-xs text-gray-500 px-3 py-3">Trader</th>
+                <th className="text-right text-xs text-gray-500 px-3 py-3">Trades</th>
+                <th className="text-right text-xs text-gray-500 px-3 py-3">Win %</th>
+                <th className="text-right text-xs text-gray-500 px-3 py-3 pr-4">P&L</th>
               </tr>
             </thead>
             <tbody>
@@ -103,14 +104,14 @@ export default function LeaderboardPage() {
                   key={entry.profile?.id ?? i}
                   className="border-b border-[var(--border)] last:border-0 hover:bg-white/[0.02] transition-colors"
                 >
-                  <td className="px-4 py-3 text-sm font-mono text-gray-400">
+                  <td className="px-3 py-3 text-sm font-mono text-gray-400">
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
                   </td>
-                  <td className="px-2 py-3">
+                  <td className="px-1 py-3">
                     <RankChange delta={entry.rankChange} />
                   </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-3 group">
+                  <td className="px-3 py-3">
+                    <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-2 group">
                       {entry.profile?.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={entry.profile.avatar_url} alt={entry.profile.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
@@ -119,28 +120,29 @@ export default function LeaderboardPage() {
                           {entry.profile?.handle?.slice(0, 2).toUpperCase() ?? "?"}
                         </div>
                       )}
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-white group-hover:text-[var(--green)] transition-colors">
+                          <span className="text-sm font-medium text-white group-hover:text-[var(--green)] transition-colors truncate">
                             @{entry.profile?.handle}
                           </span>
-                          {entry.profile?.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
+                          {entry.profile?.verified && <VerifiedBadge className="w-3.5 h-3.5 shrink-0" />}
                         </div>
                         {entry.profile?.brokerage && (
-                          <p className="text-xs text-gray-500">{entry.profile.brokerage}</p>
+                          <p className="text-xs text-gray-500 truncate">{entry.profile.brokerage}</p>
                         )}
                       </div>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
-                  <td className={clsx("px-4 py-3 text-right text-sm font-bold", entry.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                  <td className="px-3 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
+                  <td className="px-3 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
+                  <td className={clsx("px-3 py-3 pr-4 text-right text-sm font-bold whitespace-nowrap", entry.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
                     {entry.pnl >= 0 ? "+" : ""}${Math.abs(entry.pnl).toLocaleString()}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
