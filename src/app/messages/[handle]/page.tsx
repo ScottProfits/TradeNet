@@ -40,9 +40,19 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!partner) return;
-    fetch(`/api/messages?with=${partner.id}`)
-      .then((r) => r.ok ? r.json() : [])
-      .then((d) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView(), 50); });
+    function loadMessages() {
+      fetch(`/api/messages?with=${partner!.id}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((d: Message[]) => {
+          setMessages((prev) => {
+            if (d.length !== prev.length) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+            return d;
+          });
+        });
+    }
+    loadMessages();
+    const interval = setInterval(loadMessages, 5000);
+    return () => clearInterval(interval);
   }, [partner]);
 
   async function handleSend(e: React.FormEvent) {

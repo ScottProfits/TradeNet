@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -89,6 +90,15 @@ export async function POST(req: NextRequest) {
     .select("handle, avatar_url, verified")
     .eq("id", userId)
     .single();
+
+  // Push notification to receiver
+  if (senderProfile) {
+    void sendPushToUser(receiverId, {
+      title: `💬 @${senderProfile.handle}`,
+      body: content.trim().slice(0, 100),
+      url: `/messages/${senderProfile.handle}`,
+    });
+  }
 
   return Response.json({ ...data, sender: senderProfile }, { status: 201 });
 }

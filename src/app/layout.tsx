@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
+    <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }} afterSignUpUrl="/onboarding">
       <html lang="en">
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
