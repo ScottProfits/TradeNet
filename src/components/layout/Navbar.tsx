@@ -210,6 +210,9 @@ export default function Navbar() {
                 )}
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
+              <Link href="/profile/me" className="hidden lg:block text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
+                Profile
+              </Link>
               <Link href="/settings" className="hidden lg:block text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
                 Settings
               </Link>
