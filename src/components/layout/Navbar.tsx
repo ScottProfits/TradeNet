@@ -26,6 +26,7 @@ interface TickerResult {
 const links = [
   { href: "/feed", label: "Feed" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/market", label: "Market" },
 ];
 
 export default function Navbar() {

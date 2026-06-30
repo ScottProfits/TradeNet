@@ -7,6 +7,7 @@ import SidebarRight from "@/components/feed/SidebarRight";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 import ExploreTab from "@/components/feed/ExploreTab";
 import LiveTicker from "@/components/feed/LiveTicker";
+import MarketPulse from "@/components/feed/MarketPulse";
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
@@ -124,6 +125,7 @@ export default function FeedPage() {
 
       <section className="space-y-3">
         <LiveTicker />
+        <MarketPulse />
         {/* Post button — hidden on mobile since nav bar has + button */}
         <button
           onClick={() => setShowModal(true)}
