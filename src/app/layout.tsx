@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     startupImage: "/apple-touch-icon.png",
   },
   icons: {
-    apple: "/apple-touch-icon.png?v=3",
+    apple: "/apple-touch-icon-v3.png",
   },
   themeColor: "#00C896",
 };
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }} afterSignUpUrl="/onboarding">
       <html lang="en">
         <head>
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png" />
         </head>
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
