@@ -78,19 +78,36 @@ export async function POST(req: NextRequest) {
   if (tradeId) {
     await supabase.rpc("increment_comments", { trade_id_input: tradeId });
     const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
+    const [{ data: actor }, { data: full }] = await Promise.all([
+      supabase.from("profiles").select("handle").eq("id", userId).single(),
+      supabase.from("trades").select("ticker, pnl").eq("id", tradeId).single(),
+    ]);
+    const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
+
+    // Notify trade owner of comment (unless they wrote it)
     if (trade && trade.user_id !== userId) {
       await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
-      const [{ data: actor }, { data: full }] = await Promise.all([
-        supabase.from("profiles").select("handle").eq("id", userId).single(),
-        supabase.from("trades").select("ticker, pnl").eq("id", tradeId).single(),
-      ]);
       if (actor) {
-        const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
         void sendPushToUser(trade.user_id, {
           title: `💬 @${actor.handle} commented`,
           body: `"${snippet}" on your ${full?.ticker ?? ""} trade`,
           url: `/trade/${tradeId}`,
         });
+      }
+    }
+
+    // Notify the parent comment author when someone replies to their comment
+    if (parentId) {
+      const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", parentId).single();
+      if (parentComment && parentComment.user_id !== userId && parentComment.user_id !== trade?.user_id) {
+        await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+        if (actor) {
+          void sendPushToUser(parentComment.user_id, {
+            title: `↩️ @${actor.handle} replied to you`,
+            body: `"${snippet}"`,
+            url: `/trade/${tradeId}`,
+          });
+        }
       }
     }
   }
