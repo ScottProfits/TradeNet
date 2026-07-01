@@ -46,6 +46,7 @@ interface Profile {
   pnl_month: number;
   verified: boolean;
   pinned_trade_id?: string | null;
+  logo_url?: string | null;
   instagram?: string;
   tiktok?: string;
   discord?: string;
@@ -218,6 +219,10 @@ export default function ProfilePage() {
                 </span>
               )}
               {profile.handle === "scottprofits" && <FounderBadge />}
+              {profile.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain rounded-lg mt-1" />
+              )}
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>

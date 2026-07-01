@@ -23,11 +23,11 @@ export default function DotsMenu({ onEdit, onDelete }: DotsMenuProps) {
     <div ref={ref} className="relative">
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((s) => !s); }}
-        className="flex flex-col items-center justify-center gap-[3px] p-1.5 text-gray-500 hover:text-white transition-colors"
+        className="flex flex-col items-center justify-center gap-[3px] p-1.5 text-gray-600 hover:text-gray-400 transition-colors"
         aria-label="More options"
       >
-        <span className="w-[5px] h-[5px] rounded-[1px] bg-current" />
-        <span className="w-[5px] h-[5px] rounded-[1px] bg-current" />
+        <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+        <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
       </button>
 
       {open && (
