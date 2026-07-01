@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
@@ -45,6 +45,7 @@ interface Profile {
   win_rate: number;
   pnl_month: number;
   verified: boolean;
+  pinned_trade_id?: string | null;
   instagram?: string;
   tiktok?: string;
   discord?: string;
@@ -104,6 +105,7 @@ export default function ProfilePage() {
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
+  const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -116,6 +118,7 @@ export default function ProfilePage() {
         setData(d);
         setFollowerCount(d.followersCount);
         setFollowing(d.isFollowing ?? false);
+        setPinnedTradeId(d.profile.pinned_trade_id ?? null);
       });
   }, [handle]);
 
@@ -143,6 +146,16 @@ export default function ProfilePage() {
       setFollowerCount((c) => c + (next ? -1 : 1));
     }
     setFollowLoading(false);
+  }
+
+  async function handlePin(tradeId: string) {
+    const next = pinnedTradeId === tradeId ? null : tradeId;
+    setPinnedTradeId(next);
+    await fetch("/api/pin-trade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tradeId }),
+    });
   }
 
   async function openModal(type: "followers" | "following") {
@@ -332,41 +345,68 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {trades.map((t) => {
-          const tradeObj: TradeCardTrade = {
-            id: t.id,
-            traderId: profile.id,
-            ticker: t.ticker,
-            direction: t.direction === "LONG" ? "Long" : "Short",
-            shares: 0,
-            time: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            pnl: t.pnl,
-            pnlPct: t.pnl_percent,
-            notes: t.caption ?? "",
-            likes: (t as { likes_count?: number }).likes_count ?? 0,
-            comments: (t as { comments_count?: number }).comments_count ?? 0,
-          };
-          const traderObj: Trader = {
-            id: profile.id,
-            handle: profile.handle,
-            displayName: profile.full_name || profile.handle,
-            initials: profile.handle.slice(0, 2).toUpperCase(),
-            color: "#6366F1",
-            brokerage: profile.brokerage ?? "",
-            verified: profile.verified,
-            followers: 0, following: 0, winRate: 0, pnlMonth: 0, categories: [],
-          };
-          return (
-            <TradeCard
-              key={t.id}
-              trade={tradeObj}
-              trader={traderObj}
-              imageUrl={t.image_url ?? undefined}
-              avatarUrl={profile.avatar_url ?? undefined}
-              strategy={(t as { strategy?: string }).strategy ?? undefined}
-            />
-          );
-        })}
+        {[...trades]
+          .sort((a, b) => {
+            if (a.id === pinnedTradeId) return -1;
+            if (b.id === pinnedTradeId) return 1;
+            return 0;
+          })
+          .map((t) => {
+            const isPinned = t.id === pinnedTradeId;
+            const tradeObj: TradeCardTrade = {
+              id: t.id,
+              traderId: profile.id,
+              ticker: t.ticker,
+              direction: t.direction === "LONG" ? "Long" : "Short",
+              shares: 0,
+              time: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              pnl: t.pnl,
+              pnlPct: t.pnl_percent,
+              notes: t.caption ?? "",
+              likes: (t as { likes_count?: number }).likes_count ?? 0,
+              comments: (t as { comments_count?: number }).comments_count ?? 0,
+            };
+            const traderObj: Trader = {
+              id: profile.id,
+              handle: profile.handle,
+              displayName: profile.full_name || profile.handle,
+              initials: profile.handle.slice(0, 2).toUpperCase(),
+              color: "#6366F1",
+              brokerage: profile.brokerage ?? "",
+              verified: profile.verified,
+              followers: 0, following: 0, winRate: 0, pnlMonth: 0, categories: [],
+            };
+            return (
+              <div key={t.id} className="relative">
+                {isPinned && (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold mb-1 ml-1">
+                    <Pin className="w-3 h-3" />
+                    Pinned trade
+                  </div>
+                )}
+                <TradeCard
+                  trade={tradeObj}
+                  trader={traderObj}
+                  imageUrl={t.image_url ?? undefined}
+                  avatarUrl={profile.avatar_url ?? undefined}
+                  strategy={(t as { strategy?: string }).strategy ?? undefined}
+                />
+                {isOwnProfile && (
+                  <button
+                    onClick={() => handlePin(t.id)}
+                    className={`absolute top-3 right-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                      isPinned
+                        ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
+                        : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
+                    }`}
+                  >
+                    {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                    {isPinned ? "Unpin" : "Pin"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
       </div>
 
       {/* Liked posts — only visible to profile owner */}

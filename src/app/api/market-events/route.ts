@@ -74,9 +74,11 @@ function getMarketStatus() {
   let minutesUntilClose = 0;
   if (isNYOpen) {
     minutesUntilClose = nyClose - et.total;
-  } else if (isPremarket) {
+  } else if (nyWeekday && et.total < nyOpen) {
+    // Same weekday, before open (e.g. 3 AM ET — market opens later today)
     minutesUntilOpen = nyOpen - et.total;
   } else {
+    // Past close, or weekend — find next trading day
     let daysUntilOpen = 0;
     let nextDay = et.day;
     do { daysUntilOpen++; nextDay = (nextDay + 1) % 7; } while (nextDay === 0 || nextDay === 6);
