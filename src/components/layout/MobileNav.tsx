@@ -97,9 +97,17 @@ export default function MobileNav() {
 
         {/* Center post button */}
         <button onClick={() => setShowModal(true)} className="flex-1 flex flex-col items-center gap-0.5 py-1.5">
-          <span className="w-9 h-9 rounded-full bg-[var(--green)] flex items-center justify-center shadow-lg shadow-[var(--green)]/30"
-            style={{ opacity: hoverIdx === 2 ? 0.8 : 1 }}>
-            <Plus className="w-5 h-5 text-black" />
+          <span
+            className="flex items-center justify-center shadow-lg shadow-[var(--green)]/40 transition-transform active:scale-95"
+            style={{
+              opacity: hoverIdx === 2 ? 0.85 : 1,
+              width: 44, height: 44,
+              borderRadius: 14,
+              background: `linear-gradient(135deg, #00C896 0%, #00a87e 100%)`,
+              boxShadow: '0 0 16px rgba(0,200,150,0.45)',
+            }}
+          >
+            <Plus className="w-5 h-5 text-black" strokeWidth={2.5} />
           </span>
         </button>
 
