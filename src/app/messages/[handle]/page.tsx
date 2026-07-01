@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Send, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   id: string;
@@ -40,19 +41,37 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!partner) return;
-    function loadMessages() {
-      fetch(`/api/messages?with=${partner!.id}`)
-        .then((r) => r.ok ? r.json() : [])
-        .then((d: Message[]) => {
-          setMessages((prev) => {
-            if (d.length !== prev.length) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-            return d;
-          });
-        });
-    }
-    loadMessages();
-    const interval = setInterval(loadMessages, 5000);
-    return () => clearInterval(interval);
+    // Initial load
+    fetch(`/api/messages?with=${partner.id}`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView(), 50); });
+
+    // Supabase Realtime subscription
+    const channel = supabase
+      .channel(`dm-${partner.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `receiver_id=eq.${partner.id}`,
+      }, () => {
+        fetch(`/api/messages?with=${partner.id}`)
+          .then((r) => r.ok ? r.json() : [])
+          .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
+      })
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `sender_id=eq.${partner.id}`,
+      }, () => {
+        fetch(`/api/messages?with=${partner.id}`)
+          .then((r) => r.ok ? r.json() : [])
+          .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [partner]);
 
   async function handleSend(e: React.FormEvent) {
