@@ -201,7 +201,7 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
 }) {
   const [showDelete, setShowDelete] = useState(false);
   const isOwner = c.user_id === userId;
-  const longPress = useLongPress(() => { if (isOwner) setShowDelete(true); }, 800);
+  const longPress = useLongPress(() => { if (isOwner) setShowDelete(true); }, 1500);
 
   return (
     <div className="flex gap-2.5 group select-none">
