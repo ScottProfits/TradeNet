@@ -426,8 +426,10 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="text-center pt-2 pb-4">
+      <div className="flex items-center justify-center gap-4 pt-2 pb-4">
         <a href="/privacy" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Privacy Policy</a>
+        <span className="text-gray-700">·</span>
+        <a href="/terms" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Terms of Service</a>
       </div>
 
       {cropSrc && (
