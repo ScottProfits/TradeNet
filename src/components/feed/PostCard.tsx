@@ -1,5 +1,5 @@
 "use client";
-import { Heart, Share2, MessageCircle, NotebookPen, Check, X } from "lucide-react";
+import { Heart, Share2, MessageCircle, Check, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import Image from "next/image";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
-import { useLongPress } from "@/hooks/useLongPress";
+import DotsMenu from "@/components/ui/DotsMenu";
 import { clsx } from "clsx";
 
 interface RealPost {
@@ -45,7 +45,6 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
   const initials = profile?.handle?.slice(0, 2).toUpperCase() ?? "?";
   const isOwner = userId === post.user_id;
 
-  const longPress = useLongPress(() => { if (isOwner) setShowDelete(true); }, 2000);
 
   async function handleLike() {
     if (!isSignedIn) return;
@@ -93,8 +92,7 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
 
   return (
     <div
-      className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 select-none"
-      {...longPress}
+      className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3"
     >
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -120,9 +118,10 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
           </p>
         </div>
         {isOwner && !editing && (
-          <button onClick={() => { setEditing(true); setEditContent(content); }} className="text-gray-500 hover:text-[var(--green)] transition-colors p-1">
-            <NotebookPen className="w-4 h-4" />
-          </button>
+          <DotsMenu
+            onEdit={() => { setEditing(true); setEditContent(content); }}
+            onDelete={() => setShowDelete(true)}
+          />
         )}
       </div>
 

@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Trash2, BarChart2, ShieldCheck, BookOpen, Check, NotebookPen } from "lucide-react";
+import { Heart, MessageCircle, Share2, BarChart2, ShieldCheck, NotebookPen, Check } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -9,9 +9,8 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
-import { useLongPress } from "@/hooks/useLongPress";
+import DotsMenu from "@/components/ui/DotsMenu";
 import TradingViewChart from "@/components/ui/TradingViewChart";
-import PostTradeModal from "@/components/feed/PostTradeModal";
 import EditTradeModal from "@/components/feed/EditTradeModal";
 
 interface TradeCardProps {
@@ -116,7 +115,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   }
 
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
-  const longPress = useLongPress(() => { if (isOwner) setShowDeleteSheet(true); }, 2000);
 
   async function handleDelete() {
     setShowDeleteSheet(false);
@@ -127,8 +125,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
 
   return (
     <div
-      className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity select-none", deleting && "opacity-40 pointer-events-none")}
-      {...longPress}
+      className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}
     >
       <div className="flex items-start gap-3">
         {/* Avatar with verified badge overlay */}
@@ -183,6 +180,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           </p>
         </div>
 
+        {isOwner && (
+          <DotsMenu
+            onEdit={() => setShowEditModal(true)}
+            onDelete={() => setShowDeleteSheet(true)}
+          />
+        )}
       </div>
 
       {localNotes && <p className="text-sm text-gray-300 leading-relaxed">{localNotes}</p>}
@@ -255,14 +258,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </button>
         <div className="ml-auto flex items-center gap-3">
           {isOwner && (
-            <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
-              <NotebookPen className="w-4 h-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </button>
-          )}
-          {isOwner && (
             <button onClick={() => setShowJournal((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showJournal ? "text-white" : "text-gray-500 hover:text-yellow-400")}>
-              <BookOpen className="w-4 h-4" />
+              <NotebookPen className="w-4 h-4" />
               <span className="hidden sm:inline">Journal</span>
             </button>
           )}
@@ -272,17 +269,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
               <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify"}</span>
             </button>
           )}
-          {isOwner && (
-            <button onClick={() => setShowDeleteSheet(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--red)] transition-colors">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
 
       {showJournal && isOwner && (
         <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3 space-y-2">
-          <p className="text-xs font-semibold text-yellow-400 flex items-center gap-1"><BookOpen className="w-3 h-3" /> Private Journal — only you can see this</p>
+          <p className="text-xs font-semibold text-yellow-400 flex items-center gap-1"><NotebookPen className="w-3 h-3" /> Private Journal — only you can see this</p>
           <textarea
             value={journalNote}
             onChange={(e) => setJournalNote(e.target.value)}
