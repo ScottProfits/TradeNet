@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Send, Trash2, CornerDownRight, Heart } from "lucide-react";
+import { Send, CornerDownRight, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import DeleteSheet from "@/components/ui/DeleteSheet";
+import { useLongPress } from "@/hooks/useLongPress";
 
 interface Comment {
   id: string;
@@ -197,8 +199,12 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
   onLike: (id: string) => void;
   isReply?: boolean;
 }) {
+  const [showDelete, setShowDelete] = useState(false);
+  const isOwner = c.user_id === userId;
+  const longPress = useLongPress(() => { if (isOwner) setShowDelete(true); });
+
   return (
-    <div className="flex gap-2.5 group">
+    <div className="flex gap-2.5 group select-none">
       <Link href={`/profile/${c.profiles?.handle}`} className="shrink-0">
         {c.profiles?.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -209,7 +215,7 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
           </div>
         )}
       </Link>
-      <div className="flex-1 bg-[var(--bg)] rounded-xl px-3 py-2">
+      <div className="flex-1 bg-[var(--bg)] rounded-xl px-3 py-2" {...longPress}>
         <div className="flex items-center justify-between mb-0.5">
           <div className="flex items-center gap-1.5">
             <Link href={`/profile/${c.profiles?.handle}`} className="text-xs font-semibold text-white hover:text-[var(--green)] transition-colors">
@@ -236,15 +242,17 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
                 <span className={liked ? "text-pink-400" : "text-gray-600"}>{likeCount}</span>
               )}
             </button>
-            {c.user_id === userId && (
-              <button onClick={() => onDelete(c.id)} className="text-gray-600 hover:text-[var(--red)] transition-colors p-0.5">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
           </div>
         </div>
         <p className="text-sm text-gray-300">{c.content}</p>
       </div>
+      {showDelete && (
+        <DeleteSheet
+          label={isReply ? "reply" : "comment"}
+          onConfirm={() => { setShowDelete(false); onDelete(c.id); }}
+          onCancel={() => setShowDelete(false)}
+        />
+      )}
     </div>
   );
 }

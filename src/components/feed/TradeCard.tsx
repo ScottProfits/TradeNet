@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy, Trash2, BarChart2, ShieldCheck, BookOpen, Check } from "lucide-react";
+import { Heart, MessageCircle, Share2, Copy, BarChart2, ShieldCheck, BookOpen, Check } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -8,6 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
+import DeleteSheet from "@/components/ui/DeleteSheet";
+import { useLongPress } from "@/hooks/useLongPress";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 
@@ -102,15 +104,21 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
     setVerifying(false);
   }
 
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const longPress = useLongPress(() => { if (isOwner) setShowDeleteSheet(true); });
+
   async function handleDelete() {
-    if (!confirm("Delete this trade?")) return;
+    setShowDeleteSheet(false);
     setDeleting(true);
     await fetch(`/api/trades/${trade.id}`, { method: "DELETE" });
     onDelete?.(trade.id);
   }
 
   return (
-    <div className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}>
+    <div
+      className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity select-none", deleting && "opacity-40 pointer-events-none")}
+      {...longPress}
+    >
       <div className="flex items-start gap-3">
         {/* Avatar with verified badge overlay */}
         <Link href={`/profile/${trader.handle}`} className="flex-shrink-0 relative">
@@ -164,16 +172,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           </p>
         </div>
 
-        {/* Delete button — only for post owner */}
-        {isOwner && (
-          <button
-            onClick={handleDelete}
-            className="text-gray-600 hover:text-[var(--red)] transition-colors p-1 flex-shrink-0"
-            title="Delete post"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       {trade.notes && <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>}
@@ -294,6 +292,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}
+        />
+      )}
+      {showDeleteSheet && (
+        <DeleteSheet
+          label="trade"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteSheet(false)}
         />
       )}
       {showCopyModal && (
