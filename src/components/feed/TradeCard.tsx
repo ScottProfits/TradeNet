@@ -105,7 +105,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   }
 
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
-  const longPress = useLongPress(() => { if (isOwner) setShowDeleteSheet(true); }, 1500);
+  const longPress = useLongPress(() => { if (isOwner) setShowDeleteSheet(true); }, 2000);
 
   async function handleDelete() {
     setShowDeleteSheet(false);
