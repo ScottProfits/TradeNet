@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/ui/themes";
@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   icons: {
     apple: "/apple-touch-icon-v3.png",
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#00C896",
 };
 
