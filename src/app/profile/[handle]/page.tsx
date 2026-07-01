@@ -188,26 +188,26 @@ export default function ProfilePage() {
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => profile.avatar_url && setAvatarOpen(true)}
-              className={`w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
-            >
-              {profile.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatar_url} alt={profile.handle} className="w-16 h-16 rounded-full object-cover" />
-              ) : initials}
-            </button>
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={() => profile.avatar_url && setAvatarOpen(true)}
+                className={`w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
+              >
+                {profile.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.avatar_url} alt={profile.handle} className="w-16 h-16 rounded-full object-cover" />
+                ) : initials}
+              </button>
+              {profile.verified && (
+                <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-2 py-0.5">
+                  <VerifiedBadge className="w-3 h-3" />
+                  <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
+                </span>
+              )}
+              {profile.handle === "scottprofits" && <FounderBadge />}
+            </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
-                {profile.verified && (
-                  <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-2 py-0.5">
-                    <VerifiedBadge className="w-3.5 h-3.5" />
-                    <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
-                  </span>
-                )}
-                {profile.handle === "scottprofits" && <FounderBadge />}
-              </div>
+              <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
               {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {profile.trading_style && (

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, Users, Flame, Zap, Star, ArrowUpRight, UserPlus } from "lucide-react";
+import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 
@@ -156,7 +156,7 @@ export default function ExploreTab() {
           <Link href="/explore/strategies" className="flex items-center gap-2 mb-3 group w-fit">
             <Zap className="w-5 h-5 text-yellow-400" />
             <h2 className="font-semibold text-white group-hover:text-yellow-400 transition-colors">Hot Strategies This Week</h2>
-            <ArrowUpRight className="w-4 h-4 text-gray-600 group-hover:text-yellow-400 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-yellow-400 transition-colors" />
           </Link>
           {loading ? (
             <div className="grid grid-cols-2 gap-3">
@@ -187,7 +187,7 @@ export default function ExploreTab() {
         <Link href="/explore/trending" className="flex items-center gap-2 mb-3 group w-fit">
           <Flame className="w-5 h-5 text-orange-400" />
           <h2 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Trending This Week</h2>
-          <ArrowUpRight className="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition-colors" />
         </Link>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

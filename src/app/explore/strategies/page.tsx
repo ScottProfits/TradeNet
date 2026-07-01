@@ -1,19 +1,64 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Zap, ArrowLeft } from "lucide-react";
+import { Zap, ArrowLeft, X, UserPlus, Check } from "lucide-react";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface HotStrategy { name: string; count: number; winRate: number; avgPnl: number; }
+
+interface StrategyUser {
+  id: string;
+  handle: string;
+  avatar_url: string;
+  verified: boolean;
+  trading_style: string | null;
+  pnl: number;
+  trades: number;
+}
+
+function Avatar({ url, handle }: { url: string; handle: string }) {
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={handle} className="w-10 h-10 rounded-full object-cover shrink-0" />
+  ) : (
+    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+      {handle.slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
 
 export default function StrategiesPage() {
   const [strategies, setStrategies] = useState<HotStrategy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<HotStrategy | null>(null);
+  const [users, setUsers] = useState<StrategyUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [following, setFollowing] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch("/api/explore")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.hotStrategies) setStrategies(d.hotStrategies); setLoading(false); });
   }, []);
+
+  async function openStrategy(s: HotStrategy) {
+    setSelected(s);
+    setUsersLoading(true);
+    const res = await fetch(`/api/explore/strategy-users?name=${encodeURIComponent(s.name)}`);
+    const data = res.ok ? await res.json() : [];
+    setUsers(data);
+    setUsersLoading(false);
+  }
+
+  async function toggleFollow(userId: string, handle: string) {
+    const isFollowing = following[userId];
+    setFollowing((f) => ({ ...f, [userId]: !isFollowing }));
+    await fetch("/api/follow", {
+      method: isFollowing ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetHandle: handle }),
+    });
+  }
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -28,7 +73,7 @@ export default function StrategiesPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-24 bg-[var(--card)] rounded-xl animate-pulse" />
+            <div key={i} className="h-20 bg-[var(--card)] rounded-xl animate-pulse" />
           ))}
         </div>
       ) : strategies.length === 0 ? (
@@ -36,9 +81,10 @@ export default function StrategiesPage() {
       ) : (
         <div className="space-y-3">
           {strategies.map((s, i) => (
-            <div
+            <button
               key={s.name}
-              className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-4 hover:border-yellow-400/30 transition-colors"
+              onClick={() => openStrategy(s)}
+              className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-4 hover:border-yellow-400/40 transition-colors"
             >
               <span className="text-gray-600 font-mono text-sm w-5 text-center shrink-0">{i + 1}</span>
               <div className="flex-1 min-w-0">
@@ -52,8 +98,84 @@ export default function StrategiesPage() {
               <p className={`text-sm font-bold shrink-0 ${s.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
                 {s.avgPnl >= 0 ? "+" : ""}${Math.abs(s.avgPnl).toLocaleString()} avg
               </p>
-            </div>
+            </button>
           ))}
+        </div>
+      )}
+
+      {/* Strategy detail drawer */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={() => setSelected(null)}>
+          <div
+            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border)]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <h2 className="font-bold text-white">{selected.name}</h2>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                  <span>{selected.count} trades</span>
+                  <span>·</span>
+                  <span className="text-[var(--green)]">{selected.winRate}% win</span>
+                  <span>·</span>
+                  <span className={selected.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}>
+                    {selected.avgPnl >= 0 ? "+" : ""}${Math.abs(selected.avgPnl).toLocaleString()} avg
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white transition-colors p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User list */}
+            <div className="overflow-y-auto flex-1 p-4 space-y-3">
+              <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-2">Top Traders Using This Strategy</p>
+              {usersLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-16 bg-[var(--bg)] rounded-xl animate-pulse" />
+                ))
+              ) : users.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-8">No traders found for this strategy.</p>
+              ) : (
+                users.map((u) => (
+                  <div key={u.id} className="flex items-center gap-3 bg-[var(--bg)] rounded-xl p-3">
+                    <Link href={`/profile/${u.handle}`} onClick={() => setSelected(null)}>
+                      <Avatar url={u.avatar_url} handle={u.handle} />
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/profile/${u.handle}`} onClick={() => setSelected(null)} className="flex items-center gap-1 hover:text-[var(--green)] transition-colors">
+                        <span className="text-sm font-semibold text-white truncate">@{u.handle}</span>
+                        {u.verified && <VerifiedBadge className="w-3 h-3 shrink-0" />}
+                      </Link>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>{u.trades} trades</span>
+                        <span>·</span>
+                        <span className={u.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}>
+                          {u.pnl >= 0 ? "+" : ""}${Math.abs(u.pnl).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleFollow(u.id, u.handle)}
+                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors shrink-0 ${
+                        following[u.id]
+                          ? "bg-[var(--green)]/20 text-[var(--green)] border-[var(--green)]/40"
+                          : "border-[var(--border)] text-gray-400 hover:text-white hover:border-white/30"
+                      }`}
+                    >
+                      {following[u.id] ? <Check className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                      {following[u.id] ? "Following" : "Follow"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
