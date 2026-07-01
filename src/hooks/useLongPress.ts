@@ -24,5 +24,6 @@ export function useLongPress(onLongPress: () => void, delay = 500) {
     onTouchStart: start,
     onTouchEnd: cancel,
     onTouchCancel: cancel,
+    onTouchMove: cancel,
   };
 }
