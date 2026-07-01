@@ -153,10 +153,11 @@ export default function ExploreTab() {
       {/* Hot Strategies */}
       {(loading || (data?.hotStrategies?.length ?? 0) > 0) && (
         <section>
-          <div className="flex items-center gap-2 mb-3">
+          <Link href="/explore/strategies" className="flex items-center gap-2 mb-3 group w-fit">
             <Zap className="w-5 h-5 text-yellow-400" />
-            <h2 className="font-semibold text-white">Hot Strategies This Week</h2>
-          </div>
+            <h2 className="font-semibold text-white group-hover:text-yellow-400 transition-colors">Hot Strategies This Week</h2>
+            <ArrowUpRight className="w-4 h-4 text-gray-600 group-hover:text-yellow-400 transition-colors" />
+          </Link>
           {loading ? (
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-[var(--card)] rounded-xl animate-pulse" />)}
@@ -183,10 +184,11 @@ export default function ExploreTab() {
 
       {/* Trending Tickers */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
+        <Link href="/explore/trending" className="flex items-center gap-2 mb-3 group w-fit">
           <Flame className="w-5 h-5 text-orange-400" />
-          <h2 className="font-semibold text-white">Trending This Week</h2>
-        </div>
+          <h2 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Trending This Week</h2>
+          <ArrowUpRight className="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition-colors" />
+        </Link>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {Array.from({ length: 10 }).map((_, i) => <div key={i} className="h-16 bg-[var(--card)] rounded-xl animate-pulse" />)}
