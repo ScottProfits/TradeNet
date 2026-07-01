@@ -105,9 +105,10 @@ export default function StrategiesPage() {
 
       {/* Strategy detail drawer */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setSelected(null)}>
           <div
-            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
+            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl w-full max-w-lg flex flex-col"
+            style={{ height: "75vh" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
