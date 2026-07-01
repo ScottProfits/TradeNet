@@ -107,7 +107,7 @@ export default function StrategiesPage() {
       {selected && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={() => setSelected(null)}>
           <div
-            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
