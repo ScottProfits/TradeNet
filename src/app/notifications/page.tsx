@@ -109,12 +109,15 @@ export default function NotificationsPage() {
                 <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">{group}</p>
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
                   {items.map((n) => (
-                    <Link
+                    <div
                       key={n.id}
-                      href={n.trade_id ? `/trade/${n.trade_id}` : `/profile/${n.actor?.handle}`}
                       className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
                     >
-                      <div className="relative shrink-0">
+                      <Link
+                        href={`/profile/${n.actor?.handle}`}
+                        className="relative shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {n.actor?.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={n.actor.avatar_url} alt={n.actor.handle} className="w-10 h-10 rounded-full object-cover" />
@@ -126,16 +129,19 @@ export default function NotificationsPage() {
                         <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
                           {icon(n.type)}
                         </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
+                      </Link>
+                      <Link
+                        href={n.trade_id ? `/trade/${n.trade_id}` : `/profile/${n.actor?.handle}`}
+                        className="flex-1 min-w-0"
+                      >
                         <p className="text-sm text-gray-200">
                           <span className="font-semibold text-white">@{n.actor?.handle}</span>
                           {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
                           {" "}{message(n.type)}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                   ))}
                 </div>
               </div>
