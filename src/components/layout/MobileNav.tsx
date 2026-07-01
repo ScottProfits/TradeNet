@@ -71,7 +71,12 @@ export default function MobileNav() {
   }
 
   const tabColor = (idx: number) =>
-    hoverIdx === idx || isActive(idx) ? "var(--green)" : "#6b7280";
+    hoverIdx === idx || isActive(idx) ? "var(--green)" : "rgba(255,255,255,0.35)";
+
+  const tabGlow = (idx: number) =>
+    hoverIdx === idx || isActive(idx)
+      ? "drop-shadow(0 0 6px rgba(0,200,150,0.8))"
+      : "none";
 
   return (
     <>
@@ -80,18 +85,23 @@ export default function MobileNav() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => setHoverIdx(null)}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg)] border-t border-[var(--border)]/50 flex items-center lg:hidden"
-        style={{ borderTopWidth: "0.5px" }}
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center lg:hidden"
+        style={{
+          background: "rgba(15, 17, 23, 0.75)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "0.5px solid rgba(255,255,255,0.06)",
+        }}
       >
         {/* Home */}
-        <Link href="/feed" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors" style={{ color: tabColor(0) }}>
-          <Home className="w-5 h-5" />
+        <Link href="/feed" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-all" style={{ color: tabColor(0) }}>
+          <Home className="w-5 h-5" style={{ filter: tabGlow(0) }} />
           Home
         </Link>
 
         {/* Market */}
-        <Link href="/market" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors" style={{ color: tabColor(1) }}>
-          <BarChart2 className="w-5 h-5" />
+        <Link href="/market" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-all" style={{ color: tabColor(1) }}>
+          <BarChart2 className="w-5 h-5" style={{ filter: tabGlow(1) }} />
           Market
         </Link>
 
@@ -112,19 +122,20 @@ export default function MobileNav() {
         </button>
 
         {/* Alerts */}
-        <Link href="/notifications" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors relative" style={{ color: tabColor(3) }}>
-          <Bell className="w-5 h-5" />
+        <Link href="/notifications" className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-all relative" style={{ color: tabColor(3) }}>
+          <Bell className="w-5 h-5" style={{ filter: tabGlow(3) }} />
           Alerts
         </Link>
 
         {/* Profile */}
-        <Link href={profileHref} className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors" style={{ color: tabColor(4) }}>
+        <Link href={profileHref} className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-all" style={{ color: tabColor(4) }}>
           {profileAvatar || user?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={(profileAvatar || user?.imageUrl) as string}
               alt="Profile"
               className={clsx("w-6 h-6 rounded-full object-cover", (hoverIdx === 4 || pathname.startsWith("/profile")) ? "ring-2 ring-[var(--green)]" : "")}
+              style={{ filter: tabGlow(4) }}
             />
           ) : (
             <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
