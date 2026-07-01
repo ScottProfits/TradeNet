@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { data: updated, error } = await supabase
     .from("trades")
-    .update({ ticker, direction, entry: entryNum, exit: exitNum, shares: sharesNum, pnl, pnl_percent, caption, strategy })
+    .update({ ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy })
     .eq("id", id)
     .select()
     .single();

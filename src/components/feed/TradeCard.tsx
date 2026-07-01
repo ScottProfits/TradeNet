@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy, BarChart2, ShieldCheck, BookOpen, Check, Pencil } from "lucide-react";
+import { Heart, MessageCircle, Share2, Trash2, BarChart2, ShieldCheck, BookOpen, Check, NotebookPen } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -256,7 +256,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         <div className="ml-auto flex items-center gap-3">
           {isOwner && (
             <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
-              <Pencil className="w-4 h-4" />
+              <NotebookPen className="w-4 h-4" />
               <span className="hidden sm:inline">Edit</span>
             </button>
           )}
@@ -272,10 +272,11 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
               <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify"}</span>
             </button>
           )}
-          <button onClick={() => setShowCopyModal(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
-            <Copy className="w-4 h-4" />
-            <span className="hidden sm:inline">Copy</span>
-          </button>
+          {isOwner && (
+            <button onClick={() => setShowDeleteSheet(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--red)] transition-colors">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -324,13 +325,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           initial={{ ticker: localTicker, direction: localDirection as "Long" | "Short", entry, exit, shares: rawShares, notes: localNotes, strategy: localStrategy }}
           onSaved={(u) => { setLocalTicker(u.ticker); setLocalDirection(u.direction === "LONG" ? "Long" : "Short"); setLocalPnl(u.pnl); setLocalPnlPct(u.pnlPct); setLocalNotes(u.notes); setLocalStrategy(u.strategy); }}
           onClose={() => setShowEditModal(false)}
-        />
-      )}
-      {showCopyModal && (
-        <PostTradeModal
-          onClose={() => setShowCopyModal(false)}
-          onPosted={() => setShowCopyModal(false)}
-          prefill={{ ticker: trade.ticker, direction: trade.direction as "LONG" | "SHORT", shares: String(trade.shares ?? "") }}
         />
       )}
     </div>

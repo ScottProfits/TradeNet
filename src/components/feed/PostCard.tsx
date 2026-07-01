@@ -1,5 +1,5 @@
 "use client";
-import { Heart, Share2, MessageCircle, Pencil, Check, X } from "lucide-react";
+import { Heart, Share2, MessageCircle, NotebookPen, Check, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
@@ -121,7 +121,7 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
         </div>
         {isOwner && !editing && (
           <button onClick={() => { setEditing(true); setEditContent(content); }} className="text-gray-500 hover:text-[var(--green)] transition-colors p-1">
-            <Pencil className="w-4 h-4" />
+            <NotebookPen className="w-4 h-4" />
           </button>
         )}
       </div>
