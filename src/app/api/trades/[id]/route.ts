@@ -30,3 +30,39 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   await supabase.from("trades").delete().eq("id", id);
   return new Response("OK", { status: 200 });
 }
+
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const { id } = await params;
+  const { ticker, direction, entry, exit, shares, caption, strategy } = await req.json();
+
+  const { data: trade } = await supabase.from("trades").select("user_id").eq("id", id).single();
+  if (!trade) return new Response("Not found", { status: 404 });
+  if (trade.user_id !== userId) return new Response("Forbidden", { status: 403 });
+
+  const entryNum = parseFloat(entry);
+  const exitNum = parseFloat(exit);
+  const sharesNum = parseFloat(shares) || 1;
+  let pnl = 0;
+  let pnl_percent = 0;
+  if (!isNaN(entryNum) && !isNaN(exitNum) && entryNum > 0) {
+    pnl = direction === "LONG"
+      ? (exitNum - entryNum) * sharesNum
+      : (entryNum - exitNum) * sharesNum;
+    pnl_percent = direction === "LONG"
+      ? ((exitNum - entryNum) / entryNum) * 100
+      : ((entryNum - exitNum) / entryNum) * 100;
+  }
+
+  const { data: updated, error } = await supabase
+    .from("trades")
+    .update({ ticker, direction, entry: entryNum, exit: exitNum, shares: sharesNum, pnl, pnl_percent, caption, strategy })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) return new Response(error.message, { status: 500 });
+  return Response.json(updated);
+}

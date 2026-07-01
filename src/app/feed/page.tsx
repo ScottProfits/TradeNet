@@ -19,6 +19,7 @@ interface RealTrade {
   direction: "LONG" | "SHORT";
   entry: number;
   exit: number;
+  shares: number;
   pnl: number;
   pnl_percent: number;
   caption: string;
@@ -156,9 +157,9 @@ export default function FeedPage() {
             : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
                 if (item.type === "trade") {
                   const { trade, trader } = realTradeToCardProps(item);
-                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} onDelete={handleDelete} />;
+                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
                 }
-                return <PostCard key={item.id} post={item} />;
+                return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
               })
         )}
 
@@ -176,11 +177,14 @@ export default function FeedPage() {
                 likedByMe={item.liked_by_me}
                 verifiedPnl={item.verified_pnl}
                 journalNote={item.journal_note ?? undefined}
+                entry={item.entry}
+                exit={item.exit}
+                rawShares={item.shares ?? 0}
                 onDelete={handleDelete}
               />
             );
           }
-          return <PostCard key={item.id} post={item} />;
+          return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
         })}
 
         {tab === "feed" && feedTrades.map((trade) => {

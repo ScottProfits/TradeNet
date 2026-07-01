@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, Copy, BarChart2, ShieldCheck, BookOpen, Check } from "lucide-react";
+import { Heart, MessageCircle, Share2, Copy, BarChart2, ShieldCheck, BookOpen, Check, Pencil } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import DeleteSheet from "@/components/ui/DeleteSheet";
 import { useLongPress } from "@/hooks/useLongPress";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 import PostTradeModal from "@/components/feed/PostTradeModal";
+import EditTradeModal from "@/components/feed/EditTradeModal";
 
 interface TradeCardProps {
   trade: Trade;
@@ -22,10 +23,13 @@ interface TradeCardProps {
   likedByMe?: boolean;
   verifiedPnl?: boolean;
   journalNote?: string;
+  entry?: number;
+  exit?: number;
+  rawShares?: number;
   onDelete?: (id: string) => void;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy, likedByMe, verifiedPnl, journalNote: initialJournal, onDelete }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(trade.likes);
@@ -42,7 +46,14 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [isVerified, setIsVerified] = useState(verifiedPnl ?? false);
   const [verifying, setVerifying] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
-  const positive = trade.pnl >= 0;
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [localTicker, setLocalTicker] = useState(trade.ticker);
+  const [localDirection, setLocalDirection] = useState(trade.direction);
+  const [localPnl, setLocalPnl] = useState(trade.pnl);
+  const [localPnlPct, setLocalPnlPct] = useState(trade.pnlPct);
+  const [localNotes, setLocalNotes] = useState(trade.notes ?? "");
+  const [localStrategy, setLocalStrategy] = useState(initialStrategy ?? "");
+  const positive = localPnl >= 0;
   const isOwner = userId === trade.traderId;
 
   async function handleLike() {
@@ -159,7 +170,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
                   : "bg-[var(--red)]/20 text-[var(--red)]"
               )}
             >
-              {positive ? "+" : ""}${trade.pnl.toLocaleString()} today
+              {positive ? "+" : ""}${localPnl.toLocaleString()} today
             </span>
             {isVerified && (
               <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--green)] bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
@@ -174,10 +185,10 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
 
       </div>
 
-      {trade.notes && <p className="text-sm text-gray-300 leading-relaxed">{trade.notes}</p>}
-      {strategy && (
+      {localNotes && <p className="text-sm text-gray-300 leading-relaxed">{localNotes}</p>}
+      {localStrategy && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">📊 {strategy}</span>
+          <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">📊 {localStrategy}</span>
         </div>
       )}
 
@@ -200,17 +211,17 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
 
       <div className="bg-[var(--bg)] rounded-lg p-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-bold text-white text-base sm:text-lg truncate">{trade.ticker}</p>
+          <p className="font-bold text-white text-base sm:text-lg truncate">{localTicker}</p>
           <p className="text-xs text-gray-500 truncate">
-            {trade.direction} · {trade.shares > 0 ? `${trade.shares} ${trade.direction === "Long" ? "shares" : "contracts"} · ` : ""}{trade.time}
+            {localDirection} · {trade.shares > 0 ? `${trade.shares} ${localDirection === "Long" ? "shares" : "contracts"} · ` : ""}{trade.time}
           </p>
         </div>
         <div className="text-right shrink-0">
           <p className={clsx("font-bold text-base sm:text-lg", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
-            {positive ? "+" : ""}${trade.pnl.toLocaleString()}
+            {positive ? "+" : ""}${localPnl.toLocaleString()}
           </p>
           <p className={clsx("text-sm", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
-            {positive ? "+" : ""}{trade.pnlPct}%
+            {positive ? "+" : ""}{localPnlPct.toFixed(2)}%
           </p>
         </div>
       </div>
@@ -243,6 +254,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           Chart
         </button>
         <div className="ml-auto flex items-center gap-3">
+          {isOwner && (
+            <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors">
+              <Pencil className="w-4 h-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
+          )}
           {isOwner && (
             <button onClick={() => setShowJournal((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showJournal ? "text-white" : "text-gray-500 hover:text-yellow-400")}>
               <BookOpen className="w-4 h-4" />
@@ -299,6 +316,14 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           label="trade"
           onConfirm={handleDelete}
           onCancel={() => setShowDeleteSheet(false)}
+        />
+      )}
+      {showEditModal && (
+        <EditTradeModal
+          tradeId={trade.id}
+          initial={{ ticker: localTicker, direction: localDirection as "Long" | "Short", entry, exit, shares: rawShares, notes: localNotes, strategy: localStrategy }}
+          onSaved={(u) => { setLocalTicker(u.ticker); setLocalDirection(u.direction === "LONG" ? "Long" : "Short"); setLocalPnl(u.pnl); setLocalPnlPct(u.pnlPct); setLocalNotes(u.notes); setLocalStrategy(u.strategy); }}
+          onClose={() => setShowEditModal(false)}
         />
       )}
       {showCopyModal && (
