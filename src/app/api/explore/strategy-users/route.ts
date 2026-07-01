@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function GET(req: NextRequest) {
   const name = req.nextUrl.searchParams.get("name");
@@ -13,7 +8,7 @@ export async function GET(req: NextRequest) {
   const { data: trades, error } = await supabase
     .from("trades")
     .select("user_id, pnl")
-    .ilike("strategy", name);
+    .eq("strategy", name);
 
   if (error) console.error("strategy-users trades error:", error);
   if (!trades?.length) return NextResponse.json([]);
