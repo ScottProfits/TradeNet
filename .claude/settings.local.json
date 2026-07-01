@@ -84,7 +84,10 @@
       "Bash(node -e \"const webpush = require\\('./node_modules/web-push'\\); const keys = webpush.generateVAPIDKeys\\(\\); console.log\\('PUBLIC:', keys.publicKey\\); console.log\\('PRIVATE:', keys.privateKey\\);\")",
       "Bash(node -e \"const fs=require\\('fs'\\); const b64=fs.readFileSync\\('/Users/a.scott/TradeNet/public/apple-touch-icon-v3.png'\\).toString\\('base64'\\); console.log\\(b64.length\\);\")",
       "Bash(git -C /Users/a.scott/TradeNet log --oneline -5)",
-      "Bash(git -C /Users/a.scott/TradeNet log --oneline)"
+      "Bash(git -C /Users/a.scott/TradeNet log --oneline)",
+      "Bash(xcode-select --version)",
+      "Bash(xcodebuild -version)",
+      "Bash(npx cap *)"
     ]
   }
 }
