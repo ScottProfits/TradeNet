@@ -82,3 +82,17 @@ create policy "Users can unlike" on public.likes for delete using (true);
 
 create policy "Comments are viewable by everyone" on public.comments for select using (true);
 create policy "Users can comment" on public.comments for insert with check (true);
+
+-- Comment likes table
+create table if not exists public.comment_likes (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references public.profiles(id) on delete cascade,
+  comment_id uuid not null references public.comments(id) on delete cascade,
+  created_at timestamp with time zone default now(),
+  unique(user_id, comment_id)
+);
+
+alter table public.comment_likes enable row level security;
+create policy "Comment likes viewable by everyone" on public.comment_likes for select using (true);
+create policy "Users can like comments" on public.comment_likes for insert with check (true);
+create policy "Users can unlike comments" on public.comment_likes for delete using (true);

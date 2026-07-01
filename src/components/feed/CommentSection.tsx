@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Send, Trash2, CornerDownRight } from "lucide-react";
+import { Send, Trash2, CornerDownRight, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -28,9 +28,11 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
-  const [replyTo, setReplyTo] = useState<{ id: string; handle: string } | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; handle: string; topLevelId: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   const entityId = tradeId ?? postId ?? "";
@@ -40,14 +42,24 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     if (!entityId) return;
     fetch(`/api/comments?${paramKey}=${entityId}`)
       .then((r) => r.ok ? r.json() : [])
-      .then((d) => { setComments(d); setLoading(false); onCountLoaded?.(d.length); });
+      .then((d: Comment[]) => {
+        setComments(d);
+        setLoading(false);
+        onCountLoaded?.(d.length);
+        if (d.length) {
+          const ids = d.map((c) => c.id).join(",");
+          fetch(`/api/comment-likes?commentIds=${ids}`)
+            .then((r) => r.ok ? r.json() : { counts: {}, liked: {} })
+            .then(({ counts, liked }) => { setLikeCounts(counts); setLikedMap(liked); });
+        }
+      });
   }, [entityId, paramKey]);
 
-  function startReply(id: string, handle: string) {
-    setReplyTo({ id, handle });
+  const startReply = useCallback((commentId: string, handle: string, topLevelId: string) => {
+    setReplyTo({ id: commentId, handle, topLevelId });
     setText(`@${handle} `);
     setTimeout(() => inputRef.current?.focus(), 50);
-  }
+  }, []);
 
   function cancelReply() {
     setReplyTo(null);
@@ -58,14 +70,18 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     e.preventDefault();
     if (!text.trim() || posting) return;
     setPosting(true);
+    // Always attach reply to the top-level comment so all replies stay flat under it
+    const parentId = replyTo?.topLevelId ?? null;
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId: replyTo?.id ?? null }),
+      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId }),
     });
     if (res.ok) {
       const comment = await res.json();
       setComments((c) => [...c, comment]);
+      setLikeCounts((prev) => ({ ...prev, [comment.id]: 0 }));
+      setLikedMap((prev) => ({ ...prev, [comment.id]: false }));
       setText("");
       setReplyTo(null);
       onCommentAdded?.();
@@ -83,9 +99,20 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     onCommentDeleted?.();
   }
 
-  // Separate top-level and replies
+  async function handleLike(commentId: string) {
+    if (!isSignedIn) return;
+    const wasLiked = likedMap[commentId];
+    setLikedMap((prev) => ({ ...prev, [commentId]: !wasLiked }));
+    setLikeCounts((prev) => ({ ...prev, [commentId]: (prev[commentId] ?? 0) + (wasLiked ? -1 : 1) }));
+    await fetch("/api/comment-likes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commentId }),
+    });
+  }
+
   const topLevel = comments.filter((c) => !c.parent_id);
-  const replies = comments.filter((c) => c.parent_id);
+  const repliesFor = (id: string) => comments.filter((c) => c.parent_id === id);
 
   return (
     <div className="space-y-3 pt-1 border-t border-[var(--border)]">
@@ -102,17 +129,22 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
                 <CommentRow
                   c={c}
                   userId={userId}
+                  liked={likedMap[c.id] ?? false}
+                  likeCount={likeCounts[c.id] ?? 0}
                   onDelete={handleDelete}
-                  onReply={startReply}
+                  onReply={(id, handle) => startReply(id, handle, c.id)}
+                  onLike={handleLike}
                 />
-                {/* Replies */}
-                {replies.filter((r) => r.parent_id === c.id).map((r) => (
+                {repliesFor(c.id).map((r) => (
                   <div key={r.id} className="ml-9 mt-2">
                     <CommentRow
                       c={r}
                       userId={userId}
+                      liked={likedMap[r.id] ?? false}
+                      likeCount={likeCounts[r.id] ?? 0}
                       onDelete={handleDelete}
-                      onReply={(_, handle) => startReply(c.id, handle)}
+                      onReply={(_, handle) => startReply(r.id, handle, c.id)}
+                      onLike={handleLike}
                       isReply
                     />
                   </div>
@@ -155,11 +187,14 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   );
 }
 
-function CommentRow({ c, userId, onDelete, onReply, isReply }: {
+function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, isReply }: {
   c: Comment;
   userId: string | null | undefined;
+  liked: boolean;
+  likeCount: number;
   onDelete: (id: string) => void;
   onReply: (id: string, handle: string) => void;
+  onLike: (id: string) => void;
   isReply?: boolean;
 }) {
   return (
@@ -185,12 +220,21 @@ function CommentRow({ c, userId, onDelete, onReply, isReply }: {
               {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onReply(c.id, c.profiles?.handle)}
-              className="text-xs text-gray-600 hover:text-[var(--green)] transition-colors px-1"
+              className="text-xs text-gray-600 hover:text-[var(--green)] transition-colors"
             >
               Reply
+            </button>
+            <button
+              onClick={() => onLike(c.id)}
+              className="flex items-center gap-1 text-xs transition-colors"
+            >
+              <Heart className={`w-3 h-3 transition-colors ${liked ? "fill-pink-400 text-pink-400" : "text-gray-600 hover:text-pink-400"}`} />
+              {likeCount > 0 && (
+                <span className={liked ? "text-pink-400" : "text-gray-600"}>{likeCount}</span>
+              )}
             </button>
             {c.user_id === userId && (
               <button onClick={() => onDelete(c.id)} className="text-gray-600 hover:text-[var(--red)] transition-colors p-0.5">
