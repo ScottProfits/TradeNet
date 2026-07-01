@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Zap, ArrowLeft, X, UserPlus, Check } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface HotStrategy { name: string; count: number; winRate: number; avgPnl: number; }
@@ -28,6 +29,7 @@ function Avatar({ url, handle }: { url: string; handle: string }) {
 }
 
 export default function StrategiesPage() {
+  const { userId } = useAuth();
   const [strategies, setStrategies] = useState<HotStrategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<HotStrategy | null>(null);
@@ -161,17 +163,19 @@ export default function StrategiesPage() {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => toggleFollow(u.id, u.handle)}
-                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors shrink-0 ${
-                        following[u.id]
-                          ? "bg-[var(--green)]/20 text-[var(--green)] border-[var(--green)]/40"
-                          : "border-[var(--border)] text-gray-400 hover:text-white hover:border-white/30"
-                      }`}
-                    >
-                      {following[u.id] ? <Check className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
-                      {following[u.id] ? "Following" : "Follow"}
-                    </button>
+                    {u.id !== userId && (
+                      <button
+                        onClick={() => toggleFollow(u.id, u.handle)}
+                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors shrink-0 ${
+                          following[u.id]
+                            ? "bg-[var(--green)]/20 text-[var(--green)] border-[var(--green)]/40"
+                            : "border-[var(--border)] text-gray-400 hover:text-white hover:border-white/30"
+                        }`}
+                      >
+                        {following[u.id] ? <Check className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                        {following[u.id] ? "Following" : "Follow"}
+                      </button>
+                    )}
                   </div>
                 ))
               )}
