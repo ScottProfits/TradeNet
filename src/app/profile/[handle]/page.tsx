@@ -221,7 +221,7 @@ export default function ProfilePage() {
               {profile.handle === "scottprofits" && <FounderBadge />}
               {profile.logo_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain rounded-lg mt-1" />
+                <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain mt-1" style={{ mixBlendMode: "screen" }} />
               )}
             </div>
             <div>
