@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { NotebookPen, Trash2 } from "lucide-react";
+import { PenLine, Trash2 } from "lucide-react";
 
 interface DotsMenuProps {
   onEdit: () => void;
@@ -26,8 +26,8 @@ export default function DotsMenu({ onEdit, onDelete }: DotsMenuProps) {
         className="flex flex-col items-center justify-center gap-[3px] p-1.5 text-gray-500 hover:text-white transition-colors"
         aria-label="More options"
       >
-        <span className="w-1 h-1 rounded-full bg-current" />
-        <span className="w-1 h-1 rounded-full bg-current" />
+        <span className="w-[5px] h-[5px] rounded-[1px] bg-current" />
+        <span className="w-[5px] h-[5px] rounded-[1px] bg-current" />
       </button>
 
       {open && (
@@ -36,7 +36,7 @@ export default function DotsMenu({ onEdit, onDelete }: DotsMenuProps) {
             onClick={() => { setOpen(false); onEdit(); }}
             className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <NotebookPen className="w-4 h-4" /> Edit
+            <PenLine className="w-4 h-4" /> Edit
           </button>
           <div className="h-px bg-[var(--border)]" />
           <button
