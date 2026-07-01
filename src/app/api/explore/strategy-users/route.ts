@@ -10,15 +10,24 @@ export async function GET(req: NextRequest) {
   const name = req.nextUrl.searchParams.get("name");
   if (!name) return NextResponse.json([]);
 
+  // Try last 30 days first, fall back to all-time if empty
   const since = new Date();
-  since.setDate(since.getDate() - 7);
+  since.setDate(since.getDate() - 30);
 
-  // Find trades this week using this strategy, group by user
-  const { data: trades } = await supabase
+  let { data: trades } = await supabase
     .from("trades")
     .select("user_id, pnl")
-    .eq("strategy", name)
+    .ilike("strategy", name)
     .gte("created_at", since.toISOString());
+
+  // Fall back to all-time
+  if (!trades?.length) {
+    const res = await supabase
+      .from("trades")
+      .select("user_id, pnl")
+      .ilike("strategy", name);
+    trades = res.data;
+  }
 
   if (!trades?.length) return NextResponse.json([]);
 
