@@ -481,7 +481,7 @@ export default function ProfilePage() {
           <img
             src={profile.avatar_url}
             alt={profile.handle}
-            className="w-72 h-72 sm:w-96 sm:h-96 rounded-full object-cover shadow-2xl"
+            className="w-[90vw] h-[90vw] max-w-lg max-h-[80vh] rounded-full object-cover shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
