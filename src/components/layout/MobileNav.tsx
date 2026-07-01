@@ -80,17 +80,23 @@ export default function MobileNav() {
 
   return (
     <>
+      {/* Transparent wrapper — full width but invisible, just for touch area */}
       <div
         ref={navRef}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => setHoverIdx(null)}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center lg:hidden"
-        style={{
-          background: "rgba(15, 17, 23, 0.35)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderTop: "0.5px solid rgba(255,255,255,0.06)",
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-center pb-5 lg:hidden"
+        style={{ background: "transparent" }}
+      >
+      {/* Floating pill */}
+      <div className="flex items-center w-[92%] max-w-sm" style={{
+          background: "rgba(15, 17, 23, 0.55)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "0.5px solid rgba(255,255,255,0.09)",
+          borderRadius: 999,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
         }}
       >
         {/* Home */}
@@ -106,18 +112,18 @@ export default function MobileNav() {
         </Link>
 
         {/* Center post button */}
-        <button onClick={() => setShowModal(true)} className="flex-1 flex flex-col items-center gap-0.5 py-1.5">
+        <button onClick={() => setShowModal(true)} className="flex-1 flex flex-col items-center gap-0.5 py-2">
           <span
-            className="flex items-center justify-center shadow-lg shadow-[var(--green)]/40 transition-transform active:scale-95"
+            className="flex items-center justify-center transition-transform active:scale-95"
             style={{
               opacity: hoverIdx === 2 ? 0.85 : 1,
-              width: 44, height: 44,
-              borderRadius: 14,
+              width: 36, height: 36,
+              borderRadius: 11,
               background: `linear-gradient(135deg, #00C896 0%, #00a87e 100%)`,
-              boxShadow: '0 0 16px rgba(0,200,150,0.45)',
+              boxShadow: '0 0 14px rgba(0,200,150,0.5)',
             }}
           >
-            <Plus className="w-5 h-5 text-black" strokeWidth={2.5} />
+            <Plus className="w-4 h-4 text-black" strokeWidth={2.5} />
           </span>
         </button>
 
@@ -145,8 +151,9 @@ export default function MobileNav() {
           Profile
         </Link>
       </div>
+      </div>
 
-      <div className="h-14 lg:hidden" />
+      <div className="h-24 lg:hidden" />
 
       {showModal && <PostTradeModal onClose={() => setShowModal(false)} onPosted={() => {}} />}
     </>
