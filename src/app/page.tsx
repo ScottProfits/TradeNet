@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
   return (
@@ -31,7 +32,8 @@ const SOCIAL_PROOF = [
 
 export default async function LandingPage() {
   const { userId } = await auth();
-  const isLoggedIn = !!userId;
+  if (userId) redirect("/feed");
+  const isLoggedIn = false;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
