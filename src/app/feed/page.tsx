@@ -137,14 +137,40 @@ export default function FeedPage() {
         </button>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
+        <div
+          className="flex gap-1 rounded-2xl p-1"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
           {(["feed", "explore", "following"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors ${tab === t ? "bg-[var(--green)] text-black" : "text-white bg-white/10 hover:bg-white/20"}`}
+              className="flex-1 py-2.5 rounded-xl transition-all duration-300 relative overflow-hidden"
+              style={tab === t ? {
+                background: "linear-gradient(135deg, rgba(0,200,150,0.25) 0%, rgba(0,168,126,0.15) 100%)",
+                boxShadow: "0 0 18px rgba(0,200,150,0.18), inset 0 1px 0 rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,200,150,0.35)",
+              } : {
+                background: "transparent",
+                border: "1px solid transparent",
+              }}
             >
-              {t === "feed" ? "Feed" : t === "following" ? "Following" : "Explore"}
+              <span
+                className="text-[10px] tracking-[0.18em] font-semibold uppercase transition-all duration-300"
+                style={{
+                  color: tab === t ? "#00C896" : "rgba(255,255,255,0.38)",
+                  fontFamily: "'SF Pro Display', -apple-system, sans-serif",
+                  letterSpacing: "0.18em",
+                  textShadow: tab === t ? "0 0 12px rgba(0,200,150,0.6)" : "none",
+                }}
+              >
+                {t === "feed" ? "Feed" : t === "following" ? "Following" : "Explore"}
+              </span>
             </button>
           ))}
         </div>
