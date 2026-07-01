@@ -125,7 +125,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
           )}
           <div className="space-y-3">
             {topLevel.map((c) => (
-              <div key={c.id}>
+              <div key={c.id} id={`comment-${c.id}`}>
                 <CommentRow
                   c={c}
                   userId={userId}
@@ -136,7 +136,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
                   onLike={handleLike}
                 />
                 {repliesFor(c.id).map((r) => (
-                  <div key={r.id} className="ml-9 mt-2">
+                  <div key={r.id} id={`comment-${r.id}`} className="ml-9 mt-2">
                     <CommentRow
                       c={r}
                       userId={userId}

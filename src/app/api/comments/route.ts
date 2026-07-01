@@ -86,12 +86,12 @@ export async function POST(req: NextRequest) {
 
     // Notify trade owner of comment (unless they wrote it)
     if (trade && trade.user_id !== userId) {
-      await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+      await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
       if (actor) {
         void sendPushToUser(trade.user_id, {
           title: `💬 @${actor.handle} commented`,
           body: `"${snippet}" on your ${full?.ticker ?? ""} trade`,
-          url: `/trade/${tradeId}`,
+          url: `/trade/${tradeId}#comment-${data.id}`,
         });
       }
     }
@@ -100,12 +100,12 @@ export async function POST(req: NextRequest) {
     if (parentId) {
       const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", parentId).single();
       if (parentComment && parentComment.user_id !== userId && parentComment.user_id !== trade?.user_id) {
-        await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+        await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
         if (actor) {
           void sendPushToUser(parentComment.user_id, {
             title: `↩️ @${actor.handle} replied to you`,
             body: `"${snippet}"`,
-            url: `/trade/${tradeId}`,
+            url: `/trade/${tradeId}#comment-${data.id}`,
           });
         }
       }

@@ -10,6 +10,7 @@ interface Notification {
   read: boolean;
   created_at: string;
   trade_id: string | null;
+  comment_id: string | null;
   actor: { handle: string; avatar_url: string; verified: boolean };
 }
 
@@ -108,41 +109,44 @@ export default function NotificationsPage() {
               <div key={group}>
                 <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">{group}</p>
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
-                  {items.map((n) => (
-                    <div
-                      key={n.id}
-                      className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
-                    >
-                      <Link
-                        href={`/profile/${n.actor?.handle}`}
-                        className="relative shrink-0"
-                        onClick={(e) => e.stopPropagation()}
+                  {items.map((n) => {
+                    const tradeHref = n.trade_id
+                      ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
+                      : `/profile/${n.actor?.handle}`;
+                    return (
+                      <div
+                        key={n.id}
+                        className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
                       >
-                        {n.actor?.avatar_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={n.actor.avatar_url} alt={n.actor.handle} className="w-10 h-10 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">
-                            {n.actor?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                          </div>
-                        )}
-                        <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
-                          {icon(n.type)}
-                        </span>
-                      </Link>
-                      <Link
-                        href={n.trade_id ? `/trade/${n.trade_id}` : `/profile/${n.actor?.handle}`}
-                        className="flex-1 min-w-0"
-                      >
-                        <p className="text-sm text-gray-200">
-                          <span className="font-semibold text-white">@{n.actor?.handle}</span>
-                          {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
-                          {" "}{message(n.type)}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
-                      </Link>
-                    </div>
-                  ))}
+                        <Link href={`/profile/${n.actor?.handle}`} className="relative shrink-0">
+                          {n.actor?.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={n.actor.avatar_url} alt={n.actor.handle} className="w-10 h-10 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">
+                              {n.actor?.handle?.slice(0, 2).toUpperCase() ?? "?"}
+                            </div>
+                          )}
+                          <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
+                            {icon(n.type)}
+                          </span>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-200">
+                            <Link href={`/profile/${n.actor?.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
+                              @{n.actor?.handle}
+                            </Link>
+                            {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
+                            {" "}
+                            <Link href={tradeHref} className="hover:text-white transition-colors">
+                              {message(n.type)}
+                            </Link>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
