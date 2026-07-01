@@ -399,7 +399,7 @@ export default function ProfilePage() {
                 {isOwnProfile && (
                   <button
                     onClick={() => handlePin(t.id)}
-                    className={`absolute top-3 right-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                    className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
                       isPinned
                         ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
                         : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"

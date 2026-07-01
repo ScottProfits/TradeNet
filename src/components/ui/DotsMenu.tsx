@@ -26,8 +26,8 @@ export default function DotsMenu({ onEdit, onDelete }: DotsMenuProps) {
         className="flex flex-col items-center justify-center gap-[3px] p-1.5 text-gray-600 hover:text-gray-400 transition-colors"
         aria-label="More options"
       >
-        <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
-        <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+        <span className="w-[3px] h-[3px] rounded-[1px] bg-current" />
+        <span className="w-[3px] h-[3px] rounded-[1px] bg-current" />
       </button>
 
       {open && (
