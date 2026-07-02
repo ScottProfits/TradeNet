@@ -104,8 +104,21 @@ export default function MarketPulse() {
         </div>
       </div>
 
-      {/* High-impact event banner — only shown on event day */}
-      {todayEvents.filter((e) => e.impact === "high").length > 0 && (
+      {/* High-impact event banner — only shown on event day before scheduled time */}
+      {todayEvents.filter((e) => {
+        if (e.impact !== "high") return false;
+        // Parse "H:MM AM/PM ET" from detail and hide once that time has passed
+        const match = e.detail?.match(/(\d+):(\d+)\s*(AM|PM)\s*ET/i);
+        if (!match) return true; // no time found, show all day
+        let hour = parseInt(match[1]);
+        const min = parseInt(match[2]);
+        const ampm = match[3].toUpperCase();
+        if (ampm === "PM" && hour !== 12) hour += 12;
+        if (ampm === "AM" && hour === 12) hour = 0;
+        const etNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+        const etMinutes = etNow.getHours() * 60 + etNow.getMinutes();
+        return etMinutes < hour * 60 + min;
+      }).length > 0 && (
         <div
           className="mx-3 mb-3 rounded-xl px-4 py-3"
           style={{
@@ -123,7 +136,18 @@ export default function MarketPulse() {
             </span>
           </div>
           <div className="space-y-1.5">
-            {todayEvents.filter((e) => e.impact === "high").map((e, i) => (
+            {todayEvents.filter((e) => {
+              if (e.impact !== "high") return false;
+              const match = e.detail?.match(/(\d+):(\d+)\s*(AM|PM)\s*ET/i);
+              if (!match) return true;
+              let hour = parseInt(match[1]);
+              const min = parseInt(match[2]);
+              const ampm = match[3].toUpperCase();
+              if (ampm === "PM" && hour !== 12) hour += 12;
+              if (ampm === "AM" && hour === 12) hour = 0;
+              const etNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+              return etNow.getHours() * 60 + etNow.getMinutes() < hour * 60 + min;
+            }).map((e, i) => (
               <div key={i} className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs font-semibold text-white truncate">{e.label}</span>
