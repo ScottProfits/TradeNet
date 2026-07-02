@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { TrendingUp, Search, MessageSquare } from "lucide-react";
+import { TrendingUp, Search, MessageSquare, X } from "lucide-react";
 import { clsx } from "clsx";
-import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -37,8 +37,10 @@ export default function Navbar() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tickerResults, setTickerResults] = useState<TickerResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -67,29 +69,121 @@ export default function Navbar() {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowResults(false);
+        setSearchOpen(false);
+        setQuery("");
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    if (searchOpen) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [searchOpen]);
+
   function goToProfile(handle: string) {
-    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false);
+    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false); setSearchOpen(false);
     router.push(`/profile/${handle}`);
   }
 
   function goToTicker(symbol: string) {
-    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false);
+    setQuery(""); setResults([]); setTickerResults([]); setShowResults(false); setSearchOpen(false);
     router.push(`/ticker/${encodeURIComponent(symbol)}`);
   }
 
   return (
     <nav className="border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 flex items-center gap-8 h-14">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 h-14">
         <Link href="/feed" className="flex items-center gap-2 font-bold text-white shrink-0">
           <TrendingUp className="w-5 h-5 text-[var(--green)]" />
           Ryzr
         </Link>
+
+        {/* Search icon — between logo and nav tabs */}
+        <div ref={searchRef} className="relative">
+          {searchOpen ? (
+            <div className="flex items-center gap-2 bg-[var(--card)] border border-[var(--green)]/40 rounded-lg px-3 py-1.5 w-52">
+              <Search className="w-4 h-4 text-gray-500 shrink-0" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setShowResults(true); }}
+                placeholder="Search traders..."
+                className="bg-transparent text-sm text-gray-300 placeholder-gray-500 outline-none w-full"
+              />
+              <button onClick={() => { setSearchOpen(false); setQuery(""); setShowResults(false); }}>
+                <X className="w-3.5 h-3.5 text-gray-500 hover:text-white" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          )}
+
+          {showResults && (results.length > 0 || tickerResults.length > 0) && (
+            <div className="absolute top-full mt-1 w-64 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200] max-h-80 overflow-y-auto">
+              {tickerResults.slice(0, 4).map((r) => (
+                <button
+                  key={r.symbol}
+                  onClick={() => goToTicker(r.symbol)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)]/50"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[var(--green)]/10 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4 text-[var(--green)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{r.symbol}</span>
+                      <span className="text-[10px] text-gray-600 uppercase">{r.exchange}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 truncate">{r.name}</p>
+                  </div>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                    r.type === "futures" ? "bg-orange-500/20 text-orange-400" :
+                    r.type === "crypto" ? "bg-yellow-500/20 text-yellow-400" :
+                    r.type === "forex" ? "bg-blue-500/20 text-blue-400" :
+                    "bg-[var(--green)]/20 text-[var(--green)]"
+                  }`}>{r.type}</span>
+                </button>
+              ))}
+              {results.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => goToProfile(r.handle)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+                >
+                  {r.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={r.avatar_url} alt={r.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {r.handle.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-white truncate">@{r.handle}</span>
+                      {r.verified && <VerifiedBadge className="w-3 h-3 shrink-0" />}
+                    </div>
+                    {r.full_name && r.full_name !== r.handle && (
+                      <p className="text-xs text-gray-500 truncate">{r.full_name}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showResults && query.trim() && results.length === 0 && tickerResults.length === 0 && (
+            <div className="absolute top-full mt-1 w-64 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-[200]">
+              <p className="text-sm text-gray-500">No results found</p>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-1">
           {links.map((l) => (
@@ -106,7 +200,6 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          {/* Mobile only: bell + PM indicator */}
           {isSignedIn && (
             <span className="lg:hidden flex items-center gap-1">
               <NotificationBell />
@@ -122,85 +215,9 @@ export default function Navbar() {
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          {/* Search */}
-          <div ref={searchRef} className="relative w-40 sm:w-52 lg:w-64">
-            <div className="flex items-center gap-2 bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 py-1.5 focus-within:border-[var(--green)]/50 transition-colors">
-              <Search className="w-4 h-4 text-gray-500 shrink-0" />
-              <input
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setShowResults(true); }}
-                onFocus={() => setShowResults(true)}
-                placeholder="Search traders..."
-                className="bg-transparent text-sm text-gray-300 placeholder-gray-500 outline-none w-full"
-              />
-            </div>
-
-            {showResults && (results.length > 0 || tickerResults.length > 0) && (
-              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200] max-h-80 overflow-y-auto">
-                {/* Tickers */}
-                {tickerResults.slice(0, 4).map((r) => (
-                  <button
-                    key={r.symbol}
-                    onClick={() => goToTicker(r.symbol)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left border-b border-[var(--border)]/50"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-[var(--green)]/10 flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-4 h-4 text-[var(--green)]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{r.symbol}</span>
-                        <span className="text-[10px] text-gray-600 uppercase">{r.exchange}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">{r.name}</p>
-                    </div>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
-                      r.type === "futures" ? "bg-orange-500/20 text-orange-400" :
-                      r.type === "crypto" ? "bg-yellow-500/20 text-yellow-400" :
-                      r.type === "forex" ? "bg-blue-500/20 text-blue-400" :
-                      "bg-[var(--green)]/20 text-[var(--green)]"
-                    }`}>{r.type}</span>
-                  </button>
-                ))}
-                {/* Users */}
-                {results.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => goToProfile(r.handle)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
-                  >
-                    {r.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.avatar_url} alt={r.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                        {r.handle.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium text-white truncate">@{r.handle}</span>
-                        {r.verified && <VerifiedBadge className="w-3 h-3 shrink-0" />}
-                      </div>
-                      {r.full_name && r.full_name !== r.handle && (
-                        <p className="text-xs text-gray-500 truncate">{r.full_name}</p>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {showResults && query.trim() && results.length === 0 && tickerResults.length === 0 && (
-              <div className="absolute top-full mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-[200]">
-                <p className="text-sm text-gray-500">No results found</p>
-              </div>
-            )}
-          </div>
-
+        <div className="ml-auto flex items-center gap-2">
           {isSignedIn ? (
-            <div className="flex items-center gap-2">
+            <>
               <Link href="/messages" onClick={() => setUnreadDms(0)} className={clsx("hidden lg:flex relative p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
                 <MessageSquare className="w-5 h-5" />
                 {unreadDms > 0 && (
@@ -210,14 +227,7 @@ export default function Navbar() {
                 )}
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
-              <Link href="/profile/me" className="hidden lg:block text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
-                Profile
-              </Link>
-              <Link href="/settings" className="hidden lg:block text-xs text-gray-500 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5">
-                Settings
-              </Link>
-              <UserButton />
-            </div>
+            </>
           ) : (
             <SignInButton mode="redirect">
               <button className="px-3 py-1.5 text-sm font-medium text-[var(--green)] border border-[var(--green)]/30 rounded-lg hover:bg-[var(--green)]/10 transition-colors">

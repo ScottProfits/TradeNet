@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff } from "lucide-react";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
@@ -95,7 +95,11 @@ interface LikedItem {
 export default function ProfilePage() {
   const { handle } = useParams<{ handle: string }>();
   const { userId } = useAuth();
+  const { signOut, openUserProfile } = useClerk();
+  const { user } = useUser();
   const router = useRouter();
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<ProfileData | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -107,6 +111,16 @@ export default function ProfilePage() {
   const [modalLoading, setModalLoading] = useState(false);
   const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/profile/${handle}`)
@@ -238,11 +252,45 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0 items-start">
             {isOwnProfile ? (
-              <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
-                Edit Profile
-              </Link>
+              <div className="flex flex-col items-end gap-2">
+                {/* Account DotsMenu */}
+                <div ref={accountMenuRef} className="relative">
+                  <button
+                    onClick={() => setAccountMenuOpen((o) => !o)}
+                    className="flex items-center gap-[3px] p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
+                    aria-label="Account options"
+                  >
+                    <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+                    <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+                  </button>
+                  {accountMenuOpen && (
+                    <div className="absolute right-0 top-7 w-52 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden">
+                      <div className="px-3 py-2 border-b border-[var(--border)]">
+                        <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+                      </div>
+                      <button
+                        onClick={() => { setAccountMenuOpen(false); openUserProfile(); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Manage account
+                      </button>
+                      <button
+                        onClick={() => { setAccountMenuOpen(false); signOut(() => router.push("/")); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
+                  Edit Profile
+                </Link>
+              </div>
             ) : (
               <>
                 <button
