@@ -30,7 +30,11 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
         setMessage(data.error ?? "Connection failed");
       } else {
         setStatus("success");
-        setMessage(`Connected! Imported ${data.imported} of ${data.total} fills.`);
+        setMessage(
+          data.imported > 0
+            ? `Connected! Imported ${data.imported} trade${data.imported !== 1 ? "s" : ""} from today.`
+            : `Connected! No trades from today yet. Check back after you trade.`
+        );
         onSuccess?.(data.imported);
       }
     } catch {

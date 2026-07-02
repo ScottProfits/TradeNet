@@ -27,9 +27,19 @@ export async function POST(req: NextRequest) {
       accountId
     );
 
-    // Upsert fills as trades into Supabase
+    // Only import fills from today (ET timezone)
+    const todayET = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); // YYYY-MM-DD
+
+    const todayFills = fills.filter((fill) => {
+      if (!fill.fillDate) return false;
+      // Rithmic fillDate format: YYYYMMDD — convert to YYYY-MM-DD
+      const d = fill.fillDate.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3");
+      return d === todayET;
+    });
+
+    // Upsert today's fills as trades into Supabase
     let imported = 0;
-    for (const fill of fills) {
+    for (const fill of todayFills) {
       const isBuy = fill.transactionType?.toUpperCase().includes("BUY");
       const { error } = await supabase.from("trades").upsert(
         {
@@ -43,9 +53,10 @@ export async function POST(req: NextRequest) {
           quantity: fill.fillSize,
           strategy: "Rithmic Import",
           notes: `Fill ID: ${fill.fillId} | Exchange: ${fill.exchange}`,
-          trade_date: fill.fillDate || new Date().toISOString().split("T")[0],
+          trade_date: todayET,
           source: "rithmic",
           external_id: fill.fillId,
+          is_public: true,
         },
         { onConflict: "external_id", ignoreDuplicates: true }
       );
@@ -57,7 +68,7 @@ export async function POST(req: NextRequest) {
       .from("broker_connections")
       .upsert({ user_id: userId, broker: "rithmic", connected_at: new Date().toISOString() }, { onConflict: "user_id,broker" });
 
-    return NextResponse.json({ success: true, total: fills.length, imported });
+    return NextResponse.json({ success: true, total: todayFills.length, imported, skipped: fills.length - todayFills.length });
   } catch (err: any) {
     console.error("Rithmic error:", err);
     return NextResponse.json({ error: err.message ?? "Connection failed" }, { status: 500 });
