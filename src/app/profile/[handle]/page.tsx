@@ -461,30 +461,17 @@ export default function ProfilePage() {
                   strategy={(t as { strategy?: string }).strategy ?? undefined}
                 />
                 {isOwnProfile && (
-                  <>
-                    <button
-                      onClick={() => toggleVisibility(t.id)}
-                      className={`absolute top-3 right-24 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
-                        tradeVisibility[t.id] !== false
-                          ? "bg-white/5 text-gray-500 border-[var(--border)] hover:text-red-400 hover:border-red-400/40"
-                          : "bg-red-500/10 text-red-400 border-red-400/30 hover:bg-red-500/20"
-                      }`}
-                    >
-                      {tradeVisibility[t.id] !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                      {tradeVisibility[t.id] !== false ? "Public" : "Hidden"}
-                    </button>
-                    <button
-                      onClick={() => handlePin(t.id)}
-                      className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
-                        isPinned
-                          ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
-                          : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
-                      }`}
-                    >
-                      {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-                      {isPinned ? "Unpin" : "Pin"}
-                    </button>
-                  </>
+                  <button
+                    onClick={() => handlePin(t.id)}
+                    className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                      isPinned
+                        ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
+                        : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
+                    }`}
+                  >
+                    {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                    {isPinned ? "Unpin" : "Pin"}
+                  </button>
                 )}
               </div>
             );
