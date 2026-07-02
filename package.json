@@ -19,18 +19,21 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.400.0",
     "next": "^15.5.19",
+    "protobufjs": "^8.6.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-easy-crop": "^6.0.2",
     "svix": "^1.96.1",
     "tailwind-merge": "^2.4.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/web-push": "^3.6.4",
+    "@types/ws": "^8.18.1",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",

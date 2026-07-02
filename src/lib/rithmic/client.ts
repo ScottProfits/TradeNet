@@ -20,15 +20,15 @@ export async function fetchRithmicFills(
   endEpoch?: number
 ): Promise<RithmicFill[]> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const protobuf = require("protobufjs") as typeof import("protobufjs");
+  const protobuf = require("protobufjs") as any;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const WS = require("ws") as typeof import("ws");
+  const WS = require("ws") as any;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require("path") as typeof import("path");
+  const path = require("path") as any;
 
   const PROTO_DIR = path.join(process.cwd(), "src/lib/rithmic/proto");
 
-  function loadProto() {
+  function loadProto(): any {
     const root = new protobuf.Root();
     const files = [
       "base", "request_heartbeat", "response_heartbeat",
@@ -43,16 +43,16 @@ export async function fetchRithmicFills(
     return root;
   }
 
-  function encode(root: protobuf.Root, typeName: string, payload: Record<string, unknown>): Buffer {
+  function encode(root: any, typeName: string, payload: Record<string, unknown>): Buffer {
     const Type = root.lookupType(typeName);
     return Buffer.from(Type.encode(Type.create(payload)).finish());
   }
 
-  function decode(root: protobuf.Root, typeName: string, buf: Buffer) {
+  function decode(root: any, typeName: string, buf: Buffer) {
     return root.lookupType(typeName).decode(buf);
   }
 
-  function connect(wsUri: string): Promise<import("ws")> {
+  function connect(wsUri: string): Promise<any> {
     return new Promise((resolve, reject) => {
       const ws = new WS(wsUri, { rejectUnauthorized: false });
       ws.on("open", () => resolve(ws as any));
