@@ -61,7 +61,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">7. Data Retention</h2>
-        <p>We retain your data for as long as your account is active. You may request deletion of your account and associated data by contacting us at <a href="mailto:Ajthornton01@yahoo.com" className="text-[var(--green)] hover:underline">Ajthornton01@yahoo.com</a>. We will process deletion requests within 30 days.</p>
+        <p>We retain your data for as long as your account is active. You may request deletion of your account and associated data by contacting us at <a href="mailto:RyzrSocialNetwork@gmail.com" className="text-[var(--green)] hover:underline">RyzrSocialNetwork@gmail.com</a>. We will process deletion requests within 30 days.</p>
       </section>
 
       <section className="space-y-3">
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">10. Your Rights</h2>
-        <p>Depending on your location, you may have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:Ajthornton01@yahoo.com" className="text-[var(--green)] hover:underline">Ajthornton01@yahoo.com</a>.</p>
+        <p>Depending on your location, you may have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:RyzrSocialNetwork@gmail.com" className="text-[var(--green)] hover:underline">RyzrSocialNetwork@gmail.com</a>.</p>
       </section>
 
       <section className="space-y-3">
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">12. Contact Us</h2>
         <p>If you have any questions about this Privacy Policy, contact us at:</p>
-        <p className="text-[var(--green)]">Ajthornton01@yahoo.com</p>
+        <p className="text-[var(--green)]">RyzrSocialNetwork@gmail.com</p>
       </section>
 
       <div className="border-t border-[var(--border)] pt-6 text-center">
