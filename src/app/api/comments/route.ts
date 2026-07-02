@@ -97,9 +97,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Notify the parent comment author when someone replies to their comment
+    const notifiedUserIds = new Set<string>([userId]);
+    if (trade?.user_id !== userId) notifiedUserIds.add(trade?.user_id ?? "");
+
     if (parentId) {
       const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", parentId).single();
-      if (parentComment && parentComment.user_id !== userId && parentComment.user_id !== trade?.user_id) {
+      if (parentComment && !notifiedUserIds.has(parentComment.user_id)) {
+        notifiedUserIds.add(parentComment.user_id);
         await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
         if (actor) {
           void sendPushToUser(parentComment.user_id, {
@@ -110,12 +114,67 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // Notify @mentioned users in the comment content
+    const mentions = content.match(/@([a-zA-Z0-9_]+)/g) ?? [];
+    if (mentions.length > 0) {
+      const handles = mentions.map((m: string) => m.slice(1).toLowerCase());
+      const { data: mentionedProfiles } = await supabase
+        .from("profiles")
+        .select("id, handle")
+        .in("handle", handles);
+      for (const p of mentionedProfiles ?? []) {
+        if (notifiedUserIds.has(p.id)) continue;
+        notifiedUserIds.add(p.id);
+        await supabase.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
+        if (actor) {
+          void sendPushToUser(p.id, {
+            title: `🔔 @${actor.handle} mentioned you`,
+            body: `"${snippet}"`,
+            url: `/trade/${tradeId}#comment-${data.id}`,
+          });
+        }
+      }
+    }
   }
 
   if (postId) {
-    // Increment post comments_count
-    const { data: post } = await supabase.from("posts").select("comments_count").eq("id", postId).single();
+    const { data: post } = await supabase.from("posts").select("user_id, comments_count").eq("id", postId).single();
     if (post) await supabase.from("posts").update({ comments_count: (post.comments_count ?? 0) + 1 }).eq("id", postId);
+
+    const [{ data: actor }, { data: parentComment }] = await Promise.all([
+      supabase.from("profiles").select("handle").eq("id", userId).single(),
+      parentId ? supabase.from("comments").select("user_id").eq("id", parentId).single() : Promise.resolve({ data: null }),
+    ]);
+    const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
+    const notifiedPostIds = new Set<string>([userId]);
+
+    // Notify post owner
+    if (post && post.user_id !== userId) {
+      notifiedPostIds.add(post.user_id);
+      await supabase.from("notifications").insert({ user_id: post.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+      if (actor) void sendPushToUser(post.user_id, { title: `💬 @${actor.handle} commented`, body: `"${snippet}"`, url: `/feed` });
+    }
+
+    // Notify parent comment author on reply
+    if (parentComment && !notifiedPostIds.has(parentComment.user_id)) {
+      notifiedPostIds.add(parentComment.user_id);
+      await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+      if (actor) void sendPushToUser(parentComment.user_id, { title: `↩️ @${actor.handle} replied to you`, body: `"${snippet}"`, url: `/feed` });
+    }
+
+    // Notify @mentioned users
+    const mentions = content.match(/@([a-zA-Z0-9_]+)/g) ?? [];
+    if (mentions.length > 0) {
+      const handles = mentions.map((m: string) => m.slice(1).toLowerCase());
+      const { data: mentionedProfiles } = await supabase.from("profiles").select("id, handle").in("handle", handles);
+      for (const p of mentionedProfiles ?? []) {
+        if (notifiedPostIds.has(p.id)) continue;
+        notifiedPostIds.add(p.id);
+        await supabase.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+        if (actor) void sendPushToUser(p.id, { title: `🔔 @${actor.handle} mentioned you`, body: `"${snippet}"`, url: `/feed` });
+      }
+    }
   }
 
   return Response.json(data, { status: 201 });
