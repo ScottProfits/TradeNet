@@ -12,6 +12,7 @@ import { Trade as TradeCardTrade, Trader } from "@/types";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import Link from "next/link";
+import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
@@ -98,6 +99,7 @@ export default function ProfilePage() {
   const { signOut, openUserProfile } = useClerk();
   const { user } = useUser();
   const router = useRouter();
+  const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<ProfileData | null>(null);
@@ -520,6 +522,56 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Broker connections — own profile only */}
+      {/* Broker Connections — visible to everyone, Connect button only for owner */}
+      <div className="space-y-3">
+        <h2 className="font-semibold text-white text-sm flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[var(--green)]" /> Broker Connections
+        </h2>
+        <div
+          className="rounded-2xl p-4 flex items-center justify-between"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.2)" }}
+            >
+              <TrendingUp className="w-4 h-4 text-[#00C896]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Rithmic</p>
+              <p className="text-[11px] text-gray-500">Futures broker — verified fills</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {isOwnProfile ? (
+              <button
+                onClick={() => setRithmicModalOpen(true)}
+                className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
+                style={{
+                  background: "rgba(0,200,150,0.12)",
+                  border: "1px solid rgba(0,200,150,0.3)",
+                  color: "#00C896",
+                }}
+              >
+                Connect
+              </button>
+            ) : (
+              <span className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)" }}>
+                Not connected
+              </span>
+            )}
+            {/* Rithmic attribution requirement */}
+            <img src="/brokers/rithmic-logo-white.png" alt="Market Data by Rithmic" className="h-3 opacity-25" />
+          </div>
+        </div>
+      </div>
+
       {/* Private journal — own profile only */}
       {isOwnProfile && <JournalSection />}
 
@@ -562,6 +614,14 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Rithmic connect modal */}
+      {rithmicModalOpen && (
+        <RithmicConnectModal
+          onClose={() => setRithmicModalOpen(false)}
+          onSuccess={() => setRithmicModalOpen(false)}
+        />
       )}
 
       {/* Avatar lightbox */}

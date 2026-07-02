@@ -2,7 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Camera, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, Camera, ShieldCheck, Zap } from "lucide-react";
+import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -24,11 +25,7 @@ export default function SettingsPage() {
   const [website, setWebsite] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [alpacaKey, setAlpacaKey] = useState("");
-  const [alpacaSecret, setAlpacaSecret] = useState("");
-  const [showAlpacaSecret, setShowAlpacaSecret] = useState(false);
-  const [savingAlpaca, setSavingAlpaca] = useState(false);
-  const [alpacaSaved, setAlpacaSaved] = useState(false);
+  const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
   const [verifyReason, setVerifyReason] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
@@ -55,8 +52,7 @@ export default function SettingsPage() {
           setDiscord(d.discord ?? "");
           setYoutube(d.youtube ?? "");
           setWebsite(d.website ?? "");
-          setAlpacaKey(d.alpaca_key ?? "");
-          setAlpacaSecret(d.alpaca_secret ?? "");
+
         }
         setLoading(false);
       });
@@ -371,60 +367,49 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Alpaca Brokerage Verification */}
+      {/* Broker Connections */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-[var(--green)]" />
-          <h2 className="font-bold text-white">Brokerage Verification</h2>
+          <h2 className="font-bold text-white">Broker Connections</h2>
         </div>
         <p className="text-sm text-gray-400">
-          Connect your Alpaca account to verify your trades. Verified trades show a ✅ badge so followers know your P&L is real.
+          Connect your broker to auto-import your trade history. Imported trades show a verified badge on your profile.
         </p>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm text-gray-400 mb-1 block">Alpaca API Key</label>
-            <input
-              value={alpacaKey}
-              onChange={(e) => setAlpacaKey(e.target.value)}
-              placeholder="PK..."
-              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] font-mono"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400 mb-1 block">Alpaca Secret Key</label>
-            <div className="relative">
-              <input
-                value={alpacaSecret}
-                onChange={(e) => setAlpacaSecret(e.target.value)}
-                type={showAlpacaSecret ? "text" : "password"}
-                placeholder="••••••••"
-                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] font-mono pr-10"
-              />
-              <button type="button" onClick={() => setShowAlpacaSecret((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
-                {showAlpacaSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+        <div
+          className="rounded-xl p-4 flex items-center justify-between"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.2)" }}>
+              <Zap className="w-4 h-4 text-[#00C896]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Rithmic</p>
+              <p className="text-[11px] text-gray-500">Futures — verified fills</p>
             </div>
           </div>
-          <p className="text-xs text-gray-600">Keys are stored securely and only used to verify your trades. Use paper or live Alpaca keys.</p>
-          <button
-            onClick={async () => {
-              if (!userId || !alpacaKey.trim()) return;
-              setSavingAlpaca(true);
-              await supabase.from("profiles").update({
-                alpaca_key: alpacaKey.trim(),
-                alpaca_secret: alpacaSecret.trim() || undefined,
-              }).eq("id", userId);
-              setSavingAlpaca(false);
-              setAlpacaSaved(true);
-              setTimeout(() => setAlpacaSaved(false), 3000);
-            }}
-            disabled={savingAlpaca || !alpacaKey.trim()}
-            className="w-full py-2.5 bg-[var(--green)] text-black font-bold rounded-lg hover:bg-[var(--green)]/90 transition-colors disabled:opacity-50 text-sm"
-          >
-            {savingAlpaca ? "Saving..." : alpacaSaved ? "✓ Keys saved!" : "Save Alpaca Keys"}
-          </button>
+          <div className="flex flex-col items-end gap-1.5">
+            <button
+              onClick={() => setRithmicModalOpen(true)}
+              className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
+              style={{
+                background: "rgba(0,200,150,0.12)",
+                border: "1px solid rgba(0,200,150,0.3)",
+                color: "#00C896",
+              }}
+            >
+              Connect
+            </button>
+            <img src="/brokers/rithmic-logo-white.png" alt="Market Data by Rithmic" className="h-3 opacity-25" />
+          </div>
         </div>
       </div>
+
+      {rithmicModalOpen && (
+        <RithmicConnectModal onClose={() => setRithmicModalOpen(false)} />
+      )}
 
       <div className="flex items-center justify-center gap-4 pt-2 pb-4">
         <a href="/privacy" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Privacy Policy</a>
