@@ -13,6 +13,7 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import Link from "next/link";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
+import WatchlistSection from "@/components/profile/WatchlistSection";
 
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
@@ -536,7 +537,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Broker connections — own profile only */}
+      {/* Watchlist */}
+      <WatchlistSection handle={profile.handle} isOwner={isOwnProfile} />
+
       {/* Broker Connections — visible to everyone, Connect button only for owner */}
       <div className="space-y-3">
         <h2 className="font-semibold text-white text-sm flex items-center gap-2">
