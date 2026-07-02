@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { fetchRithmicFills } from "@/lib/rithmic/client";
 
 const RITHMIC_URI = "wss://rituz00100.rithmic.com:443";
 const RITHMIC_SYSTEM = "Rithmic Test";
@@ -19,6 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const { fetchRithmicFills } = await import("@/lib/rithmic/client");
     const fills = await fetchRithmicFills(
       rithmicUser,
       rithmicPassword,

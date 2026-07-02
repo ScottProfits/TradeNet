@@ -1,3 +1,4 @@
+"use server";
 import * as protobuf from "protobufjs";
 import WebSocket from "ws";
 import path from "path";
