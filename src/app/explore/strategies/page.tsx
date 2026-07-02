@@ -47,8 +47,18 @@ export default function StrategiesPage() {
     setSelected(s);
     setUsersLoading(true);
     const res = await fetch(`/api/explore/strategy-users?name=${encodeURIComponent(s.name)}`);
-    const data = res.ok ? await res.json() : [];
+    const data: StrategyUser[] = res.ok ? await res.json() : [];
     setUsers(data);
+
+    // Check which of these users the current user already follows
+    if (data.length > 0) {
+      const followRes = await fetch(`/api/follow/status?ids=${data.map((u) => u.id).join(",")}`);
+      if (followRes.ok) {
+        const followMap: Record<string, boolean> = await followRes.json();
+        setFollowing((f) => ({ ...f, ...followMap }));
+      }
+    }
+
     setUsersLoading(false);
   }
 
