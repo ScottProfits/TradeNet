@@ -175,13 +175,42 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-[var(--bg)] rounded-lg p-1 gap-1">
-          <button type="button" onClick={() => setTab("trade")} className={clsx("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", tab === "trade" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white")}>
-            📈 Trade
-          </button>
-          <button type="button" onClick={() => setTab("post")} className={clsx("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", tab === "post" ? "bg-[var(--green)] text-black" : "text-gray-400 hover:text-white")}>
-            💬 Post
-          </button>
+        <div
+          className="flex gap-1 rounded-2xl p-1"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          {(["trade", "post"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className="flex-1 py-2.5 rounded-xl transition-all duration-300"
+              style={tab === t ? {
+                background: "linear-gradient(135deg, rgba(0,200,150,0.25) 0%, rgba(0,168,126,0.15) 100%)",
+                boxShadow: "0 0 18px rgba(0,200,150,0.18), inset 0 1px 0 rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,200,150,0.35)",
+              } : {
+                background: "transparent",
+                border: "1px solid transparent",
+              }}
+            >
+              <span
+                className="text-[11px] tracking-[0.16em] font-semibold uppercase transition-all duration-300"
+                style={{
+                  color: tab === t ? "#00C896" : "rgba(255,255,255,0.38)",
+                  letterSpacing: "0.16em",
+                  textShadow: tab === t ? "0 0 12px rgba(0,200,150,0.6)" : "none",
+                }}
+              >
+                {t === "trade" ? "📈  Trade" : "💬  Post"}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Regular post form */}
