@@ -98,17 +98,44 @@ export default function MarketPulse() {
         </div>
 
         <div className="flex items-center gap-2">
-          {todayEvents.length > 0 && (
-            <span className="flex items-center gap-1 text-red-400 text-xs font-semibold">
-              <AlertTriangle className="w-3 h-3" />
-              {todayEvents.length} event{todayEvents.length > 1 ? "s" : ""} today
-            </span>
-          )}
           <Link href="/market" className="text-xs text-gray-600 hover:text-[var(--green)] transition-colors">
             Market Hub →
           </Link>
         </div>
       </div>
+
+      {/* High-impact event banner — only shown on event day */}
+      {todayEvents.filter((e) => e.impact === "high").length > 0 && (
+        <div
+          className="mx-3 mb-3 rounded-xl px-4 py-3"
+          style={{
+            background: "linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.06) 100%)",
+            border: "1px solid rgba(239,68,68,0.3)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+              style={{ color: "#f87171", textShadow: "0 0 10px rgba(239,68,68,0.5)" }}
+            >
+              High Impact Events Today
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {todayEvents.filter((e) => e.impact === "high").map((e, i) => (
+              <div key={i} className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-semibold text-white truncate">{e.label}</span>
+                </div>
+                {e.detail && (
+                  <span className="text-[10px] text-red-300/70 shrink-0 text-right">{e.detail}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
