@@ -13,12 +13,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
 
   if (error || !profile) return new Response("Not found", { status: 404 });
 
-  const { data: trades } = await supabase
+  const isOwner = userId === profile.id;
+  const tradesQuery = supabase
     .from("trades")
     .select("*")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(20);
+
+  if (!isOwner) tradesQuery.eq("is_public", true);
+
+  const { data: trades } = await tradesQuery;
 
   const { count: followersCount } = await supabase
     .from("follows")

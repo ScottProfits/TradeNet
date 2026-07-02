@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail, Eye, EyeOff } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
@@ -113,6 +113,7 @@ export default function ProfilePage() {
   const [modalLoading, setModalLoading] = useState(false);
   const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(null);
+  const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -136,6 +137,9 @@ export default function ProfilePage() {
         setFollowerCount(d.followersCount);
         setFollowing(d.isFollowing ?? false);
         setPinnedTradeId(d.profile.pinned_trade_id ?? null);
+        const vis: Record<string, boolean> = {};
+        for (const t of d.trades) vis[t.id] = (t as any).is_public !== false;
+        setTradeVisibility(vis);
       });
   }, [handle]);
 
@@ -163,6 +167,16 @@ export default function ProfilePage() {
       setFollowerCount((c) => c + (next ? -1 : 1));
     }
     setFollowLoading(false);
+  }
+
+  async function toggleVisibility(tradeId: string) {
+    const next = !tradeVisibility[tradeId];
+    setTradeVisibility((v) => ({ ...v, [tradeId]: next }));
+    await fetch(`/api/trades/${tradeId}/visibility`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_public: next }),
+    });
   }
 
   async function handlePin(tradeId: string) {
@@ -447,17 +461,30 @@ export default function ProfilePage() {
                   strategy={(t as { strategy?: string }).strategy ?? undefined}
                 />
                 {isOwnProfile && (
-                  <button
-                    onClick={() => handlePin(t.id)}
-                    className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
-                      isPinned
-                        ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
-                        : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
-                    }`}
-                  >
-                    {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-                    {isPinned ? "Unpin" : "Pin"}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => toggleVisibility(t.id)}
+                      className={`absolute top-3 right-24 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                        tradeVisibility[t.id] !== false
+                          ? "bg-white/5 text-gray-500 border-[var(--border)] hover:text-red-400 hover:border-red-400/40"
+                          : "bg-red-500/10 text-red-400 border-red-400/30 hover:bg-red-500/20"
+                      }`}
+                    >
+                      {tradeVisibility[t.id] !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      {tradeVisibility[t.id] !== false ? "Public" : "Hidden"}
+                    </button>
+                    <button
+                      onClick={() => handlePin(t.id)}
+                      className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
+                        isPinned
+                          ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
+                          : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
+                      }`}
+                    >
+                      {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                      {isPinned ? "Unpin" : "Pin"}
+                    </button>
+                  </>
                 )}
               </div>
             );
