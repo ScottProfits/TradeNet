@@ -11,8 +11,6 @@ interface WatchItem {
   change: number | null;
   changePct: number | null;
   volume: number | null;
-  high: number | null;
-  low: number | null;
 }
 
 interface SearchResult {
@@ -28,9 +26,16 @@ function formatVolume(v: number | null) {
   return v.toString();
 }
 
-export default function WatchlistSection({ handle, isOwner }: { handle: string; isOwner: boolean }) {
+interface Props {
+  handle: string;
+  isOwner: boolean;
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function WatchlistSection({ handle, isOwner, open, onClose }: Props) {
   const [items, setItems] = useState<WatchItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -40,10 +45,12 @@ export default function WatchlistSection({ handle, isOwner }: { handle: string; 
   const searchTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
+    if (!open) return;
+    setLoading(true);
     fetch(`/api/watchlist?handle=${handle}`)
       .then((r) => r.ok ? r.json() : [])
       .then((d) => { setItems(d); setLoading(false); });
-  }, [handle]);
+  }, [open, handle]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -95,123 +102,139 @@ export default function WatchlistSection({ handle, isOwner }: { handle: string; 
     });
   }
 
-  if (loading) return (
-    <div className="space-y-3">
-      <div className="h-5 w-32 bg-white/5 rounded animate-pulse" />
-      <div className="h-24 bg-white/5 rounded-2xl animate-pulse" />
-    </div>
-  );
+  if (!open) return null;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-white text-sm flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[var(--green)]" /> Watchlist
-        </h2>
-        {isOwner && (
-          <div ref={searchRef} className="relative">
-            <button
-              onClick={() => setShowSearch((s) => !s)}
-              className="flex items-center gap-1.5 text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
-              style={{ background: "rgba(0,200,150,0.12)", border: "1px solid rgba(0,200,150,0.3)", color: "#00C896" }}
-            >
-              {adding ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-              Add
-            </button>
+    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div
+        className="w-full max-w-lg rounded-t-2xl flex flex-col"
+        style={{
+          background: "rgba(10,10,10,0.98)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "none",
+          maxHeight: "80vh",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#00C896]" />
+            <span className="font-bold text-white text-sm">Watchlist</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <div ref={searchRef} className="relative">
+                <button
+                  onClick={() => setShowSearch((s) => !s)}
+                  className="flex items-center gap-1.5 text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
+                  style={{ background: "rgba(0,200,150,0.12)", border: "1px solid rgba(0,200,150,0.3)", color: "#00C896" }}
+                >
+                  {adding ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                  Add
+                </button>
 
-            {showSearch && (
-              <div className="absolute right-0 top-9 w-72 rounded-xl overflow-hidden z-50"
-                style={{ background: "rgba(10,10,10,0.97)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/10">
-                  <Search className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                  <input
-                    autoFocus
-                    value={searchQuery}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Search symbol or name..."
-                    className="bg-transparent text-sm text-white placeholder-gray-600 outline-none flex-1"
-                  />
-                  {searching && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-500" />}
-                </div>
-                {searchResults.length > 0 && (
-                  <div className="py-1">
-                    {searchResults.map((r) => (
-                      <button key={r.symbol} onClick={() => addSymbol(r)}
-                        className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 transition-colors text-left">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{r.symbol}</p>
-                          <p className="text-[11px] text-gray-500 truncate max-w-[180px]">{r.name}</p>
-                        </div>
-                        <span className="text-[10px] text-gray-600 uppercase">{r.type}</span>
-                      </button>
-                    ))}
+                {showSearch && (
+                  <div className="absolute right-0 top-9 w-72 rounded-xl overflow-hidden z-50"
+                    style={{ background: "rgba(10,10,10,0.97)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/10">
+                      <Search className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                      <input
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        placeholder="Search symbol or name..."
+                        className="bg-transparent text-sm text-white placeholder-gray-600 outline-none flex-1"
+                      />
+                      {searching && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-500" />}
+                    </div>
+                    {searchResults.length > 0 && (
+                      <div className="py-1">
+                        {searchResults.map((r) => (
+                          <button key={r.symbol} onClick={() => addSymbol(r)}
+                            className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 transition-colors text-left">
+                            <div>
+                              <p className="text-sm font-semibold text-white">{r.symbol}</p>
+                              <p className="text-[11px] text-gray-500 truncate max-w-[180px]">{r.name}</p>
+                            </div>
+                            <span className="text-[10px] text-gray-600 uppercase">{r.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {searchQuery && !searching && searchResults.length === 0 && (
+                      <p className="text-xs text-gray-600 text-center py-4">No results found</p>
+                    )}
                   </div>
-                )}
-                {searchQuery && !searching && searchResults.length === 0 && (
-                  <p className="text-xs text-gray-600 text-center py-4">No results found</p>
                 )}
               </div>
             )}
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
+              <X className="w-5 h-5" />
+            </button>
           </div>
-        )}
-      </div>
-
-      {items.length === 0 ? (
-        <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <p className="text-gray-500 text-sm">{isOwner ? "Add stocks, futures, or crypto to track." : "No watchlist yet."}</p>
         </div>
-      ) : (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Header */}
-          <div className="grid gap-2 px-4 py-2 border-b border-white/5"
-            style={{ gridTemplateColumns: "1fr 80px 80px 70px" }}>
-            {["Symbol", "Price", "Change", "Volume"].map((h) => (
-              <p key={h} className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold text-right first:text-left">{h}</p>
-            ))}
-          </div>
 
-          {/* Rows */}
-          {items.map((item) => {
-            const up = (item.change ?? 0) >= 0;
-            return (
-              <div key={item.id} className="grid gap-2 px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors group"
-                style={{ gridTemplateColumns: "1fr 80px 80px 70px" }}>
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: up ? "rgba(0,200,150,0.1)" : "rgba(239,68,68,0.1)" }}>
-                    {up ? <TrendingUp className="w-3.5 h-3.5 text-[#00C896]" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{item.symbol}</p>
-                    <p className="text-[10px] text-gray-600 truncate">{item.name}</p>
-                  </div>
-                  {isOwner && (
-                    <button onClick={() => removeSymbol(item.symbol)}
-                      className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 shrink-0">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <p className="text-sm font-semibold text-white text-right self-center">
-                  {item.price != null ? `$${item.price.toFixed(2)}` : "—"}
-                </p>
-
-                <div className="text-right self-center">
-                  <p className={`text-sm font-semibold ${up ? "text-[#00C896]" : "text-red-400"}`}>
-                    {item.changePct != null ? `${up ? "+" : ""}${item.changePct.toFixed(2)}%` : "—"}
-                  </p>
-                  <p className={`text-[10px] ${up ? "text-[#00C896]/70" : "text-red-400/70"}`}>
-                    {item.change != null ? `${up ? "+" : ""}$${item.change.toFixed(2)}` : ""}
-                  </p>
-                </div>
-
-                <p className="text-xs text-gray-500 text-right self-center">{formatVolume(item.volume)}</p>
+        {/* Content */}
+        <div className="overflow-y-auto flex-1">
+          {loading ? (
+            <div className="space-y-3 p-4">
+              {[1,2,3].map((i) => <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />)}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <TrendingUp className="w-8 h-8 text-gray-700 mb-3" />
+              <p className="text-gray-500 text-sm">{isOwner ? "Tap Add to start tracking symbols." : "No watchlist yet."}</p>
+            </div>
+          ) : (
+            <div>
+              {/* Column headers */}
+              <div className="grid px-4 py-2 border-b border-white/[0.04]"
+                style={{ gridTemplateColumns: "1fr 80px 90px 64px" }}>
+                {["Symbol", "Price", "Change", "Vol"].map((h) => (
+                  <p key={h} className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold text-right first:text-left">{h}</p>
+                ))}
               </div>
-            );
-          })}
+              {items.map((item) => {
+                const up = (item.change ?? 0) >= 0;
+                return (
+                  <div key={item.id} className="grid px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors group"
+                    style={{ gridTemplateColumns: "1fr 80px 90px 64px" }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: up ? "rgba(0,200,150,0.1)" : "rgba(239,68,68,0.1)" }}>
+                        {up ? <TrendingUp className="w-3.5 h-3.5 text-[#00C896]" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-white truncate">{item.symbol}</p>
+                        <p className="text-[10px] text-gray-600 truncate">{item.name}</p>
+                      </div>
+                      {isOwner && (
+                        <button onClick={() => removeSymbol(item.symbol)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 shrink-0 ml-1">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-white text-right self-center">
+                      {item.price != null ? `$${item.price.toFixed(2)}` : "—"}
+                    </p>
+                    <div className="text-right self-center">
+                      <p className={`text-sm font-semibold ${up ? "text-[#00C896]" : "text-red-400"}`}>
+                        {item.changePct != null ? `${up ? "+" : ""}${item.changePct.toFixed(2)}%` : "—"}
+                      </p>
+                      <p className={`text-[10px] ${up ? "text-[#00C896]/60" : "text-red-400/60"}`}>
+                        {item.change != null ? `${up ? "+" : ""}$${Math.abs(item.change).toFixed(2)}` : ""}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 text-right self-center">{formatVolume(item.volume)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail, Eye, EyeOff } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
@@ -310,7 +310,7 @@ export default function ProfilePage() {
                   Edit Profile
                 </Link>
                 <button
-                  onClick={() => setWatchlistOpen((o) => !o)}
+                  onClick={() => setWatchlistOpen(true)}
                   className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
                 >
                   Watchlist
@@ -545,10 +545,13 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Watchlist — always visible to visitors, toggled by owner */}
-      {(!isOwnProfile || watchlistOpen) && (
-        <WatchlistSection handle={profile.handle} isOwner={isOwnProfile} />
-      )}
+      {/* Watchlist modal */}
+      <WatchlistSection
+        handle={profile.handle}
+        isOwner={isOwnProfile}
+        open={watchlistOpen}
+        onClose={() => setWatchlistOpen(false)}
+      />
 
       {/* Broker Connections — visible to everyone, Connect button only for owner */}
       <div className="space-y-3">
