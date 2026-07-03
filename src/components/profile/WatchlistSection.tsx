@@ -149,7 +149,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
               <TrendingUp className="w-4 h-4 text-[#00C896]" />
               <span className="font-bold text-white text-sm">Stock Watchlist</span>
             </div>
-            <p className="text-[10px] text-gray-600 mt-0.5 ml-6">Track your favorite stocks with live prices</p>
+            <p className="text-[10px] text-gray-600 mt-0.5 ml-6">Track your favorite Stocks & Crypto with live prices</p>
           </div>
           <div className="flex items-center gap-2">
             {isOwner && (
