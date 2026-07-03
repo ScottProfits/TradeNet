@@ -273,7 +273,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
                       </div>
                       {isOwner && (
                         <button onClick={() => removeSymbol(item.symbol)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 p-1">
+                          className="text-gray-600 hover:text-red-400 p-1">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
