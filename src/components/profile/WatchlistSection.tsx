@@ -144,9 +144,12 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#00C896]" />
-            <span className="font-bold text-white text-sm">Stock Watchlist</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-[#00C896]" />
+              <span className="font-bold text-white text-sm">Stock Watchlist</span>
+            </div>
+            <p className="text-[10px] text-gray-600 mt-0.5 ml-6">Track your favorite stocks with live prices</p>
           </div>
           <div className="flex items-center gap-2">
             {isOwner && (
