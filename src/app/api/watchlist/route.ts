@@ -22,13 +22,16 @@ export async function GET(req: NextRequest) {
   // Fetch live quotes from Yahoo Finance
   const symbols = items.map((i) => i.symbol).join(",");
   try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(symbols)}&range=1d&interval=5m`,
-      { headers: { "User-Agent": "Mozilla/5.0" }, next: { revalidate: 30 } }
-    );
     const quoteRes = await fetch(
-      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`,
-      { headers: { "User-Agent": "Mozilla/5.0" }, next: { revalidate: 30 } }
+      `https://query2.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        cache: "no-store",
+      }
     );
 
     const quoteData = quoteRes.ok ? await quoteRes.json() : null;
@@ -45,9 +48,6 @@ export async function GET(req: NextRequest) {
         change: q.regularMarketChange ?? null,
         changePct: q.regularMarketChangePercent ?? null,
         volume: q.regularMarketVolume ?? null,
-        high: q.regularMarketDayHigh ?? null,
-        low: q.regularMarketDayLow ?? null,
-        marketCap: q.marketCap ?? null,
       };
     });
 

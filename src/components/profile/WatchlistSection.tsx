@@ -115,16 +115,14 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-center" style={{ background: "rgba(0,0,0,0.6)", alignItems: "flex-end", paddingBottom: "80px" }} onClick={onClose}>
       <div
         className="w-full max-w-lg rounded-t-2xl flex flex-col"
         style={{
           background: "rgba(10,10,10,0.98)",
           border: "1px solid rgba(255,255,255,0.08)",
           borderBottom: "none",
-          maxHeight: "80vh",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          marginBottom: "80px",
+          height: "65vh",
         }}
         onClick={(e) => e.stopPropagation()}
       >
