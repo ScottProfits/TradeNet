@@ -58,9 +58,13 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch(`/api/watchlist?handle=${handle}`)
-      .then((r) => r.ok ? r.json() : [])
-      .then((d) => { setItems(d); setLoading(false); });
+    const load = () =>
+      fetch(`/api/watchlist?handle=${handle}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((d) => { setItems(d); setLoading(false); });
+    load();
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
   }, [open, handle]);
 
   useEffect(() => {
