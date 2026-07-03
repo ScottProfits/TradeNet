@@ -6,8 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 async function fetchQuotes(symbols: string[]): Promise<Record<string, any>> {
   if (!symbols.length) return {};
   try {
-    const yahooFinance = (await import("yahoo-finance2")).default;
-    const results = await yahooFinance.quote(symbols);
+    const YF = (await import("yahoo-finance2")).default;
+    const yf = new (YF as any)({ suppressNotices: ["yahooSurvey"] });
+    const results = await yf.quote(symbols);
     const arr: any[] = Array.isArray(results) ? results : [results];
     const map: Record<string, any> = {};
     for (const q of arr) {

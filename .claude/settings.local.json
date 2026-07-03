@@ -101,7 +101,8 @@
       "Bash(cp ~/Downloads/RithmicArtwork/market_data_by_rithmic-white.png /Users/a.scott/TradeNet/public/brokers/rithmic-logo-white.png)",
       "Bash(cp ~/Downloads/RithmicArtwork/market_data_by_rithmic-black.png /Users/a.scott/TradeNet/public/brokers/rithmic-logo-black.png)",
       "Bash(xargs ls -la)",
-      "Bash(gh deployment *)"
+      "Bash(gh deployment *)",
+      "Bash(node -e \"const yf = require\\('yahoo-finance2'\\); console.log\\(Object.keys\\(yf\\)\\);\")"
     ]
   }
 }
