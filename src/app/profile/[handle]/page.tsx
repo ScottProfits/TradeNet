@@ -75,6 +75,7 @@ interface ProfileData {
   trades: Trade[];
   followersCount: number;
   followingCount: number;
+  isOwner: boolean;
 }
 
 interface LikedItem {
@@ -225,7 +226,7 @@ export default function ProfilePage() {
   const winRate = trades.length > 0 ? Math.round((winningTrades / trades.length) * 100) : 0;
   const avgPnl = trades.length > 0 ? totalPnl / trades.length : 0;
   const bestTrade = trades.length > 0 ? trades.reduce((best, t) => t.pnl > best.pnl ? t : best, trades[0]) : null;
-  const isOwnProfile = userId === profile.id;
+  const isOwnProfile = data?.isOwner ?? false;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

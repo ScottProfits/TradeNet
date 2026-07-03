@@ -53,5 +53,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
     followersCount: followersCount ?? 0,
     followingCount: followingCount ?? 0,
     isFollowing,
+    isOwner,
   });
 }
