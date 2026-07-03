@@ -63,7 +63,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
         .then((r) => r.ok ? r.json() : [])
         .then((d) => { setItems(d); setLoading(false); });
     load();
-    const interval = setInterval(load, 10000);
+    const interval = setInterval(load, 5000);
     return () => clearInterval(interval);
   }, [open, handle]);
 
