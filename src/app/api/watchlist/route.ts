@@ -5,33 +5,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 async function fetchQuotes(symbols: string[]): Promise<Record<string, any>> {
   if (!symbols.length) return {};
-  const sym = symbols.join(",");
-  const urls = [
-    `https://query2.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(sym)}`,
-    `https://query1.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(sym)}`,
-    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(sym)}`,
-  ];
-  const headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "application/json",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://finance.yahoo.com/",
-  };
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { headers, cache: "no-store" });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const results = data?.quoteResponse?.result ?? [];
-      if (!results.length) continue;
-      const map: Record<string, any> = {};
-      for (const q of results) map[q.symbol] = q;
-      return map;
-    } catch {
-      continue;
+  try {
+    const yahooFinance = (await import("yahoo-finance2")).default;
+    const results = await yahooFinance.quote(symbols);
+    const arr: any[] = Array.isArray(results) ? results : [results];
+    const map: Record<string, any> = {};
+    for (const q of arr) {
+      if (q?.symbol) map[q.symbol] = q;
     }
+    return map;
+  } catch (e) {
+    console.error("yahoo-finance2 error:", e);
+    return {};
   }
-  return {};
 }
 
 // GET /api/watchlist?handle=xxx
@@ -57,12 +43,11 @@ export async function GET(req: NextRequest) {
     const q = quotes[item.symbol] ?? {};
     const price = q.regularMarketPrice ?? null;
     const priceWhenAdded = item.price_when_added ?? null;
-    const changeSinceAdded = price != null && priceWhenAdded != null
-      ? price - priceWhenAdded
-      : null;
-    const changeSinceAddedPct = price != null && priceWhenAdded != null && priceWhenAdded !== 0
-      ? ((price - priceWhenAdded) / priceWhenAdded) * 100
-      : null;
+    const changeSinceAdded = price != null && priceWhenAdded != null ? price - priceWhenAdded : null;
+    const changeSinceAddedPct =
+      price != null && priceWhenAdded != null && priceWhenAdded !== 0
+        ? ((price - priceWhenAdded) / priceWhenAdded) * 100
+        : null;
     return {
       ...item,
       price,
@@ -86,7 +71,6 @@ export async function POST(req: NextRequest) {
   const { symbol, name, asset_type } = await req.json();
   if (!symbol) return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
 
-  // Fetch current price to store as price_when_added
   const quotes = await fetchQuotes([symbol.toUpperCase()]);
   const price_when_added = quotes[symbol.toUpperCase()]?.regularMarketPrice ?? null;
 

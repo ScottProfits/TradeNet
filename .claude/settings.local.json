@@ -88,7 +88,20 @@
       "Bash(xcode-select --version)",
       "Bash(xcodebuild -version)",
       "Bash(npx cap *)",
-      "Bash(node /private/tmp/claude-501/-Users-a-scott-TradeNet/b6f992ca-0e85-4260-b6f4-4ed2779765d0/scratchpad/gen-screenshots.js)"
+      "Bash(node /private/tmp/claude-501/-Users-a-scott-TradeNet/b6f992ca-0e85-4260-b6f4-4ed2779765d0/scratchpad/gen-screenshots.js)",
+      "Bash(node /private/tmp/claude-501/-Users-a-scott-TradeNet/b6f992ca-0e85-4260-b6f4-4ed2779765d0/scratchpad/gen-screenshots2.js)",
+      "Bash(node /private/tmp/claude-501/-Users-a-scott-TradeNet/b6f992ca-0e85-4260-b6f4-4ed2779765d0/scratchpad/gen-screenshots3.js)",
+      "Bash(mkdir -p /Users/a.scott/TradeNet/src/app/api/posts/\\\\[id\\\\])",
+      "Bash(node /private/tmp/claude-501/-Users-a-scott-TradeNet/b6f992ca-0e85-4260-b6f4-4ed2779765d0/scratchpad/gen-screenshots5.js)",
+      "Skill(clerk-backend-api)",
+      "Skill(clerk-backend-api:*)",
+      "WebSearch",
+      "Bash(open /Users/a.scott/TradeNet/screenshots/01-feed.png /Users/a.scott/TradeNet/screenshots/02-leaderboard.png /Users/a.scott/TradeNet/screenshots/03-profile.png /Users/a.scott/TradeNet/screenshots/04-market.png /Users/a.scott/TradeNet/screenshots/05-messages.png)",
+      "Bash(node -e \"require\\('protobufjs'\\)\")",
+      "Bash(cp ~/Downloads/RithmicArtwork/market_data_by_rithmic-white.png /Users/a.scott/TradeNet/public/brokers/rithmic-logo-white.png)",
+      "Bash(cp ~/Downloads/RithmicArtwork/market_data_by_rithmic-black.png /Users/a.scott/TradeNet/public/brokers/rithmic-logo-black.png)",
+      "Bash(xargs ls -la)",
+      "Bash(gh deployment *)"
     ]
   }
 }

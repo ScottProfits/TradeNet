@@ -213,44 +213,40 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
                 const sinceUp = (item.changeSinceAdded ?? 0) >= 0;
                 return (
                   <div key={item.id} className="px-4 py-3 hover:bg-white/[0.02] transition-colors group">
-                    {/* Row 1: Symbol + Last Price */}
-                    <div className="flex items-start justify-between mb-2">
+                    {/* Row 1: Symbol + Last Price inline */}
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                           style={{ background: dailyUp ? "rgba(0,200,150,0.1)" : "rgba(239,68,68,0.1)" }}>
                           {dailyUp ? <TrendingUp className="w-3.5 h-3.5 text-[#00C896]" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
                         </div>
-                        <div className="min-w-0">
+                        <div className="flex items-baseline gap-2 min-w-0">
                           <p className="text-sm font-bold text-white">{item.symbol}</p>
-                          <p className="text-[10px] text-gray-600 truncate max-w-[140px]">{item.name}</p>
+                          <p className="text-sm font-bold text-white">
+                            {item.price != null ? `$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                          </p>
+                          <p className={`text-xs font-semibold ${dailyUp ? "text-[#00C896]" : "text-red-400"}`}>
+                            {fmtPct(item.changePct)}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-white">{item.price != null ? `$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</p>
-                        <p className="text-[10px] text-gray-500">Last Price</p>
-                      </div>
                     </div>
+                    <p className="text-[10px] text-gray-600 mb-2 -mt-1 ml-9 truncate">{item.name}</p>
 
                     {/* Row 2: Stats grid */}
-                    <div className="grid grid-cols-4 gap-1 mt-1">
+                    <div className="grid grid-cols-3 gap-1">
                       <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
-                        <p className="text-[10px] text-gray-600 mb-0.5">Added</p>
+                        <p className="text-[10px] text-gray-600 mb-0.5">Date Added</p>
                         <p className="text-[11px] font-semibold text-gray-400">{fmtDate(item.added_at)}</p>
                       </div>
                       <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
-                        <p className="text-[10px] text-gray-600 mb-0.5">At Add</p>
+                        <p className="text-[10px] text-gray-600 mb-0.5">Price at Add</p>
                         <p className="text-[11px] font-semibold text-gray-400">{fmt(item.priceWhenAdded)}</p>
                       </div>
                       <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
-                        <p className="text-[10px] text-gray-600 mb-0.5">Since Add</p>
+                        <p className="text-[10px] text-gray-600 mb-0.5">Since Add %</p>
                         <p className={`text-[11px] font-semibold ${sinceUp ? "text-[#00C896]" : "text-red-400"}`}>
                           {item.changeSinceAddedPct != null ? fmtPct(item.changeSinceAddedPct) : "—"}
-                        </p>
-                      </div>
-                      <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
-                        <p className="text-[10px] text-gray-600 mb-0.5">Day %</p>
-                        <p className={`text-[11px] font-semibold ${dailyUp ? "text-[#00C896]" : "text-red-400"}`}>
-                          {fmtPct(item.changePct)}
                         </p>
                       </div>
                     </div>
