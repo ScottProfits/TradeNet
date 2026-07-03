@@ -113,6 +113,8 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
           border: "1px solid rgba(255,255,255,0.08)",
           borderBottom: "none",
           maxHeight: "80vh",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          marginBottom: "80px",
         }}
         onClick={(e) => e.stopPropagation()}
       >
