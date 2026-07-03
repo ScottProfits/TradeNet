@@ -3,7 +3,38 @@ import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/watchlist?handle=xxx — fetch a user's watchlist with live prices
+async function fetchQuotes(symbols: string[]): Promise<Record<string, any>> {
+  if (!symbols.length) return {};
+  const sym = symbols.join(",");
+  const urls = [
+    `https://query2.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(sym)}`,
+    `https://query1.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(sym)}`,
+    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(sym)}`,
+  ];
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://finance.yahoo.com/",
+  };
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const results = data?.quoteResponse?.result ?? [];
+      if (!results.length) continue;
+      const map: Record<string, any> = {};
+      for (const q of results) map[q.symbol] = q;
+      return map;
+    } catch {
+      continue;
+    }
+  }
+  return {};
+}
+
+// GET /api/watchlist?handle=xxx
 export async function GET(req: NextRequest) {
   const handle = req.nextUrl.searchParams.get("handle");
   if (!handle) return NextResponse.json([]);
@@ -19,42 +50,32 @@ export async function GET(req: NextRequest) {
 
   if (!items?.length) return NextResponse.json([]);
 
-  // Fetch live quotes from Yahoo Finance
-  const symbols = items.map((i) => i.symbol).join(",");
-  try {
-    const quoteRes = await fetch(
-      `https://query2.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "application/json",
-          "Accept-Language": "en-US,en;q=0.9",
-        },
-        cache: "no-store",
-      }
-    );
+  const symbols = items.map((i) => i.symbol);
+  const quotes = await fetchQuotes(symbols);
 
-    const quoteData = quoteRes.ok ? await quoteRes.json() : null;
-    const quotes: Record<string, any> = {};
-    for (const q of quoteData?.quoteResponse?.result ?? []) {
-      quotes[q.symbol] = q;
-    }
+  const enriched = items.map((item) => {
+    const q = quotes[item.symbol] ?? {};
+    const price = q.regularMarketPrice ?? null;
+    const priceWhenAdded = item.price_when_added ?? null;
+    const changeSinceAdded = price != null && priceWhenAdded != null
+      ? price - priceWhenAdded
+      : null;
+    const changeSinceAddedPct = price != null && priceWhenAdded != null && priceWhenAdded !== 0
+      ? ((price - priceWhenAdded) / priceWhenAdded) * 100
+      : null;
+    return {
+      ...item,
+      price,
+      change: q.regularMarketChange ?? null,
+      changePct: q.regularMarketChangePercent ?? null,
+      volume: q.regularMarketVolume ?? null,
+      priceWhenAdded,
+      changeSinceAdded,
+      changeSinceAddedPct,
+    };
+  });
 
-    const enriched = items.map((item) => {
-      const q = quotes[item.symbol] ?? {};
-      return {
-        ...item,
-        price: q.regularMarketPrice ?? null,
-        change: q.regularMarketChange ?? null,
-        changePct: q.regularMarketChangePercent ?? null,
-        volume: q.regularMarketVolume ?? null,
-      };
-    });
-
-    return NextResponse.json(enriched);
-  } catch {
-    return NextResponse.json(items);
-  }
+  return NextResponse.json(enriched);
 }
 
 // POST /api/watchlist — add a symbol
@@ -65,9 +86,13 @@ export async function POST(req: NextRequest) {
   const { symbol, name, asset_type } = await req.json();
   if (!symbol) return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
 
+  // Fetch current price to store as price_when_added
+  const quotes = await fetchQuotes([symbol.toUpperCase()]);
+  const price_when_added = quotes[symbol.toUpperCase()]?.regularMarketPrice ?? null;
+
   const { error } = await supabaseAdmin.from("watchlist").upsert(
-    { user_id: userId, symbol: symbol.toUpperCase(), name, asset_type },
-    { onConflict: "user_id,symbol", ignoreDuplicates: true }
+    { user_id: userId, symbol: symbol.toUpperCase(), name, asset_type, price_when_added },
+    { onConflict: "user_id,symbol", ignoreDuplicates: false }
   );
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

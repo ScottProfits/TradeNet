@@ -7,10 +7,14 @@ interface WatchItem {
   symbol: string;
   name: string;
   asset_type: string;
+  added_at: string;
   price: number | null;
   change: number | null;
   changePct: number | null;
   volume: number | null;
+  priceWhenAdded: number | null;
+  changeSinceAdded: number | null;
+  changeSinceAddedPct: number | null;
 }
 
 interface SearchResult {
@@ -19,11 +23,18 @@ interface SearchResult {
   type: string;
 }
 
-function formatVolume(v: number | null) {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
-  return v.toString();
+function fmt(v: number | null, prefix = "$") {
+  if (v == null) return "—";
+  return `${prefix}${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function fmtPct(v: number | null) {
+  if (v == null) return "—";
+  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+}
+
+function fmtDate(s: string) {
+  return new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
 }
 
 interface Props {
@@ -55,11 +66,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        // Delay so mobile tap on result fires before dropdown hides
-        setTimeout(() => {
-          setShowSearch(false);
-          setSearchResults([]);
-        }, 200);
+        setTimeout(() => { setShowSearch(false); setSearchResults([]); }, 200);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -115,11 +122,15 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center" style={{ background: "rgba(0,0,0,0.6)", alignItems: "flex-end", paddingBottom: "80px" }} onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex justify-center"
+      style={{ background: "rgba(0,0,0,0.6)", alignItems: "flex-end", paddingBottom: "80px" }}
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-lg rounded-t-2xl flex flex-col"
         style={{
-          background: "rgba(10,10,10,0.98)",
+          background: "rgba(10,10,10,0.99)",
           border: "1px solid rgba(255,255,255,0.08)",
           borderBottom: "none",
           height: "65vh",
@@ -127,7 +138,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#00C896]" />
             <span className="font-bold text-white text-sm">Watchlist</span>
@@ -143,7 +154,6 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
                   {adding ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                   Add
                 </button>
-
                 {showSearch && (
                   <div className="absolute right-0 top-9 w-72 rounded-xl overflow-hidden z-50"
                     style={{ background: "rgba(10,10,10,0.97)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -189,7 +199,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
         <div className="overflow-y-auto flex-1">
           {loading ? (
             <div className="space-y-3 p-4">
-              {[1,2,3].map((i) => <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />)}
+              {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />)}
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -197,47 +207,77 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
               <p className="text-gray-500 text-sm">{isOwner ? "Tap Add to start tracking symbols." : "No watchlist yet."}</p>
             </div>
           ) : (
-            <div>
-              {/* Column headers */}
-              <div className="grid px-4 py-2 border-b border-white/[0.04]"
-                style={{ gridTemplateColumns: "1fr 80px 90px 64px" }}>
-                {["Symbol", "Price", "Change", "Vol"].map((h) => (
-                  <p key={h} className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold text-right first:text-left">{h}</p>
-                ))}
-              </div>
+            <div className="divide-y divide-white/[0.04]">
               {items.map((item) => {
-                const up = (item.change ?? 0) >= 0;
+                const dailyUp = (item.change ?? 0) >= 0;
+                const sinceUp = (item.changeSinceAdded ?? 0) >= 0;
                 return (
-                  <div key={item.id} className="grid px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors group"
-                    style={{ gridTemplateColumns: "1fr 80px 90px 64px" }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: up ? "rgba(0,200,150,0.1)" : "rgba(239,68,68,0.1)" }}>
-                        {up ? <TrendingUp className="w-3.5 h-3.5 text-[#00C896]" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+                  <div key={item.id} className="px-4 py-3 hover:bg-white/[0.02] transition-colors group">
+                    {/* Row 1: Symbol + Last Price */}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: dailyUp ? "rgba(0,200,150,0.1)" : "rgba(239,68,68,0.1)" }}>
+                          {dailyUp ? <TrendingUp className="w-3.5 h-3.5 text-[#00C896]" /> : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">{item.symbol}</p>
+                          <p className="text-[10px] text-gray-600 truncate max-w-[140px]">{item.name}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-white truncate">{item.symbol}</p>
-                        <p className="text-[10px] text-gray-600 truncate">{item.name}</p>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-white">{item.price != null ? `$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</p>
+                        <p className="text-[10px] text-gray-500">Last Price</p>
+                      </div>
+                    </div>
+
+                    {/* Row 2: Stats grid */}
+                    <div className="grid grid-cols-4 gap-1 mt-1">
+                      <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
+                        <p className="text-[10px] text-gray-600 mb-0.5">Added</p>
+                        <p className="text-[11px] font-semibold text-gray-400">{fmtDate(item.added_at)}</p>
+                      </div>
+                      <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
+                        <p className="text-[10px] text-gray-600 mb-0.5">At Add</p>
+                        <p className="text-[11px] font-semibold text-gray-400">{fmt(item.priceWhenAdded)}</p>
+                      </div>
+                      <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
+                        <p className="text-[10px] text-gray-600 mb-0.5">Since Add</p>
+                        <p className={`text-[11px] font-semibold ${sinceUp ? "text-[#00C896]" : "text-red-400"}`}>
+                          {item.changeSinceAddedPct != null ? fmtPct(item.changeSinceAddedPct) : "—"}
+                        </p>
+                      </div>
+                      <div className="bg-white/[0.03] rounded-lg px-2 py-1.5">
+                        <p className="text-[10px] text-gray-600 mb-0.5">Day %</p>
+                        <p className={`text-[11px] font-semibold ${dailyUp ? "text-[#00C896]" : "text-red-400"}`}>
+                          {fmtPct(item.changePct)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Row 3: Day change $ + remove */}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="text-[10px] text-gray-600">Day Change: </span>
+                          <span className={`text-[11px] font-semibold ${dailyUp ? "text-[#00C896]" : "text-red-400"}`}>
+                            {item.change != null ? `${dailyUp ? "+" : "-"}${fmt(item.change)}` : "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-600">Since Add: </span>
+                          <span className={`text-[11px] font-semibold ${sinceUp ? "text-[#00C896]" : "text-red-400"}`}>
+                            {item.changeSinceAdded != null ? `${sinceUp ? "+" : "-"}${fmt(item.changeSinceAdded)}` : "—"}
+                          </span>
+                        </div>
                       </div>
                       {isOwner && (
                         <button onClick={() => removeSymbol(item.symbol)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 shrink-0 ml-1">
-                          <X className="w-3 h-3" />
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 p-1">
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-white text-right self-center">
-                      {item.price != null ? `$${item.price.toFixed(2)}` : "—"}
-                    </p>
-                    <div className="text-right self-center">
-                      <p className={`text-sm font-semibold ${up ? "text-[#00C896]" : "text-red-400"}`}>
-                        {item.changePct != null ? `${up ? "+" : ""}${item.changePct.toFixed(2)}%` : "—"}
-                      </p>
-                      <p className={`text-[10px] ${up ? "text-[#00C896]/60" : "text-red-400/60"}`}>
-                        {item.change != null ? `${up ? "+" : ""}$${Math.abs(item.change).toFixed(2)}` : ""}
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500 text-right self-center">{formatVolume(item.volume)}</p>
                   </div>
                 );
               })}
