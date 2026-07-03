@@ -32,7 +32,7 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tickerResults, setTickerResults] = useState<TickerResult[]>([]);
@@ -200,7 +200,7 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          {isSignedIn && (
+          {isLoaded && isSignedIn && (
             <span className="lg:hidden flex items-center gap-1">
               <NotificationBell />
               <Link href="/messages" className="relative p-1.5 text-gray-400 hover:text-white transition-colors">
@@ -216,7 +216,7 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {isSignedIn ? (
+          {isLoaded && isSignedIn ? (
             <>
               <Link href="/messages" onClick={() => setUnreadDms(0)} className={clsx("hidden lg:flex relative p-1.5 rounded-lg transition-colors", pathname.startsWith("/messages") ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5")}>
                 <MessageSquare className="w-5 h-5" />
@@ -228,13 +228,13 @@ export default function Navbar() {
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
             </>
-          ) : (
+          ) : isLoaded && !isSignedIn ? (
             <SignInButton mode="redirect">
               <button className="px-3 py-1.5 text-sm font-medium text-[var(--green)] border border-[var(--green)]/30 rounded-lg hover:bg-[var(--green)]/10 transition-colors">
                 Sign in
               </button>
             </SignInButton>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
