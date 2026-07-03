@@ -55,8 +55,11 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSearch(false);
-        setSearchResults([]);
+        // Delay so mobile tap on result fires before dropdown hides
+        setTimeout(() => {
+          setShowSearch(false);
+          setSearchResults([]);
+        }, 200);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -81,14 +84,21 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
     setShowSearch(false);
     setSearchQuery("");
     setSearchResults([]);
-    const res = await fetch("/api/watchlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symbol: result.symbol, name: result.name, asset_type: result.type }),
-    });
-    if (res.ok) {
-      const refreshed = await fetch(`/api/watchlist?handle=${handle}`).then((r) => r.json());
-      setItems(refreshed);
+    try {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: result.symbol, name: result.name, asset_type: result.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Failed to add: ${data.error ?? res.status}`);
+      } else {
+        const refreshed = await fetch(`/api/watchlist?handle=${handle}`).then((r) => r.json());
+        setItems(refreshed);
+      }
+    } catch (e) {
+      alert(`Error: ${e}`);
     }
     setAdding(false);
   }
