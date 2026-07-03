@@ -93,7 +93,7 @@ export default function Navbar() {
 
   return (
     <nav className="border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 h-14">
+      <div className="max-w-7xl mx-auto px-3 flex items-center gap-2 h-14 w-full">
         <Link href="/feed" className="flex items-center gap-2 font-bold text-white shrink-0">
           <TrendingUp className="w-5 h-5 text-[var(--green)]" />
           Ryzr
@@ -185,13 +185,13 @@ export default function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 flex-1 justify-center">
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               className={clsx(
-                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                "px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
                 pathname.startsWith(l.href)
                   ? "text-white bg-white/10"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
