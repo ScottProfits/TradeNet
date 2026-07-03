@@ -74,14 +74,15 @@ export default function WatchlistSection({ handle, isOwner }: { handle: string; 
     setShowSearch(false);
     setSearchQuery("");
     setSearchResults([]);
-    await fetch("/api/watchlist", {
+    const res = await fetch("/api/watchlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symbol: result.symbol, name: result.name, asset_type: result.type }),
     });
-    // Refresh
-    const refreshed = await fetch(`/api/watchlist?handle=${handle}`).then((r) => r.json());
-    setItems(refreshed);
+    if (res.ok) {
+      const refreshed = await fetch(`/api/watchlist?handle=${handle}`).then((r) => r.json());
+      setItems(refreshed);
+    }
     setAdding(false);
   }
 

@@ -102,6 +102,7 @@ export default function ProfilePage() {
   const { user } = useUser();
   const router = useRouter();
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
+  const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<ProfileData | null>(null);
@@ -308,6 +309,12 @@ export default function ProfilePage() {
                 <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
                   Edit Profile
                 </Link>
+                <button
+                  onClick={() => setWatchlistOpen((o) => !o)}
+                  className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
+                >
+                  Watchlist
+                </button>
               </div>
             ) : (
               <>
@@ -538,8 +545,10 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Watchlist */}
-      <WatchlistSection handle={profile.handle} isOwner={isOwnProfile} />
+      {/* Watchlist — always visible to visitors, toggled by owner */}
+      {(!isOwnProfile || watchlistOpen) && (
+        <WatchlistSection handle={profile.handle} isOwner={isOwnProfile} />
+      )}
 
       {/* Broker Connections — visible to everyone, Connect button only for owner */}
       <div className="space-y-3">
