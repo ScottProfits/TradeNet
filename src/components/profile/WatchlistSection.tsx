@@ -111,6 +111,7 @@ export default function WatchlistSection({ handle, isOwner, open, onClose }: Pro
   }
 
   async function removeSymbol(symbol: string) {
+    if (!confirm(`Remove ${symbol} from your watchlist?`)) return;
     setItems((prev) => prev.filter((i) => i.symbol !== symbol));
     await fetch("/api/watchlist", {
       method: "DELETE",
