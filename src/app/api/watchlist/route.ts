@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/watchlist?handle=xxx — fetch a user's watchlist with live prices
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
   const { symbol, name, asset_type } = await req.json();
   if (!symbol) return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
 
-  const { error } = await supabase.from("watchlist").upsert(
+  const { error } = await supabaseAdmin.from("watchlist").upsert(
     { user_id: userId, symbol: symbol.toUpperCase(), name, asset_type },
     { onConflict: "user_id,symbol", ignoreDuplicates: true }
   );
@@ -79,6 +80,6 @@ export async function DELETE(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { symbol } = await req.json();
-  await supabase.from("watchlist").delete().eq("user_id", userId).eq("symbol", symbol.toUpperCase());
+  await supabaseAdmin.from("watchlist").delete().eq("user_id", userId).eq("symbol", symbol.toUpperCase());
   return NextResponse.json({ success: true });
 }
