@@ -170,7 +170,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
                   : "bg-[var(--red)]/20 text-[var(--red)]"
               )}
             >
-              {positive ? "+" : ""}${localPnl.toLocaleString()} today
+              {positive ? "+" : ""}${localPnl.toLocaleString()}
             </span>
             {isVerified && (
               <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--green)] bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
