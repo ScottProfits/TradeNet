@@ -6,7 +6,7 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment";
+  type: "follow" | "like" | "comment" | "message_like";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -23,13 +23,14 @@ function timeAgo(date: string) {
 }
 
 function icon(type: string) {
-  if (type === "like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
+  if (type === "like" || type === "message_like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
   if (type === "follow") return <UserPlus className="w-4 h-4 text-green-400" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
 function message(type: string) {
   if (type === "like") return "liked your trade";
+  if (type === "message_like") return "liked your message";
   if (type === "follow") return "started following you";
   return "commented on your trade";
 }
@@ -110,9 +111,11 @@ export default function NotificationsPage() {
                 <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">{group}</p>
                 <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                   {items.map((n) => {
-                    const tradeHref = n.trade_id
-                      ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
-                      : `/profile/${n.actor?.handle}`;
+                    const tradeHref = n.type === "message_like"
+                      ? `/messages/${n.actor?.handle}`
+                      : n.trade_id
+                        ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
+                        : `/profile/${n.actor?.handle}`;
                     return (
                       <div
                         key={n.id}

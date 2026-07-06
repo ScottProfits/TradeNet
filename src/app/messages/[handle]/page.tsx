@@ -31,6 +31,14 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
+
+  function isNearBottom() {
+    const el = scrollContainerRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }
 
   useEffect(() => {
     // Load partner profile
@@ -44,13 +52,27 @@ export default function ChatPage() {
     // Initial load
     fetch(`/api/messages?with=${partner.id}`)
       .then((r) => r.ok ? r.json() : [])
-      .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView(), 50); });
+      .then((d: Message[]) => {
+        setMessages(d);
+        lastMessageIdRef.current = d.at(-1)?.id ?? null;
+        setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
+      });
 
     // Poll for new messages (messages table is server-only now, no client Realtime access)
     const interval = setInterval(() => {
+      const wasNearBottom = isNearBottom();
       fetch(`/api/messages?with=${partner.id}`)
         .then((r) => r.ok ? r.json() : [])
-        .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
+        .then((d: Message[]) => {
+          const newLastId = d.at(-1)?.id ?? null;
+          const hasNewMessage = newLastId !== lastMessageIdRef.current;
+          setMessages(d);
+          lastMessageIdRef.current = newLastId;
+          // Only auto-scroll if a genuinely new message arrived and the user was already at the bottom
+          if (hasNewMessage && wasNearBottom) {
+            setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+          }
+        });
     }, 4000);
 
     return () => clearInterval(interval);
@@ -68,6 +90,7 @@ export default function ChatPage() {
     if (res.ok) {
       const msg = await res.json();
       setMessages((m) => [...m, msg]);
+      lastMessageIdRef.current = msg.id;
       setText("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
@@ -75,7 +98,7 @@ export default function ChatPage() {
   }
 
   async function toggleLike(m: Message) {
-    if (!userId) return;
+    if (!userId || m.sender_id === userId) return;
     const alreadyLiked = (m.liked_by ?? []).includes(userId);
     setMessages((msgs) =>
       msgs.map((msg) =>
@@ -117,7 +140,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto glass-card border-t-0 border-b-0 rounded-none p-4 space-y-3">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto glass-card border-t-0 border-b-0 rounded-none p-4 space-y-3">
         {messages.length === 0 && (
           <p className="text-center text-gray-600 text-sm pt-8">Start the conversation with @{handle}</p>
         )}
@@ -141,21 +164,29 @@ export default function ChatPage() {
                         color: "#fff",
                       }
                 }
-                onDoubleClick={() => toggleLike(m)}
+                onDoubleClick={() => { if (!mine) toggleLike(m); }}
               >
                 <p className="text-sm leading-relaxed">{m.content}</p>
                 <p className={`text-xs mt-1 ${mine ? "text-black/60" : "text-gray-500"}`}>
                   {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => toggleLike(m)}
-                  className={`absolute -bottom-3 ${mine ? "left-1" : "right-1"} w-6 h-6 rounded-full flex items-center justify-center transition-all solid-menu ${
-                    liked ? "opacity-100 scale-100" : "opacity-60 hover:opacity-100 scale-90 hover:scale-100"
-                  }`}
-                >
-                  <Heart className={`w-3 h-3 ${liked ? "fill-[var(--red)] text-[var(--red)]" : "text-gray-400"}`} />
-                </button>
+                {mine ? (
+                  liked && (
+                    <span className={`absolute -bottom-3 left-1 w-6 h-6 rounded-full flex items-center justify-center solid-menu`}>
+                      <Heart className="w-3 h-3 fill-[var(--red)] text-[var(--red)]" />
+                    </span>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleLike(m)}
+                    className={`absolute -bottom-3 right-1 w-6 h-6 rounded-full flex items-center justify-center transition-all solid-menu ${
+                      liked ? "opacity-100 scale-100" : "opacity-60 hover:opacity-100 scale-90 hover:scale-100"
+                    }`}
+                  >
+                    <Heart className={`w-3 h-3 ${liked ? "fill-[var(--red)] text-[var(--red)]" : "text-gray-400"}`} />
+                  </button>
+                )}
               </div>
             </div>
           );
