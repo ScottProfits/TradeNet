@@ -1,6 +1,7 @@
 "use client";
 import { Trash2, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function DeleteSheet({
   label,
@@ -17,7 +18,7 @@ export default function DeleteSheet({
     return () => clearTimeout(t);
   }, []);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
       onClick={ready ? onCancel : undefined}
@@ -54,6 +55,7 @@ export default function DeleteSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

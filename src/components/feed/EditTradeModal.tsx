@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, TrendingUp, TrendingDown, ImagePlus, Video, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
@@ -108,7 +109,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   const currentMediaUrl = newMediaPreview ?? existingUrl;
   const currentMediaIsVideo = newMediaPreview ? newMediaType === "video" : currentMediaUrl ? isVideo(currentMediaUrl) : false;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative solid-menu rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -240,6 +241,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
