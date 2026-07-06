@@ -8,6 +8,7 @@ import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 export default function SettingsPage() {
   const { userId } = useAuth();
@@ -159,18 +160,7 @@ export default function SettingsPage() {
         {/* Avatar upload */}
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
-            {avatarPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatarPreview}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border-2 border-[var(--green)]"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-3xl border-2 border-[var(--border)]">
-                {initials}
-              </div>
-            )}
+            <SafeAvatar src={avatarPreview} alt="Profile" initials={initials} className="w-24 h-24 text-3xl border-2 border-[var(--green)]" />
             <button
               type="button"
               onClick={() => fileRef.current?.click()}

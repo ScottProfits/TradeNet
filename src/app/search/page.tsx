@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, TrendingUp, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface UserResult {
   id: string;
@@ -193,14 +194,7 @@ export default function SearchPage() {
                     onClick={() => router.push(`/profile/${r.handle}`)}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left"
                   >
-                    {r.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.avatar_url} alt={r.handle} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                        {r.handle.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <SafeAvatar src={r.avatar_url} alt={r.handle} initials={r.handle} className="w-10 h-10 text-sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-semibold text-white">@{r.handle}</span>

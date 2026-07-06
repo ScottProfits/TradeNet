@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Conversation {
   id: string;
@@ -44,7 +45,6 @@ export default function MessagesPage() {
         {convos.map((c) => {
           const partner = c.partner;
           const unread = !c.read && c.receiver_id === userId;
-          const initials = partner?.handle?.slice(0, 2).toUpperCase() ?? "?";
 
           return (
             <Link
@@ -52,14 +52,7 @@ export default function MessagesPage() {
               href={`/messages/${partner?.handle}`}
               className="flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0"
             >
-              {partner?.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={partner.avatar_url} alt={partner.handle} className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {initials}
-                </div>
-              )}
+              <SafeAvatar src={partner?.avatar_url} alt={partner?.handle ?? ""} initials={partner?.handle ?? "?"} className="w-11 h-11" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className={`font-semibold text-sm ${unread ? "text-white" : "text-gray-300"}`}>@{partner?.handle}</span>

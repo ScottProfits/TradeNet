@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Suggestion {
   id: string;
@@ -37,14 +38,7 @@ export default function SuggestedTraders() {
         {traders.map((t) => (
           <div key={t.id} className="flex items-center gap-2">
             <Link href={`/profile/${t.handle}`} className="shrink-0">
-              {t.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={t.avatar_url} alt={t.handle} className="w-7 h-7 rounded-full object-cover" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                  {t.handle.slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <SafeAvatar src={t.avatar_url} alt={t.handle} initials={t.handle} className="w-7 h-7 text-xs" />
             </Link>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">

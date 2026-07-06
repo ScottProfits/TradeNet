@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 const ADMIN_ID = "user_3FjHwLbvzd59NATWEJDb6dwguxh";
 
@@ -78,14 +79,7 @@ export default function AdminPage() {
               <div key={req.user_id} className="bg-[var(--card)] border border-[var(--green)]/30 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {profile.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profile.avatar_url} alt={profile.handle} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-                        {profile.handle.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <SafeAvatar src={profile.avatar_url} alt={profile.handle} initials={profile.handle} className="w-10 h-10 text-sm" />
                     <div>
                       <p className="font-semibold text-white">@{profile.handle}</p>
                       <p className="text-xs text-gray-500">{new Date(req.created_at).toLocaleDateString()}</p>
@@ -132,14 +126,7 @@ export default function AdminPage() {
         {profiles.map((p) => (
           <div key={p.id} className={`bg-[var(--card)] border rounded-xl p-4 flex items-center justify-between ${requestedUserIds.has(p.id) ? "border-[var(--green)]/20" : "border-[var(--border)]"}`}>
             <div className="flex items-center gap-3">
-              {p.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.avatar_url} alt={p.handle} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-                  {p.handle.slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <SafeAvatar src={p.avatar_url} alt={p.handle} initials={p.handle} className="w-10 h-10 text-sm" />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-white">@{p.handle}</span>

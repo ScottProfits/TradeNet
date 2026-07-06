@@ -5,6 +5,7 @@ import { Send, CornerDownRight, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import DeleteSheet from "@/components/ui/DeleteSheet";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 import { useLongPress } from "@/hooks/useLongPress";
 
 interface Comment {
@@ -206,14 +207,7 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
   return (
     <div className="flex gap-2.5 group select-none">
       <Link href={`/profile/${c.profiles?.handle}`} className="shrink-0">
-        {c.profiles?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={c.profiles.avatar_url} alt={c.profiles.handle} className="w-7 h-7 rounded-full object-cover" />
-        ) : (
-          <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-            {c.profiles?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-          </div>
-        )}
+        <SafeAvatar src={c.profiles?.avatar_url} alt={c.profiles?.handle ?? ""} initials={c.profiles?.handle ?? "?"} className="w-7 h-7 text-xs" />
       </Link>
       <div className="flex-1 bg-[var(--bg)] rounded-xl px-3 py-2" {...longPress}>
         <div className="flex items-center justify-between mb-0.5">

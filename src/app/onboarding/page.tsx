@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { clsx } from "clsx";
 import { Check, ChevronRight } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 const TRADING_STYLES = [
   { value: "Day Trader", emoji: "⚡", desc: "In and out same day" },
@@ -149,14 +150,7 @@ export default function OnboardingPage() {
               <div className="space-y-2">
                 {suggestions.map((s) => (
                   <div key={s.id} className="flex items-center gap-3 p-3 glass-card rounded-2xl">
-                    {s.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.avatar_url} alt={s.handle} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold shrink-0">
-                        {s.handle.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <SafeAvatar src={s.avatar_url} alt={s.handle} initials={s.handle} className="w-10 h-10" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-white text-sm">@{s.handle}</span>

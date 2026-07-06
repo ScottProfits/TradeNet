@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface LeaderEntry {
   profile: {
@@ -112,14 +113,7 @@ export default function LeaderboardPage() {
                   </td>
                   <td className="px-3 py-3">
                     <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-2 group">
-                      {entry.profile?.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={entry.profile.avatar_url} alt={entry.profile.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                          {entry.profile?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                        </div>
-                      )}
+                      <SafeAvatar src={entry.profile?.avatar_url} alt={entry.profile?.handle ?? ""} initials={entry.profile?.handle ?? "?"} className="w-8 h-8 text-xs" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-medium text-white group-hover:text-[var(--green)] transition-colors truncate">

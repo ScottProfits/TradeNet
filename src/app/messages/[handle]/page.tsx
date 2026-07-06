@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Send, ArrowLeft, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Message {
   id: string;
@@ -114,7 +115,6 @@ export default function ChatPage() {
     }).catch(() => {});
   }
 
-  const initials = partner?.handle.slice(0, 2).toUpperCase() ?? "?";
 
   return (
     <div className="max-w-xl mx-auto flex flex-col h-[calc(100vh-80px)]">
@@ -123,14 +123,7 @@ export default function ChatPage() {
         <Link href="/messages" className="text-gray-500 hover:text-white transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        {partner?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={partner.avatar_url} alt={partner.handle} className="w-9 h-9 rounded-full object-cover" />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-            {initials}
-          </div>
-        )}
+        <SafeAvatar src={partner?.avatar_url} alt={partner?.handle ?? handle} initials={partner?.handle ?? handle} className="w-9 h-9 text-sm" />
         <div className="flex items-center gap-1.5">
           <Link href={`/profile/${handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
             @{handle}

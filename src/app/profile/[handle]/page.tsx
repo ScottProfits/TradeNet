@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade as TradeCardTrade, Trader } from "@/types";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 import { clsx } from "clsx";
 import Link from "next/link";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
@@ -101,6 +102,7 @@ export default function ProfilePage() {
   const { signOut, openUserProfile } = useClerk();
   const { user } = useUser();
   const router = useRouter();
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -240,9 +242,14 @@ export default function ProfilePage() {
                 onClick={() => profile.avatar_url && setAvatarOpen(true)}
                 className={`w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
               >
-                {profile.avatar_url ? (
+                {profile.avatar_url && !avatarLoadFailed ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.handle} className="w-16 h-16 rounded-full object-cover" />
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.handle}
+                    className="w-16 h-16 rounded-full object-cover"
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
                 ) : initials}
               </button>
               {profile.verified && (
@@ -502,14 +509,7 @@ export default function ProfilePage() {
             <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
               {likedItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 p-4 hover:bg-white/[0.02] transition-colors">
-                  {item.profiles?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.profiles.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {item.profiles?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                    </div>
-                  )}
+                  <SafeAvatar src={item.profiles?.avatar_url} alt="" initials={item.profiles?.handle ?? "?"} className="w-9 h-9 text-xs" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Link href={`/profile/${item.profiles?.handle}`} className="text-sm font-semibold text-white hover:text-[var(--green)] transition-colors">
@@ -627,14 +627,7 @@ export default function ProfilePage() {
                   onClick={() => setModal(null)}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg)] transition-colors"
                 >
-                  {u.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={u.avatar_url} alt={u.handle} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {u.handle.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <SafeAvatar src={u.avatar_url} alt={u.handle} initials={u.handle} className="w-10 h-10 text-sm" />
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="font-semibold text-white truncate">@{u.handle}</span>
                     {u.verified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}

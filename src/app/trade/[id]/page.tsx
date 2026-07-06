@@ -6,6 +6,7 @@ import { ArrowLeft, Heart, Share2, BarChart2, TrendingUp, TrendingDown } from "l
 import Link from "next/link";
 import { clsx } from "clsx";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 import CommentSection from "@/components/feed/CommentSection";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 
@@ -125,14 +126,7 @@ export default function TradePage() {
       <div className="glass-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-3">
           <Link href={isSignedIn ? `/profile/${profile.handle}` : "/sign-up"}>
-            {profile.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.avatar_url} alt={profile.handle} className="w-11 h-11 rounded-full object-cover" />
-            ) : (
-              <div className="w-11 h-11 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold">
-                {profile.handle.slice(0, 2).toUpperCase()}
-              </div>
-            )}
+            <SafeAvatar src={profile.avatar_url} alt={profile.handle} initials={profile.handle} className="w-11 h-11" />
           </Link>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">

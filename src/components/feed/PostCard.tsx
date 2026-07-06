@@ -8,6 +8,7 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 import { clsx } from "clsx";
 
 interface RealPost {
@@ -42,7 +43,6 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
   const [deleted, setDeleted] = useState(false);
 
   const profile = post.profiles;
-  const initials = profile?.handle?.slice(0, 2).toUpperCase() ?? "?";
   const isOwner = userId === post.user_id;
 
 
@@ -97,14 +97,7 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href={`/profile/${profile?.handle}`} className="shrink-0">
-          {profile?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatar_url} alt={profile.handle} className="w-10 h-10 rounded-full object-cover" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
-              {initials}
-            </div>
-          )}
+          <SafeAvatar src={profile?.avatar_url} alt={profile?.handle ?? ""} initials={profile?.handle ?? "?"} className="w-10 h-10 text-sm" />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-1.5">

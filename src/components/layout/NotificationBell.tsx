@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Heart, UserPlus, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
@@ -106,14 +107,7 @@ export default function NotificationBell() {
                   className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-white/5 transition-colors ${!n.read ? "bg-[var(--green)]/5" : ""}`}
                 >
                   <div className="relative shrink-0">
-                    {n.actor?.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={n.actor.avatar_url} alt={n.actor.handle} className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                        {n.actor?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                      </div>
-                    )}
+                    <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-8 h-8 text-xs" />
                     <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
                       {icon(n.type)}
                     </span>

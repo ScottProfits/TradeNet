@@ -30,6 +30,7 @@ interface TradeCardProps {
 
 export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const [liked, setLiked] = useState(likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(trade.likes);
   const [commentCount, setCommentCount] = useState(trade.comments);
@@ -130,7 +131,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       <div className="flex items-start gap-3">
         {/* Avatar with verified badge overlay */}
         <Link href={`/profile/${trader.handle}`} className="flex-shrink-0 relative">
-          {avatarUrl ? (
+          {avatarUrl && !avatarFailed ? (
             <Image
               src={avatarUrl}
               alt={trader.handle}
@@ -138,6 +139,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
               height={40}
               className="w-10 h-10 rounded-full object-cover"
               unoptimized
+              onError={() => setAvatarFailed(true)}
             />
           ) : (
             <div

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Bell, Heart, UserPlus, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
@@ -122,14 +123,7 @@ export default function NotificationsPage() {
                         className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
                       >
                         <Link href={`/profile/${n.actor?.handle}`} className="relative shrink-0">
-                          {n.actor?.avatar_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={n.actor.avatar_url} alt={n.actor.handle} className="w-10 h-10 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">
-                              {n.actor?.handle?.slice(0, 2).toUpperCase() ?? "?"}
-                            </div>
-                          )}
+                          <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-10 h-10 text-sm" />
                           <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
                             {icon(n.type)}
                           </span>

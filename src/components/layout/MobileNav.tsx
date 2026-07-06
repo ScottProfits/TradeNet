@@ -6,6 +6,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import { clsx } from "clsx";
 import PostTradeModal from "@/components/feed/PostTradeModal";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 const TABS = [
   { label: "Home", href: "/feed", icon: "home" },
@@ -135,19 +136,13 @@ export default function MobileNav() {
 
         {/* Profile */}
         <Link href={profileHref} className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-all" style={{ color: tabColor(4) }}>
-          {profileAvatar || user?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={(profileAvatar || user?.imageUrl) as string}
-              alt="Profile"
-              className={clsx("w-6 h-6 rounded-full object-cover", (hoverIdx === 4 || pathname.startsWith("/profile")) ? "ring-2 ring-[var(--green)]" : "")}
-              style={{ filter: tabGlow(4) }}
-            />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
-              {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
-            </div>
-          )}
+          <SafeAvatar
+            src={profileAvatar || user?.imageUrl}
+            alt="Profile"
+            initials={user?.username ?? "?"}
+            className={clsx("w-6 h-6 text-[10px]", (hoverIdx === 4 || pathname.startsWith("/profile")) ? "ring-2 ring-[var(--green)]" : "")}
+            style={{ filter: tabGlow(4) }}
+          />
           Profile
         </Link>
       </div>

@@ -7,6 +7,7 @@ import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import NotificationBell from "@/components/layout/NotificationBell";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface SearchResult {
   id: string;
@@ -170,14 +171,7 @@ export default function Navbar() {
                   onClick={() => goToProfile(r.handle)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
                 >
-                  {r.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.avatar_url} alt={r.handle} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {r.handle.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <SafeAvatar src={r.avatar_url} alt={r.handle} initials={r.handle} className="w-8 h-8 text-xs" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-white truncate">@{r.handle}</span>
@@ -242,18 +236,12 @@ export default function Navbar() {
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
               <Link href={profileHref} className="hidden lg:block shrink-0">
-                {profileAvatar || user?.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={(profileAvatar || user?.imageUrl) as string}
-                    alt="Profile"
-                    className={clsx("w-7 h-7 rounded-full object-cover", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                    {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
-                  </div>
-                )}
+                <SafeAvatar
+                  src={profileAvatar || user?.imageUrl}
+                  alt="Profile"
+                  initials={user?.username ?? "?"}
+                  className={clsx("w-7 h-7 text-xs", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
+                />
               </Link>
             </>
           ) : isLoaded && !isSignedIn ? (
