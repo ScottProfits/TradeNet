@@ -239,12 +239,14 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+      {!isOwnProfile && (
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+      )}
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
