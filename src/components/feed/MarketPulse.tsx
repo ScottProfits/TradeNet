@@ -53,7 +53,7 @@ export default function MarketPulse() {
   const { marketStatus: ms, todayEvents } = data;
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden mb-4">
+    <div className="glass-card rounded-2xl overflow-hidden mb-4">
 
       {/* Market clocks */}
       <div className="grid grid-cols-3 divide-x divide-[var(--border)]">

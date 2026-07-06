@@ -28,7 +28,7 @@ export default function LiveTicker() {
   const doubled = [...items, ...items]; // duplicate for seamless loop
 
   return (
-    <div className="w-full overflow-hidden bg-[var(--card)] border border-[var(--border)] rounded-xl py-2 relative">
+    <div className="w-full overflow-hidden glass-card rounded-2xl py-2 relative">
       <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[var(--card)] to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--card)] to-transparent z-10 pointer-events-none" />
       <div

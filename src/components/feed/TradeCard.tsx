@@ -125,7 +125,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
 
   return (
     <div
-      className={clsx("bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}
+      className={clsx("glass-card rounded-2xl p-3 sm:p-4 space-y-3 transition-opacity", deleting && "opacity-40 pointer-events-none")}
     >
       <div className="flex items-start gap-3">
         {/* Avatar with verified badge overlay */}
@@ -220,7 +220,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className={clsx("font-bold text-base sm:text-lg", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+          <p className={clsx("font-bold text-base sm:text-lg", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
             {positive ? "+" : ""}${localPnl.toLocaleString()}
           </p>
           <p className={clsx("text-sm", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>

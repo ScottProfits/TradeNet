@@ -5,7 +5,7 @@ import { CheckCircle } from "lucide-react";
 export default function SidebarProfile() {
   const u = currentUser;
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-4">
+    <div className="glass-card rounded-2xl p-4 space-y-4">
       <div className="flex flex-col items-center gap-2">
         <Avatar initials={u.initials} color={u.color} size="lg" />
         <div className="text-center">
@@ -27,7 +27,7 @@ export default function SidebarProfile() {
           <p className="text-xs text-gray-500">Following</p>
         </div>
         <div>
-          <p className="font-bold text-[var(--green)]">+{u.pnlMonth}%</p>
+          <p className="font-bold text-[var(--green)] glow-green">+{u.pnlMonth}%</p>
           <p className="text-xs text-gray-500">This month</p>
         </div>
       </div>

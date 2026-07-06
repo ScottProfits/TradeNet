@@ -92,7 +92,7 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
 
   return (
     <div
-      className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-4 space-y-3"
+      className="glass-card rounded-2xl p-3 sm:p-4 space-y-3"
     >
       {/* Header */}
       <div className="flex items-center gap-3">
