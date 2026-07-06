@@ -34,7 +34,7 @@ export default function DiscoverPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {traders.map((t) => (
-          <div key={t.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+          <div key={t.id} className="glass-card rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-3">
               <Avatar initials={t.initials} color={t.color} size="md" />
               <div>
@@ -52,7 +52,7 @@ export default function DiscoverPage() {
                 <p className="text-xs text-gray-500">Win rate</p>
               </div>
               <div>
-                <p className={`font-bold ${t.pnlMonth >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+                <p className={`font-bold ${t.pnlMonth >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                   {t.pnlMonth >= 0 ? "+" : ""}${Math.abs(t.pnlMonth).toLocaleString()}
                 </p>
                 <p className="text-xs text-gray-500">This month</p>

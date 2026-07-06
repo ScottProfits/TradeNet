@@ -74,7 +74,7 @@ export default function ExploreTab() {
           <div className="space-y-2">
             {data!.topToday.map((entry, i) => (
               <Link key={entry.profile.id} href={`/profile/${entry.profile.handle}`}
-                className="flex items-center gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 hover:border-yellow-400/40 transition-colors group">
+                className="flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-yellow-400/40 transition-colors group">
                 <span className="text-gray-600 font-mono text-sm w-4 text-center">{i + 1}</span>
                 <Avatar url={entry.profile.avatar_url} handle={entry.profile.handle} />
                 <div className="flex-1 min-w-0">
@@ -84,7 +84,7 @@ export default function ExploreTab() {
                   </div>
                   <p className="text-xs text-gray-500">{entry.trades} trade{entry.trades !== 1 ? "s" : ""} today</p>
                 </div>
-                <span className={clsx("text-sm font-bold shrink-0", entry.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                <span className={clsx("text-sm font-bold shrink-0", entry.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                   {entry.pnl >= 0 ? "+" : ""}${Math.abs(entry.pnl).toLocaleString()}
                 </span>
               </Link>
@@ -106,7 +106,7 @@ export default function ExploreTab() {
           <div className="space-y-2">
             {data!.mostImproved.map((entry, i) => (
               <Link key={entry.profile.id} href={`/profile/${entry.profile.handle}`}
-                className="flex items-center gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 hover:border-[var(--green)]/40 transition-colors group">
+                className="flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-[var(--green)]/40 transition-colors group">
                 <span className="text-gray-600 font-mono text-sm w-4 text-center">{i + 1}</span>
                 <Avatar url={entry.profile.avatar_url} handle={entry.profile.handle} />
                 <div className="flex-1 min-w-0">
@@ -115,7 +115,7 @@ export default function ExploreTab() {
                     {entry.profile.verified && <VerifiedBadge className="w-3 h-3 shrink-0" />}
                   </div>
                 </div>
-                <span className="text-sm font-bold text-[var(--green)] shrink-0">+${entry.delta.toLocaleString()}</span>
+                <span className="text-sm font-bold text-[var(--green)] glow-green shrink-0">+${entry.delta.toLocaleString()}</span>
               </Link>
             ))}
           </div>
@@ -134,7 +134,7 @@ export default function ExploreTab() {
           <div className="space-y-2">
             {data!.suggested.map((trader) => (
               <Link key={trader.id} href={`/profile/${trader.handle}`}
-                className="flex items-center gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 hover:border-blue-400/40 transition-colors group">
+                className="flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-blue-400/40 transition-colors group">
                 <Avatar url={trader.avatar_url} handle={trader.handle} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -165,14 +165,14 @@ export default function ExploreTab() {
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {data!.hotStrategies.map((s) => (
-                <div key={s.name} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 space-y-1 hover:border-yellow-400/30 transition-colors">
+                <div key={s.name} className="glass-card rounded-2xl p-3 space-y-1 hover:border-yellow-400/30 transition-colors">
                   <p className="font-semibold text-white text-sm truncate">{s.name}</p>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>{s.count} {s.count === 1 ? "trade" : "trades"}</span>
                     <span>·</span>
                     <span className="text-[var(--green)]">{s.winRate}% win</span>
                   </div>
-                  <p className={`text-xs font-semibold ${s.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+                  <p className={`text-xs font-semibold ${s.avgPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                     {s.avgPnl >= 0 ? "+" : ""}${Math.abs(s.avgPnl).toLocaleString()} avg
                   </p>
                 </div>
@@ -199,7 +199,7 @@ export default function ExploreTab() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {data!.trending.map(({ ticker, count }, i) => (
               <Link key={ticker} href={`/ticker/${ticker}`}
-                className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 flex flex-col items-center gap-1 hover:border-orange-400/40 transition-colors">
+                className="glass-card rounded-2xl p-3 flex flex-col items-center gap-1 hover:border-orange-400/40 transition-colors">
                 <span className="text-xs text-gray-500">#{i + 1}</span>
                 <span className="font-bold text-white text-lg">{ticker}</span>
                 <span className="text-xs text-gray-500">{count} {count === 1 ? "trade" : "trades"}</span>
@@ -221,7 +221,7 @@ export default function ExploreTab() {
           <div className="space-y-2">
             {data!.topTraders.map((trader, i) => (
               <Link key={trader.id} href={`/profile/${trader.handle}`}
-                className="flex items-center gap-4 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--green)]/50 transition-colors group">
+                className="flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-[var(--green)]/50 transition-colors group">
                 <span className="text-gray-600 font-mono text-sm w-5 text-center">{i + 1}</span>
                 <Avatar url={trader.avatar_url} handle={trader.handle} />
                 <div className="flex-1 min-w-0">

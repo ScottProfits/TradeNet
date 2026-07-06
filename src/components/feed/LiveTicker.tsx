@@ -42,7 +42,7 @@ export default function LiveTicker() {
             <span key={`${item.id}-${i}`} className="inline-flex items-center gap-1.5 text-xs shrink-0">
               <span className="text-gray-500">@{item.profiles?.handle ?? "trader"}</span>
               <span className="font-bold text-white">${item.ticker}</span>
-              <span className={clsx("font-semibold", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+              <span className={clsx("font-semibold", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                 {positive ? "+" : ""}${Math.abs(item.pnl).toLocaleString()}
               </span>
               <span className="text-gray-700">·</span>

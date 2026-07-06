@@ -61,7 +61,7 @@ export default function SearchPage() {
   return (
     <div className="max-w-xl mx-auto">
       {/* Search bar */}
-      <div className="flex items-center gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-3 mb-6 focus-within:border-[var(--green)]/50 transition-colors">
+      <div className="flex items-center gap-3 glass-card rounded-2xl px-4 py-3 mb-6 focus-within:border-[var(--green)]/50 transition-colors">
         <Search className="w-5 h-5 text-gray-500 shrink-0" />
         <input
           ref={inputRef}
@@ -107,7 +107,7 @@ export default function SearchPage() {
                 <button
                   key={t.symbol}
                   onClick={() => router.push(`/ticker/${encodeURIComponent(t.symbol)}`)}
-                  className="flex items-center gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-3 hover:border-[var(--green)]/30 transition-colors text-left"
+                  className="flex items-center gap-3 glass-card rounded-2xl px-4 py-3 hover:border-[var(--green)]/30 transition-colors text-left"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[var(--green)]/10 flex items-center justify-center shrink-0">
                     <TrendingUp className="w-4 h-4 text-[var(--green)]" />
@@ -127,7 +127,7 @@ export default function SearchPage() {
       {loading && (
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 animate-pulse">
+            <div key={i} className="glass-card rounded-2xl p-4 animate-pulse">
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/5 shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -150,7 +150,7 @@ export default function SearchPage() {
                 <TrendingUp className="w-4 h-4 text-[var(--green)]" />
                 <span className="text-sm font-semibold text-white">Tickers</span>
               </div>
-              <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+              <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                 {tickers.slice(0, 6).map((r) => (
                   <button
                     key={r.symbol}
@@ -186,7 +186,7 @@ export default function SearchPage() {
                 <Users className="w-4 h-4 text-[var(--green)]" />
                 <span className="text-sm font-semibold text-white">Traders</span>
               </div>
-              <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+              <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                 {users.map((r) => (
                   <button
                     key={r.id}

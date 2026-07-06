@@ -122,7 +122,7 @@ export default function TradePage() {
       )}
 
       {/* Trader header */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <div className="glass-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-3">
           <Link href={isSignedIn ? `/profile/${profile.handle}` : "/sign-up"}>
             {profile.avatar_url ? (
@@ -162,7 +162,7 @@ export default function TradePage() {
               {trade.direction === "Long" || trade.direction === "LONG"
                 ? <TrendingUp className="w-4 h-4 text-[var(--green)]" />
                 : <TrendingDown className="w-4 h-4 text-[var(--red)]" />}
-              <p className={clsx("font-semibold", (trade.direction === "Long" || trade.direction === "LONG") ? "text-[var(--green)]" : "text-[var(--red)]")}>
+              <p className={clsx("font-semibold", (trade.direction === "Long" || trade.direction === "LONG") ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                 {trade.direction}
               </p>
             </div>
@@ -181,7 +181,7 @@ export default function TradePage() {
           </div>
           <div>
             <p className="text-xs text-gray-500 mb-1">Return</p>
-            <p className={clsx("font-bold", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+            <p className={clsx("font-bold", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
               {positive ? "+" : ""}{trade.pnl_percent?.toFixed(2) ?? "0.00"}%
             </p>
           </div>
@@ -228,13 +228,13 @@ export default function TradePage() {
 
       {/* Chart — only for signed-in users */}
       {isSignedIn && showChart && (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div className="glass-card rounded-2xl overflow-hidden">
           <TradingViewChart ticker={trade.ticker} />
         </div>
       )}
 
       {/* Comments — blurred for logged-out */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+      <div className="glass-card rounded-2xl p-4">
         <h2 className="text-sm font-semibold text-white mb-4">Comments ({commentCount})</h2>
         {isSignedIn ? (
           <CommentSection

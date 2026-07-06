@@ -69,7 +69,7 @@ export default function LeaderboardPage() {
               "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
               period === t.period
                 ? "bg-[var(--green)] text-black"
-                : "bg-[var(--card)] border border-[var(--border)] text-gray-400 hover:text-white"
+                : "glass-card text-gray-400 hover:text-white"
             )}
           >
             {t.label}
@@ -77,7 +77,7 @@ export default function LeaderboardPage() {
         ))}
       </div>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         {loading ? (
           <div className="py-16 text-center text-gray-500 text-sm">Loading...</div>
         ) : data.length === 0 ? (
@@ -135,7 +135,7 @@ export default function LeaderboardPage() {
                   </td>
                   <td className="px-3 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
                   <td className="px-3 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
-                  <td className={clsx("px-3 py-3 pr-4 text-right text-sm font-bold whitespace-nowrap", entry.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                  <td className={clsx("px-3 py-3 pr-4 text-right text-sm font-bold whitespace-nowrap", entry.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                     {entry.pnl >= 0 ? "+" : ""}${Math.abs(entry.pnl).toLocaleString()}
                   </td>
                 </tr>

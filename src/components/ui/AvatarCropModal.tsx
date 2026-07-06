@@ -46,7 +46,7 @@ export default function AvatarCropModal({ imageSrc, onSave, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-sm overflow-hidden">
+      <div className="relative glass-card rounded-2xl w-full max-w-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <h2 className="font-bold text-white">Adjust Photo</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white">

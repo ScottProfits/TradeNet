@@ -154,7 +154,7 @@ export default function SettingsPage() {
       )}
       <h1 className="text-2xl font-bold text-white">{isNewUser ? "Complete Your Profile" : "Profile Settings"}</h1>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-6">
+      <div className="glass-card rounded-2xl p-6 space-y-6">
 
         {/* Avatar upload */}
         <div className="flex flex-col items-center gap-3">
@@ -324,7 +324,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Verification request */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+      <div className="glass-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <VerifiedBadge className="w-5 h-5" />
           <h2 className="font-bold text-white">Request Verification</h2>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Broker Connections */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+      <div className="glass-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-[var(--green)]" />
           <h2 className="font-bold text-white">Broker Connections</h2>

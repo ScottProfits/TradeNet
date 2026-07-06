@@ -139,7 +139,7 @@ export default function Navbar() {
           )}
 
           {showResults && (results.length > 0 || tickerResults.length > 0) && (
-            <div className="absolute top-full mt-1 w-64 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden z-[200] max-h-80 overflow-y-auto">
+            <div className="absolute top-full mt-1 w-64 glass-card rounded-2xl shadow-xl overflow-hidden z-[200] max-h-80 overflow-y-auto">
               {tickerResults.slice(0, 4).map((r) => (
                 <button
                   key={r.symbol}
@@ -193,7 +193,7 @@ export default function Navbar() {
           )}
 
           {showResults && query.trim() && results.length === 0 && tickerResults.length === 0 && (
-            <div className="absolute top-full mt-1 w-64 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl px-4 py-3 z-[200]">
+            <div className="absolute top-full mt-1 w-64 glass-card rounded-2xl shadow-xl px-4 py-3 z-[200]">
               <p className="text-sm text-gray-500">No results found</p>
             </div>
           )}

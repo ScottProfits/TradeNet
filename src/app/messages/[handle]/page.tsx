@@ -78,7 +78,7 @@ export default function ChatPage() {
   return (
     <div className="max-w-xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="glass-card rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <Link href="/messages" className="text-gray-500 hover:text-white transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -120,7 +120,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="bg-[var(--card)] border border-[var(--border)] rounded-b-2xl px-4 py-3 flex gap-2 flex-shrink-0">
+      <form onSubmit={handleSend} className="glass-card rounded-b-2xl px-4 py-3 flex gap-2 flex-shrink-0">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}

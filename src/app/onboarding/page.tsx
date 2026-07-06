@@ -148,7 +148,7 @@ export default function OnboardingPage() {
             ) : (
               <div className="space-y-2">
                 {suggestions.map((s) => (
-                  <div key={s.id} className="flex items-center gap-3 p-3 bg-[var(--card)] border border-[var(--border)] rounded-xl">
+                  <div key={s.id} className="flex items-center gap-3 p-3 glass-card rounded-2xl">
                     {s.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={s.avatar_url} alt={s.handle} className="w-10 h-10 rounded-full object-cover shrink-0" />

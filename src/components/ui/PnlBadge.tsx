@@ -12,7 +12,7 @@ export default function PnlBadge({ value, showSign = true, className }: PnlBadge
     <span
       className={clsx(
         "font-semibold",
-        positive ? "text-[var(--green)]" : "text-[var(--red)]",
+        positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red",
         className
       )}
     >

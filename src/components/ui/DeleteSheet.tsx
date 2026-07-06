@@ -23,7 +23,7 @@ export default function DeleteSheet({
       onClick={ready ? onCancel : undefined}
     >
       <div
-        className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl w-full max-w-lg p-5"
+        className="glass-card rounded-t-2xl w-full max-w-lg p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">

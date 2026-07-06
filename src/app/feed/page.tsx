@@ -179,7 +179,7 @@ export default function FeedPage() {
 
         {tab === "following" && (
           followingItems.length === 0
-            ? <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
+            ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
             : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
                 if (item.type === "trade") {
                   const { trade, trader } = realTradeToCardProps(item);

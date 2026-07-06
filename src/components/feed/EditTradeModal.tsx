@@ -64,7 +64,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative glass-card rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Edit Trade</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
@@ -122,10 +122,10 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
               preview >= 0 ? "bg-[var(--green)]/10 border border-[var(--green)]/20" : "bg-[var(--red)]/10 border border-[var(--red)]/20")}>
               <span className="text-sm text-gray-400">P&L Preview</span>
               <div className="text-right">
-                <span className={clsx("font-bold", preview >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                <span className={clsx("font-bold", preview >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                   {preview >= 0 ? "+" : ""}${Math.abs(preview).toFixed(2)}
                 </span>
-                <span className={clsx("text-sm ml-2", preview >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                <span className={clsx("text-sm ml-2", preview >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                   ({previewPct! >= 0 ? "+" : ""}{previewPct!.toFixed(2)}%)
                 </span>
               </div>

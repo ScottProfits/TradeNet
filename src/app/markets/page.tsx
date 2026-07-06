@@ -14,7 +14,7 @@ export default function MarketsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-white">Markets</h1>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--border)]">
@@ -31,10 +31,10 @@ export default function MarketsPage() {
                 <td className="px-4 py-3 font-bold text-white">{t.symbol}</td>
                 <td className="px-4 py-3 text-sm text-gray-400">{t.name}</td>
                 <td className="px-4 py-3 text-right text-sm text-white">${t.price.toFixed(2)}</td>
-                <td className={`px-4 py-3 text-right text-sm font-medium ${t.change >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+                <td className={`px-4 py-3 text-right text-sm font-medium ${t.change >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                   {t.change >= 0 ? "+" : ""}{t.change.toFixed(2)}
                 </td>
-                <td className={`px-4 py-3 text-right text-sm font-medium ${t.pct >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+                <td className={`px-4 py-3 text-right text-sm font-medium ${t.pct >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                   {t.pct >= 0 ? "+" : ""}{t.pct.toFixed(2)}%
                 </td>
               </tr>

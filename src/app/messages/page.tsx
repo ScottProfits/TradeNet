@@ -32,7 +32,7 @@ export default function MessagesPage() {
     <div className="max-w-xl mx-auto space-y-4">
       <h1 className="text-2xl font-bold text-white">Messages</h1>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         {convos.length === 0 && (
           <div className="p-12 text-center">
             <MessageSquare className="w-10 h-10 text-gray-600 mx-auto mb-3" />

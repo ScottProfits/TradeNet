@@ -81,7 +81,7 @@ export default function NotificationsPage() {
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 animate-pulse">
+            <div key={i} className="glass-card rounded-2xl p-4 animate-pulse">
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/5" />
                 <div className="flex-1 space-y-2">
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
             return (
               <div key={group}>
                 <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">{group}</p>
-                <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+                <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                   {items.map((n) => {
                     const tradeHref = n.trade_id
                       ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`

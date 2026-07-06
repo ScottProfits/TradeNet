@@ -86,7 +86,7 @@ export default function MarketPage() {
     return (
       <div className="max-w-3xl mx-auto space-y-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-[var(--card)] border border-[var(--border)] rounded-xl h-20 animate-pulse" />
+          <div key={i} className="glass-card rounded-2xl h-20 animate-pulse" />
         ))}
       </div>
     );
@@ -158,7 +158,7 @@ export default function MarketPage() {
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             📅 Economic Calendar <span className="text-xs text-gray-500 font-normal">Next 14 days</span>
           </h2>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+          <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
             {upcomingEvents.length === 0 ? (
               <p className="text-center text-gray-600 text-sm py-8">No major events upcoming</p>
             ) : upcomingEvents.map((e, i) => (
@@ -186,7 +186,7 @@ export default function MarketPage() {
         {/* Market News */}
         <div className="space-y-3">
           <h2 className="text-base font-bold text-white">📰 Market News</h2>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+          <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
             {news.length === 0 ? (
               <p className="text-center text-gray-600 text-sm py-6">Loading…</p>
             ) : news.map((n, i) => (

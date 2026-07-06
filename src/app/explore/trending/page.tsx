@@ -39,7 +39,7 @@ export default function TrendingPage() {
             <Link
               key={ticker}
               href={`/ticker/${ticker}`}
-              className="flex items-center gap-4 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-orange-400/40 transition-colors group"
+              className="flex items-center gap-4 glass-card rounded-2xl p-4 hover:border-orange-400/40 transition-colors group"
             >
               <span className="text-gray-600 font-mono text-sm w-5 text-center shrink-0">#{i + 1}</span>
               <div className="flex-1 min-w-0">

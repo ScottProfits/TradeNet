@@ -48,7 +48,7 @@ export default function TickerPage() {
       </div>
 
       {!loading && trades.length === 0 && (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center">
+        <div className="glass-card rounded-2xl p-8 text-center">
           <p className="text-gray-500">No trades posted for ${ticker.toUpperCase()} yet.</p>
         </div>
       )}

@@ -223,7 +223,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <p className={clsx("font-bold text-base sm:text-lg", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
             {positive ? "+" : ""}${localPnl.toLocaleString()}
           </p>
-          <p className={clsx("text-sm", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+          <p className={clsx("text-sm", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
             {positive ? "+" : ""}{localPnlPct.toFixed(2)}%
           </p>
         </div>

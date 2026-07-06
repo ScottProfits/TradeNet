@@ -31,7 +31,7 @@ export default function SuggestedTraders() {
   if (traders.length === 0) return null;
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+    <div className="glass-card rounded-2xl p-4">
       <h3 className="font-semibold text-white text-sm mb-3">Suggested traders</h3>
       <div className="space-y-3">
         {traders.map((t) => (

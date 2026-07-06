@@ -232,7 +232,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Profile header */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6">
+      <div className="glass-card rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                     <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
                   </button>
                   {accountMenuOpen && (
-                    <div className="absolute right-0 top-7 w-52 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="absolute right-0 top-7 w-52 glass-card rounded-2xl shadow-xl z-50 overflow-hidden">
                       <div className="px-3 py-2 border-b border-[var(--border)]">
                         <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
                       </div>
@@ -389,7 +389,7 @@ export default function ProfilePage() {
             <p className="text-[10px] sm:text-xs text-gray-500">Trades</p>
           </div>
           <div className="text-center">
-            <p className={clsx("font-bold text-base sm:text-lg", totalPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+            <p className={clsx("font-bold text-base sm:text-lg", totalPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
               {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500">Total P&L</p>
@@ -399,13 +399,13 @@ export default function ProfilePage() {
             <p className="text-[10px] sm:text-xs text-gray-500">Win Rate</p>
           </div>
           <div className="text-center">
-            <p className={clsx("font-bold text-base sm:text-lg", avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+            <p className={clsx("font-bold text-base sm:text-lg", avgPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
               {trades.length > 0 ? `${avgPnl >= 0 ? "+" : ""}$${Math.abs(avgPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500">Avg P&L</p>
           </div>
           <div className="text-center">
-            <p className={clsx("font-bold text-base sm:text-lg", bestTrade && bestTrade.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]")}>
+            <p className={clsx("font-bold text-base sm:text-lg", bestTrade && bestTrade.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
               {bestTrade ? `+$${Math.abs(bestTrade.pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500">Best Trade</p>
@@ -418,7 +418,7 @@ export default function ProfilePage() {
         <h2 className="font-semibold text-white">Trade history ({trades.length})</h2>
 
         {trades.length === 0 && (
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center">
+          <div className="glass-card rounded-2xl p-8 text-center">
             <p className="text-gray-500 text-sm">No trades posted yet.</p>
           </div>
         )}
@@ -495,11 +495,11 @@ export default function ProfilePage() {
           </h2>
 
           {likedItems.length === 0 ? (
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center">
+            <div className="glass-card rounded-2xl p-8 text-center">
               <p className="text-gray-500 text-sm">Nothing liked yet.</p>
             </div>
           ) : (
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+            <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
               {likedItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 p-4 hover:bg-white/[0.02] transition-colors">
                   {item.profiles?.avatar_url ? (
@@ -608,7 +608,7 @@ export default function ProfilePage() {
       {/* Followers / Following modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setModal(null)}>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
               <h2 className="font-bold text-white capitalize">{modal}</h2>
               <button onClick={() => setModal(null)} className="text-gray-500 hover:text-white transition-colors">

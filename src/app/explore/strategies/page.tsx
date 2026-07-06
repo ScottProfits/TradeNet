@@ -96,7 +96,7 @@ export default function StrategiesPage() {
             <button
               key={s.name}
               onClick={() => openStrategy(s)}
-              className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-4 hover:border-yellow-400/40 transition-colors"
+              className="w-full text-left glass-card rounded-2xl p-4 flex items-center gap-4 hover:border-yellow-400/40 transition-colors"
             >
               <span className="text-gray-600 font-mono text-sm w-5 text-center shrink-0">{i + 1}</span>
               <div className="flex-1 min-w-0">
@@ -107,7 +107,7 @@ export default function StrategiesPage() {
                   <span className="text-[var(--green)]">{s.winRate}% win rate</span>
                 </div>
               </div>
-              <p className={`text-sm font-bold shrink-0 ${s.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+              <p className={`text-sm font-bold shrink-0 ${s.avgPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                 {s.avgPnl >= 0 ? "+" : ""}${Math.abs(s.avgPnl).toLocaleString()} avg
               </p>
             </button>
@@ -119,7 +119,7 @@ export default function StrategiesPage() {
       {selected && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setSelected(null)}>
           <div
-            className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl w-full max-w-lg flex flex-col"
+            className="glass-card rounded-t-2xl w-full max-w-lg flex flex-col"
             style={{ height: "75vh" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -135,7 +135,7 @@ export default function StrategiesPage() {
                   <span>·</span>
                   <span className="text-[var(--green)]">{selected.winRate}% win</span>
                   <span>·</span>
-                  <span className={selected.avgPnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}>
+                  <span className={selected.avgPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}>
                     {selected.avgPnl >= 0 ? "+" : ""}${Math.abs(selected.avgPnl).toLocaleString()} avg
                   </span>
                 </div>
@@ -168,7 +168,7 @@ export default function StrategiesPage() {
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span>{u.trades} trades</span>
                         <span>·</span>
-                        <span className={u.pnl >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}>
+                        <span className={u.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}>
                           {u.pnl >= 0 ? "+" : ""}${Math.abs(u.pnl).toLocaleString()}
                         </span>
                       </div>

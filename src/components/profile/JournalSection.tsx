@@ -113,7 +113,7 @@ export default function JournalSection() {
           <BookOpen className="w-4 h-4 text-yellow-400" /> Private Journal
         </h2>
         <div className="flex items-center gap-2">
-          <div className="flex bg-[var(--card)] border border-[var(--border)] rounded-lg p-0.5">
+          <div className="flex glass-card rounded-lg p-0.5">
             <button onClick={() => setTab("notes")} className={clsx("px-3 py-1 text-xs font-semibold rounded-md transition-colors", tab === "notes" ? "bg-yellow-500/20 text-yellow-400" : "text-gray-500 hover:text-white")}>
               Notes
             </button>
@@ -161,7 +161,7 @@ export default function JournalSection() {
         <p className="text-gray-500 text-sm text-center py-6">Loading...</p>
       ) : tab === "notes" ? (
         entries.length === 0 ? (
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center space-y-2">
+          <div className="glass-card rounded-2xl p-8 text-center space-y-2">
             <BookOpen className="w-8 h-8 text-gray-600 mx-auto" />
             <p className="text-gray-500 text-sm">No notes yet. Tap New Note to start journaling.</p>
           </div>
@@ -220,7 +220,7 @@ export default function JournalSection() {
         )
       ) : (
         tradeNotes.length === 0 ? (
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 text-center">
+          <div className="glass-card rounded-2xl p-8 text-center">
             <p className="text-gray-500 text-sm">No trade notes yet. Open a trade card and tap Journal to add one.</p>
           </div>
         ) : (
@@ -234,7 +234,7 @@ export default function JournalSection() {
                     {(t.direction === "LONG" || t.direction === "Long")
                       ? <TrendingUp className="w-3.5 h-3.5 text-[var(--green)]" />
                       : <TrendingDown className="w-3.5 h-3.5 text-[var(--red)]" />}
-                    <span className={clsx("text-xs font-semibold", positive ? "text-[var(--green)]" : "text-[var(--red)]")}>
+                    <span className={clsx("text-xs font-semibold", positive ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                       {positive ? "+" : ""}${Math.abs(t.pnl).toLocaleString()}
                     </span>
                     <span className="text-[10px] text-gray-600 ml-auto">

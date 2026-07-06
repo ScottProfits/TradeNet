@@ -11,7 +11,7 @@ export default function StrategiesPage() {
         {strategies.map((s) => {
           const topTraders = traders.slice(0, 3);
           return (
-            <div key={s.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+            <div key={s.id} className="glass-card rounded-2xl p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <h3 className="font-semibold text-white text-lg">{s.name}</h3>
                 <Tag label={s.tag} />
