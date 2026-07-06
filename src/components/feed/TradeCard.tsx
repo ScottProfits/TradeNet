@@ -12,6 +12,7 @@ import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 import EditTradeModal from "@/components/feed/EditTradeModal";
+import { isToday } from "@/lib/timeAgo";
 
 interface TradeCardProps {
   trade: Trade;
@@ -170,7 +171,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
                   : "bg-[var(--red)]/20 text-[var(--red)]"
               )}
             >
-              {positive ? "+" : ""}${localPnl.toLocaleString()}
+              {positive ? "+" : ""}${localPnl.toLocaleString()}{trade.createdAt && isToday(trade.createdAt) ? " today" : ""}
             </span>
             {isVerified && (
               <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--green)] bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">

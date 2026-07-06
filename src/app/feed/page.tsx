@@ -62,6 +62,7 @@ function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
     id: rt.id, traderId: rt.user_id, ticker: rt.ticker,
     direction: rt.direction === "LONG" ? "Long" : "Short", shares: 0,
     time: timeAgo(rt.created_at),
+    createdAt: rt.created_at,
     pnl: rt.pnl, pnlPct: rt.pnl_percent, notes: rt.caption ?? "",
     likes: rt.likes_count, comments: rt.comments_count,
   };

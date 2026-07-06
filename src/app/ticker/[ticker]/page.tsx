@@ -62,6 +62,7 @@ export default function TickerPage() {
           id: t.id, traderId: t.user_id, ticker: t.ticker,
           direction: t.direction === "LONG" ? "Long" : "Short", shares: 0,
           time: timeAgo(t.created_at),
+          createdAt: t.created_at,
           pnl: t.pnl, pnlPct: t.pnl_percent, notes: t.caption ?? "",
           likes: t.likes_count, comments: t.comments_count,
         };

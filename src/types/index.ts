@@ -20,6 +20,7 @@ export interface Trade {
   direction: "Long" | "Short";
   shares: number;
   time: string;
+  createdAt?: string;
   pnl: number;
   pnlPct: number;
   notes: string;
