@@ -86,7 +86,7 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed right-0.5 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1 transition-all duration-300 ease-out"
+        className="fixed right-0.5 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1"
         style={{
           width: PILL_WIDTH,
           background: "rgba(15, 17, 23, 0.05)",
@@ -95,6 +95,11 @@ export default function MobileNav() {
           transformOrigin: "bottom right",
           opacity: hiddenForExplore ? 0 : collapsed ? 0.55 : 1,
           pointerEvents: hiddenForExplore ? "none" : "auto",
+          transition: "transform 300ms ease-out, opacity 300ms ease-out",
+          WebkitTransform: hiddenForExplore ? "scale(0.6) translateX(20px)" : collapsed ? "scale(0.6)" : "scale(1)",
+          willChange: "transform, opacity",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
         }}
       >
         {/* Home */}

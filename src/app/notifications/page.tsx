@@ -65,7 +65,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 pr-12 lg:pr-0">
         <h1 className="text-xl font-bold text-white">Notifications</h1>
         {notifs.length > 0 && (
           <button

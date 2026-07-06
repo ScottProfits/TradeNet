@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { clsx } from "clsx";
 import Navbar from "@/components/layout/Navbar";
 import MobileNav from "@/components/layout/MobileNav";
 import MobileTopMenu from "@/components/layout/MobileTopMenu";
@@ -19,7 +20,7 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
     <>
       {!isProfileRoute && <Navbar />}
       {!isProfileRoute && <MobileTopMenu />}
-      <main className="max-w-7xl mx-auto px-4 pt-3 lg:pt-6 pb-6">{children}</main>
+      <main className={clsx("max-w-7xl mx-auto px-4 pb-6", isProfileRoute ? "pt-8" : "pt-3 lg:pt-6")}>{children}</main>
       {!isProfileRoute && <MobileNav />}
     </>
   );
