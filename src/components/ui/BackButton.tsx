@@ -5,9 +5,10 @@ import { ArrowLeft } from "lucide-react";
 interface BackButtonProps {
   fallbackHref?: string;
   className?: string;
+  iconOnly?: boolean;
 }
 
-export default function BackButton({ fallbackHref = "/feed", className }: BackButtonProps) {
+export default function BackButton({ fallbackHref = "/feed", className, iconOnly }: BackButtonProps) {
   const router = useRouter();
 
   function handleBack() {
@@ -17,6 +18,18 @@ export default function BackButton({ fallbackHref = "/feed", className }: BackBu
     } else {
       router.push(fallbackHref);
     }
+  }
+
+  if (iconOnly) {
+    return (
+      <button
+        onClick={handleBack}
+        aria-label="Back"
+        className={className ?? "text-gray-400 hover:text-white transition-colors"}
+      >
+        <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
+      </button>
+    );
   }
 
   return (

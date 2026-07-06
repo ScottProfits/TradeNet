@@ -238,7 +238,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <BackButton className="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors -mb-3" />
+      <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors -mb-3" />
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
