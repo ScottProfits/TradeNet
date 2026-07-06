@@ -34,6 +34,13 @@ body {
   text-shadow: 0 0 12px rgba(0,200,150,0.45);
 }
 
+/* Opaque variant for floating menus/popups where legibility over content matters more than transparency */
+.solid-menu {
+  background: #16181f;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
 .glow-red {
   text-shadow: 0 0 12px rgba(255,77,77,0.45);
 }

@@ -33,7 +33,18 @@ export async function GET(req: NextRequest) {
       .eq("receiver_id", userId)
       .eq("sender_id", withUser);
 
-    return Response.json(data ?? []);
+    const messageIds = (data ?? []).map((m) => m.id);
+    const { data: likes } = messageIds.length
+      ? await supabaseAdmin.from("message_likes").select("message_id, user_id").in("message_id", messageIds)
+      : { data: [] };
+
+    const likedByMap = new Map<string, string[]>();
+    for (const l of likes ?? []) {
+      likedByMap.set(l.message_id, [...(likedByMap.get(l.message_id) ?? []), l.user_id]);
+    }
+
+    const result = (data ?? []).map((m) => ({ ...m, liked_by: likedByMap.get(m.id) ?? [] }));
+    return Response.json(result);
   }
 
   // Conversation list — deduplicated by partner, with profile info

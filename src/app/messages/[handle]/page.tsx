@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Send, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -13,6 +13,7 @@ interface Message {
   content: string;
   created_at: string;
   sender: { handle: string; avatar_url: string; verified: boolean };
+  liked_by?: string[];
 }
 
 interface Profile {
@@ -73,6 +74,23 @@ export default function ChatPage() {
     setSending(false);
   }
 
+  async function toggleLike(m: Message) {
+    if (!userId) return;
+    const alreadyLiked = (m.liked_by ?? []).includes(userId);
+    setMessages((msgs) =>
+      msgs.map((msg) =>
+        msg.id === m.id
+          ? { ...msg, liked_by: alreadyLiked ? (msg.liked_by ?? []).filter((id) => id !== userId) : [...(msg.liked_by ?? []), userId] }
+          : msg
+      )
+    );
+    await fetch("/api/messages/like", {
+      method: alreadyLiked ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: m.id }),
+    }).catch(() => {});
+  }
+
   const initials = partner?.handle.slice(0, 2).toUpperCase() ?? "?";
 
   return (
@@ -99,19 +117,45 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto bg-[var(--card)] border-x border-[var(--border)] p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto glass-card border-t-0 border-b-0 rounded-none p-4 space-y-3">
         {messages.length === 0 && (
           <p className="text-center text-gray-600 text-sm pt-8">Start the conversation with @{handle}</p>
         )}
         {messages.map((m) => {
           const mine = m.sender_id === userId;
+          const liked = (m.liked_by ?? []).length > 0;
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${mine ? "bg-[var(--green)] text-black" : "bg-[var(--bg)] text-white"}`}>
+            <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+              <div
+                className="group relative max-w-[75%] rounded-2xl px-4 py-2.5 transition-transform active:scale-[0.98]"
+                style={
+                  mine
+                    ? {
+                        background: "linear-gradient(135deg, #00C896 0%, #00a87e 100%)",
+                        boxShadow: "0 4px 16px rgba(0,200,150,0.25)",
+                        color: "#000",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "#fff",
+                      }
+                }
+                onDoubleClick={() => toggleLike(m)}
+              >
                 <p className="text-sm leading-relaxed">{m.content}</p>
-                <p className={`text-xs mt-1 ${mine ? "text-black/60" : "text-gray-600"}`}>
+                <p className={`text-xs mt-1 ${mine ? "text-black/60" : "text-gray-500"}`}>
                   {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => toggleLike(m)}
+                  className={`absolute -bottom-3 ${mine ? "left-1" : "right-1"} w-6 h-6 rounded-full flex items-center justify-center transition-all solid-menu ${
+                    liked ? "opacity-100 scale-100" : "opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+                  }`}
+                >
+                  <Heart className={`w-3 h-3 ${liked ? "fill-[var(--red)] text-[var(--red)]" : "text-gray-400"}`} />
+                </button>
               </div>
             </div>
           );
@@ -125,14 +169,18 @@ export default function ChatPage() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Send a message..."
-          className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+          className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)] transition-colors"
         />
         <button
           type="submit"
           disabled={sending || !text.trim()}
-          className="p-2 bg-[var(--green)] text-black rounded-xl hover:bg-[var(--green)]/90 transition-colors disabled:opacity-40"
+          className="p-2.5 rounded-xl transition-all disabled:opacity-40"
+          style={{
+            background: "linear-gradient(135deg, rgba(0,200,150,0.9) 0%, rgba(0,168,126,0.9) 100%)",
+            boxShadow: "0 0 16px rgba(0,200,150,0.3)",
+          }}
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4 text-black" />
         </button>
       </form>
     </div>

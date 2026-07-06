@@ -31,7 +31,7 @@ export default function DotsMenu({ onEdit, onDelete }: DotsMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-8 z-40 glass-card rounded-2xl shadow-xl overflow-hidden min-w-[130px]">
+        <div className="absolute right-0 top-8 z-40 solid-menu rounded-2xl overflow-hidden min-w-[130px]">
           <button
             onClick={() => { setOpen(false); onEdit(); }}
             className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
