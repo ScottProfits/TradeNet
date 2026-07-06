@@ -124,7 +124,7 @@ export default function FeedPage() {
         <SidebarProfile />
       </aside>
 
-      <section className="space-y-3">
+      <section className="space-y-3 min-w-0">
         <LiveTicker />
         <MarketPulse />
         {/* Post button — hidden on mobile since nav bar has + button */}
