@@ -8,7 +8,8 @@ import PostTradeModal from "@/components/feed/PostTradeModal";
 import ExploreTab from "@/components/feed/ExploreTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
@@ -66,13 +67,33 @@ function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
   return { trade, trader };
 }
 
+function isValidTab(t: string | null): t is "feed" | "following" | "explore" {
+  return t === "feed" || t === "following" || t === "explore";
+}
+
 export default function FeedPage() {
+  return (
+    <Suspense fallback={null}>
+      <FeedPageInner />
+    </Suspense>
+  );
+}
+
+function FeedPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<"feed" | "following" | "explore">("feed");
+  const initialTab = searchParams.get("tab");
+  const [tab, setTabState] = useState<"feed" | "following" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
   const { setIsExploreActive } = useNavVisibility();
+
+  function setTab(t: "feed" | "following" | "explore") {
+    setTabState(t);
+    router.replace(t === "feed" ? "/feed" : `/feed?tab=${t}`, { scroll: false });
+  }
 
   useEffect(() => {
     setIsExploreActive(tab === "explore");
