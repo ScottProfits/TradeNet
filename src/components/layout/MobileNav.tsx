@@ -72,7 +72,7 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed right-2 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1 transition-all duration-300 ease-out"
+        className="fixed right-0.5 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1 transition-all duration-300 ease-out"
         style={{
           width: PILL_WIDTH,
           background: "rgba(15, 17, 23, 0.05)",
