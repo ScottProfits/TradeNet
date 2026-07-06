@@ -11,6 +11,11 @@
   --red: #FF4D4D;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   background-color: var(--bg);
   color: #F9FAFB;

@@ -70,11 +70,13 @@ export default function MobileTopMenu() {
 
   function goToProfile(handle: string) {
     setOpen(false); setQuery(""); setResults([]); setTickerResults([]);
+    window.scrollTo(0, 0);
     router.push(`/profile/${handle}`);
   }
 
   function goToTicker(symbol: string) {
     setOpen(false); setQuery(""); setResults([]); setTickerResults([]);
+    window.scrollTo(0, 0);
     router.push(`/ticker/${encodeURIComponent(symbol)}`);
   }
 

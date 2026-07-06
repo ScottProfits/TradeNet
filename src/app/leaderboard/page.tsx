@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import BackButton from "@/components/ui/BackButton";
 
 interface LeaderEntry {
   profile: {
@@ -59,6 +60,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      <BackButton className="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors -mb-3 lg:hidden" />
       <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
