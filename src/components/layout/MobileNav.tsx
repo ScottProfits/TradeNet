@@ -18,6 +18,27 @@ export default function MobileNav() {
   const [showModal, setShowModal] = useState(false);
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        if (y > lastY && y > 40) setCollapsed(true);
+        else if (y < lastY) setCollapsed(false);
+        lastY = y;
+        ticking = false;
+      });
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -51,11 +72,14 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed right-2 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1"
+        className="fixed right-2 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1 transition-all duration-300 ease-out"
         style={{
           width: PILL_WIDTH,
           background: "rgba(15, 17, 23, 0.05)",
           borderRadius: 999,
+          transform: collapsed ? "scale(0.72)" : "scale(1)",
+          transformOrigin: "bottom right",
+          opacity: collapsed ? 0.55 : 1,
         }}
       >
         {/* Home */}
