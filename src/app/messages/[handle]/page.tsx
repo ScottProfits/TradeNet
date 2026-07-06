@@ -151,7 +151,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => toggleLike(m)}
                   className={`absolute -bottom-3 ${mine ? "left-1" : "right-1"} w-6 h-6 rounded-full flex items-center justify-center transition-all solid-menu ${
-                    liked ? "opacity-100 scale-100" : "opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
+                    liked ? "opacity-100 scale-100" : "opacity-60 hover:opacity-100 scale-90 hover:scale-100"
                   }`}
                 >
                   <Heart className={`w-3 h-3 ${liked ? "fill-[var(--red)] text-[var(--red)]" : "text-gray-400"}`} />
