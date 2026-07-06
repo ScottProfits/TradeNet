@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Zap, ArrowLeft, X, UserPlus, Check } from "lucide-react";
+import { Zap, X, UserPlus, Check } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import BackButton from "@/components/ui/BackButton";
 
 interface HotStrategy { name: string; count: number; winRate: number; avgPnl: number; }
 
@@ -75,9 +76,7 @@ export default function StrategiesPage() {
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <Link href="/feed?tab=explore" className="text-gray-500 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+        <BackButton iconOnly fallbackHref="/feed?tab=explore" className="text-gray-500 hover:text-white transition-colors" />
         <Zap className="w-5 h-5 text-yellow-400" />
         <h1 className="text-lg font-bold text-white">Hot Strategies This Week</h1>
       </div>

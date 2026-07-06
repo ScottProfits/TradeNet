@@ -242,8 +242,8 @@ export default function ProfilePage() {
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => profile.avatar_url && setAvatarOpen(true)}
@@ -271,9 +271,9 @@ export default function ProfilePage() {
                 <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain mt-1" style={{ mixBlendMode: "screen" }} />
               )}
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">@{profile.handle}</h1>
-              {profile.full_name && <p className="text-gray-400 text-sm">{profile.full_name}</p>}
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-white truncate">@{profile.handle}</h1>
+              {profile.full_name && <p className="text-gray-400 text-sm truncate">{profile.full_name}</p>}
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {profile.trading_style && (
                   <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">

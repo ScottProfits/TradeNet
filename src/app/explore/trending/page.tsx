@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Flame, ArrowLeft } from "lucide-react";
+import { Flame } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 
 interface TrendingTicker { ticker: string; count: number; }
 
@@ -18,9 +19,7 @@ export default function TrendingPage() {
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <Link href="/feed?tab=explore" className="text-gray-500 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+        <BackButton iconOnly fallbackHref="/feed?tab=explore" className="text-gray-500 hover:text-white transition-colors" />
         <Flame className="w-5 h-5 text-orange-400" />
         <h1 className="text-lg font-bold text-white">Trending This Week</h1>
       </div>
