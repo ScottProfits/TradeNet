@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
   const { userId } = await auth();
@@ -21,7 +22,7 @@ export async function GET() {
   const full_name =
     [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || handle;
 
-  const { data: created, error: insertError } = await supabase
+  const { data: created, error: insertError } = await supabaseAdmin
     .from("profiles")
     .upsert(
       { id: userId, handle, full_name, avatar_url: clerkUser.imageUrl },
