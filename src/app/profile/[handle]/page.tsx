@@ -242,8 +242,8 @@ export default function ProfilePage() {
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4 min-w-0">
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => profile.avatar_url && setAvatarOpen(true)}

@@ -4,6 +4,7 @@ import { Search, TrendingUp, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import BackButton from "@/components/ui/BackButton";
 
 interface UserResult {
   id: string;
@@ -61,6 +62,7 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-xl mx-auto">
+      <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors mb-3 lg:hidden" />
       {/* Search bar */}
       <div className="flex items-center gap-3 glass-card rounded-2xl px-4 py-3 mb-6 focus-within:border-[var(--green)]/50 transition-colors">
         <Search className="w-5 h-5 text-gray-500 shrink-0" />
