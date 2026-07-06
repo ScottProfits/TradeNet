@@ -241,7 +241,7 @@ export default function Navbar() {
                 )}
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
-              <Link href={profileHref} className="shrink-0">
+              <Link href={profileHref} className="hidden lg:block shrink-0">
                 {profileAvatar || user?.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

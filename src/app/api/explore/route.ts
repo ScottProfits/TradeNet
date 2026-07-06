@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
 
 export async function GET() {
@@ -120,7 +121,7 @@ export async function GET() {
 async function notifyExplore(userIds: string[], category: string, date: string, title: string, body: string) {
   if (userIds.length === 0) return;
   // Check who was already notified today
-  const { data: already } = await supabase
+  const { data: already } = await supabaseAdmin
     .from("explore_notifications")
     .select("user_id")
     .eq("category", category)
@@ -132,7 +133,7 @@ async function notifyExplore(userIds: string[], category: string, date: string, 
   if (toNotify.length === 0) return;
 
   // Insert notification records and send pushes
-  await supabase.from("explore_notifications").insert(toNotify.map((user_id) => ({ user_id, category, date })));
-  await supabase.from("notifications").insert(toNotify.map((user_id) => ({ user_id, type: "explore", actor_id: user_id })));
+  await supabaseAdmin.from("explore_notifications").insert(toNotify.map((user_id) => ({ user_id, category, date })));
+  await supabaseAdmin.from("notifications").insert(toNotify.map((user_id) => ({ user_id, type: "explore", actor_id: user_id })));
   await Promise.all(toNotify.map((uid) => sendPushToUser(uid, { title, body, url: "/feed" })));
 }

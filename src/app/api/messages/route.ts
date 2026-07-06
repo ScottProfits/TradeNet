@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
   const unreadOnly = req.nextUrl.searchParams.get("unread");
 
   if (unreadOnly) {
-    const { count } = await supabase
+    const { count } = await supabaseAdmin
       .from("messages")
       .select("*", { count: "exact", head: true })
       .eq("receiver_id", userId)
@@ -20,13 +21,13 @@ export async function GET(req: NextRequest) {
   }
 
   if (withUser) {
-    const { data } = await supabase
+    const { data } = await supabaseAdmin
       .from("messages")
       .select("*")
       .or(`and(sender_id.eq.${userId},receiver_id.eq.${withUser}),and(sender_id.eq.${withUser},receiver_id.eq.${userId})`)
       .order("created_at", { ascending: true });
 
-    await supabase
+    await supabaseAdmin
       .from("messages")
       .update({ read: true })
       .eq("receiver_id", userId)
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Conversation list — deduplicated by partner, with profile info
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from("messages")
     .select("*")
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
   const { receiverId, content } = await req.json();
   if (!receiverId || !content?.trim()) return new Response("Missing fields", { status: 400 });
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("messages")
     .insert({ sender_id: userId, receiver_id: receiverId, content: content.trim() })
     .select()

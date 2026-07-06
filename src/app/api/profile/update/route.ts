@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function PATCH(req: NextRequest) {
@@ -27,7 +28,7 @@ export async function PATCH(req: NextRequest) {
 
   if (existing) return new Response("That handle is already taken", { status: 409 });
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("profiles")
     .upsert({ id: userId, handle: clean, full_name, bio, brokerage, trading_style, instagram, tiktok, discord, youtube, website }, { onConflict: "id" });
 

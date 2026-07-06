@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function PATCH(req: NextRequest) {
@@ -12,6 +13,6 @@ export async function PATCH(req: NextRequest) {
   const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
   if (!trade || trade.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
-  await supabase.from("trades").update({ journal_note: note ?? null }).eq("id", tradeId);
+  await supabaseAdmin.from("trades").update({ journal_note: note ?? null }).eq("id", tradeId);
   return new Response("OK", { status: 200 });
 }

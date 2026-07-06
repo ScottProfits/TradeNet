@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   const { reason } = await req.json();
 
-  const { error } = await supabase.from("verify_requests").upsert(
+  const { error } = await supabaseAdmin.from("verify_requests").upsert(
     { user_id: userId, reason, status: "pending" },
     { onConflict: "user_id" }
   );
@@ -21,7 +21,7 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from("verify_requests")
     .select("status, reason, created_at")
     .eq("user_id", userId)

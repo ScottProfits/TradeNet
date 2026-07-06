@@ -1,12 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from("journal_entries")
     .select("*")
     .eq("user_id", userId)
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { title, content } = await req.json();
   if (!content?.trim()) return new Response("Content required", { status: 400 });
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("journal_entries")
     .insert({ user_id: userId, title: title?.trim() || null, content: content.trim() })
     .select()
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
   const { id, title, content } = await req.json();
   if (!id) return new Response("Missing id", { status: 400 });
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("journal_entries")
     .update({ title: title?.trim() || null, content: content?.trim(), updated_at: new Date().toISOString() })
     .eq("id", id)
@@ -54,6 +54,6 @@ export async function DELETE(req: NextRequest) {
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const { id } = await req.json();
-  await supabase.from("journal_entries").delete().eq("id", id).eq("user_id", userId);
+  await supabaseAdmin.from("journal_entries").delete().eq("id", id).eq("user_id", userId);
   return new Response("OK");
 }

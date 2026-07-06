@@ -1,7 +1,7 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const handle = username || `user_${id.slice(-6)}`;
     const full_name = [first_name, last_name].filter(Boolean).join(" ") || handle;
 
-    await supabase.from("profiles").insert({
+    await supabaseAdmin.from("profiles").insert({
       id,
       handle,
       full_name,
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     const handle = username || `user_${id.slice(-6)}`;
     const full_name = [first_name, last_name].filter(Boolean).join(" ") || handle;
 
-    await supabase.from("profiles").upsert({
+    await supabaseAdmin.from("profiles").upsert({
       id,
       handle,
       full_name,

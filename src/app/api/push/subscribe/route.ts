@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const subscription = await req.json();
   if (!subscription?.endpoint) return new Response("Invalid subscription", { status: 400 });
 
-  await supabase.from("push_subscriptions").upsert(
+  await supabaseAdmin.from("push_subscriptions").upsert(
     { user_id: userId, endpoint: subscription.endpoint, subscription: JSON.stringify(subscription) },
     { onConflict: "endpoint" }
   );
@@ -22,6 +22,6 @@ export async function DELETE(req: NextRequest) {
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const { endpoint } = await req.json();
-  await supabase.from("push_subscriptions").delete().match({ user_id: userId, endpoint });
+  await supabaseAdmin.from("push_subscriptions").delete().match({ user_id: userId, endpoint });
   return new Response("OK", { status: 200 });
 }

@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   const { tradeId } = await req.json();
 
-  const { error } = await supabase.from("likes").insert({
+  const { error } = await supabaseAdmin.from("likes").insert({
     user_id: userId,
     trade_id: tradeId,
   });
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!error) {
-    await supabase.rpc("increment_likes", { trade_id_input: tradeId });
+    await supabaseAdmin.rpc("increment_likes", { trade_id_input: tradeId });
 
     const [{ data: trade }, { data: actor }] = await Promise.all([
       supabase.from("trades").select("user_id, ticker, pnl").eq("id", tradeId).single(),
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     if (trade && trade.user_id !== userId) {
       const pnlStr = trade.pnl >= 0 ? `+$${trade.pnl.toLocaleString()}` : `-$${Math.abs(trade.pnl).toLocaleString()}`;
-      await supabase.from("notifications").insert({
+      await supabaseAdmin.from("notifications").insert({
         user_id: trade.user_id,
         type: "like",
         actor_id: userId,
@@ -53,8 +54,8 @@ export async function DELETE(req: NextRequest) {
 
   const { tradeId } = await req.json();
 
-  await supabase.from("likes").delete().match({ user_id: userId, trade_id: tradeId });
-  await supabase.rpc("decrement_likes", { trade_id_input: tradeId });
+  await supabaseAdmin.from("likes").delete().match({ user_id: userId, trade_id: tradeId });
+  await supabaseAdmin.rpc("decrement_likes", { trade_id_input: tradeId });
 
   return new Response("OK", { status: 200 });
 }

@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 const ADMIN_ID = "user_3FjHwLbvzd59NATWEJDb6dwguxh";
@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
 
   const { targetHandle, verified, requestUserId } = await req.json();
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("profiles")
     .update({ verified })
     .eq("handle", targetHandle);
@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest) {
 
   // Update the request status if one exists
   if (requestUserId) {
-    await supabase
+    await supabaseAdmin
       .from("verify_requests")
       .update({ status: verified ? "approved" : "rejected" })
       .eq("user_id", requestUserId);
@@ -32,12 +32,12 @@ export async function GET() {
   const { userId } = await auth();
   if (userId !== ADMIN_ID) return new Response("Forbidden", { status: 403 });
 
-  const { data: profiles } = await supabase
+  const { data: profiles } = await supabaseAdmin
     .from("profiles")
     .select("id, handle, full_name, verified, avatar_url")
     .order("created_at", { ascending: false });
 
-  const { data: requests } = await supabase
+  const { data: requests } = await supabaseAdmin
     .from("verify_requests")
     .select("user_id, reason, status, created_at")
     .eq("status", "pending");

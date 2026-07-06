@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
@@ -18,9 +19,9 @@ export async function DELETE(req: NextRequest) {
   if (!comment) return new Response("Not found", { status: 404 });
   if (comment.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
-  const { error } = await supabase.from("comments").delete().eq("id", commentId);
+  const { error } = await supabaseAdmin.from("comments").delete().eq("id", commentId);
   if (!error && comment.trade_id) {
-    await supabase.rpc("decrement_comments", { trade_id_input: comment.trade_id });
+    await supabaseAdmin.rpc("decrement_comments", { trade_id_input: comment.trade_id });
   }
 
   return new Response("OK", { status: 200 });
@@ -57,11 +58,11 @@ export async function POST(req: NextRequest) {
     if (user) {
       const handle = user.username || `user_${userId.slice(-6)}`;
       const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
-      await supabase.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
+      await supabaseAdmin.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("comments")
     .insert({
       user_id: userId,
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
   if (error) return new Response(error.message, { status: 500 });
 
   if (tradeId) {
-    await supabase.rpc("increment_comments", { trade_id_input: tradeId });
+    await supabaseAdmin.rpc("increment_comments", { trade_id_input: tradeId });
     const { data: trade } = await supabase.from("trades").select("user_id").eq("id", tradeId).single();
     const [{ data: actor }, { data: full }] = await Promise.all([
       supabase.from("profiles").select("handle").eq("id", userId).single(),
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // Notify trade owner of comment (unless they wrote it)
     if (trade && trade.user_id !== userId) {
-      await supabase.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
+      await supabaseAdmin.from("notifications").insert({ user_id: trade.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
       if (actor) {
         void sendPushToUser(trade.user_id, {
           title: `💬 @${actor.handle} commented`,
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
       const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", parentId).single();
       if (parentComment && !notifiedUserIds.has(parentComment.user_id)) {
         notifiedUserIds.add(parentComment.user_id);
-        await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
+        await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
         if (actor) {
           void sendPushToUser(parentComment.user_id, {
             title: `↩️ @${actor.handle} replied to you`,
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
       for (const p of mentionedProfiles ?? []) {
         if (notifiedUserIds.has(p.id)) continue;
         notifiedUserIds.add(p.id);
-        await supabase.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
+        await supabaseAdmin.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
         if (actor) {
           void sendPushToUser(p.id, {
             title: `🔔 @${actor.handle} mentioned you`,
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
 
   if (postId) {
     const { data: post } = await supabase.from("posts").select("user_id, comments_count").eq("id", postId).single();
-    if (post) await supabase.from("posts").update({ comments_count: (post.comments_count ?? 0) + 1 }).eq("id", postId);
+    if (post) await supabaseAdmin.from("posts").update({ comments_count: (post.comments_count ?? 0) + 1 }).eq("id", postId);
 
     const [{ data: actor }, { data: parentComment }] = await Promise.all([
       supabase.from("profiles").select("handle").eq("id", userId).single(),
@@ -152,14 +153,14 @@ export async function POST(req: NextRequest) {
     // Notify post owner
     if (post && post.user_id !== userId) {
       notifiedPostIds.add(post.user_id);
-      await supabase.from("notifications").insert({ user_id: post.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+      await supabaseAdmin.from("notifications").insert({ user_id: post.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
       if (actor) void sendPushToUser(post.user_id, { title: `💬 @${actor.handle} commented`, body: `"${snippet}"`, url: `/feed` });
     }
 
     // Notify parent comment author on reply
     if (parentComment && !notifiedPostIds.has(parentComment.user_id)) {
       notifiedPostIds.add(parentComment.user_id);
-      await supabase.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+      await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
       if (actor) void sendPushToUser(parentComment.user_id, { title: `↩️ @${actor.handle} replied to you`, body: `"${snippet}"`, url: `/feed` });
     }
 
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
       for (const p of mentionedProfiles ?? []) {
         if (notifiedPostIds.has(p.id)) continue;
         notifiedPostIds.add(p.id);
-        await supabase.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
+        await supabaseAdmin.from("notifications").insert({ user_id: p.id, type: "comment", actor_id: userId, post_id: postId, comment_id: data.id });
         if (actor) void sendPushToUser(p.id, { title: `🔔 @${actor.handle} mentioned you`, body: `"${snippet}"`, url: `/feed` });
       }
     }

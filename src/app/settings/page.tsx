@@ -88,7 +88,11 @@ export default function SettingsPage() {
 
     const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
     const url = data.publicUrl + `?t=${Date.now()}`;
-    await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
+    await fetch("/api/profile/avatar", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatar_url: url }),
+    });
     setAvatarPreview(url);
     setUploadingAvatar(false);
   }

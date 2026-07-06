@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
   // Get trade + user's Alpaca keys
   const [{ data: trade }, { data: profile }] = await Promise.all([
     supabase.from("trades").select("id, user_id, ticker, pnl, entry, exit, created_at").eq("id", tradeId).single(),
-    supabase.from("profiles").select("alpaca_key, alpaca_secret").eq("id", userId).single(),
+    supabaseAdmin.from("profiles").select("alpaca_key, alpaca_secret").eq("id", userId).single(),
   ]);
 
   if (!trade) return new Response("Trade not found", { status: 404 });
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!match) return new Response("No matching trade found in Alpaca for this ticker on that date", { status: 404 });
 
     // Mark trade as verified
-    await supabase.from("trades").update({ verified_pnl: true }).eq("id", tradeId);
+    await supabaseAdmin.from("trades").update({ verified_pnl: true }).eq("id", tradeId);
 
     return Response.json({ verified: true });
   } catch {

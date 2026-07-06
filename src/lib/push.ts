@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 let initialized = false;
 
@@ -17,7 +17,7 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
   init();
   if (!initialized) return;
 
-  const { data: subs } = await supabase
+  const { data: subs } = await supabaseAdmin
     .from("push_subscriptions")
     .select("endpoint, subscription")
     .eq("user_id", userId);
@@ -31,7 +31,7 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
         await webpush.sendNotification(sub, JSON.stringify(payload));
       } catch (err: unknown) {
         if (err && typeof err === "object" && "statusCode" in err && (err.statusCode === 410 || err.statusCode === 404)) {
-          await supabase.from("push_subscriptions").delete().eq("endpoint", row.endpoint);
+          await supabaseAdmin.from("push_subscriptions").delete().eq("endpoint", row.endpoint);
         }
       }
     })

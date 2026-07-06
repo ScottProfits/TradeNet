@@ -5,7 +5,6 @@ import { useAuth } from "@clerk/nextjs";
 import { Send, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
-import { supabase } from "@/lib/supabase";
 
 interface Message {
   id: string;
@@ -46,32 +45,14 @@ export default function ChatPage() {
       .then((r) => r.ok ? r.json() : [])
       .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView(), 50); });
 
-    // Supabase Realtime subscription
-    const channel = supabase
-      .channel(`dm-${partner.id}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `receiver_id=eq.${partner.id}`,
-      }, () => {
-        fetch(`/api/messages?with=${partner.id}`)
-          .then((r) => r.ok ? r.json() : [])
-          .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
-      })
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `sender_id=eq.${partner.id}`,
-      }, () => {
-        fetch(`/api/messages?with=${partner.id}`)
-          .then((r) => r.ok ? r.json() : [])
-          .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
-      })
-      .subscribe();
+    // Poll for new messages (messages table is server-only now, no client Realtime access)
+    const interval = setInterval(() => {
+      fetch(`/api/messages?with=${partner.id}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((d: Message[]) => { setMessages(d); setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50); });
+    }, 4000);
 
-    return () => { supabase.removeChannel(channel); };
+    return () => clearInterval(interval);
   }, [partner]);
 
   async function handleSend(e: React.FormEvent) {

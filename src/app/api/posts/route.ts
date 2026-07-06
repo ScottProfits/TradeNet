@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
 export async function GET() {
@@ -47,11 +48,11 @@ export async function POST(req: NextRequest) {
     if (user) {
       const handle = user.username || `user_${userId.slice(-6)}`;
       const full_name = [user.firstName, user.lastName].filter(Boolean).join(" ") || handle;
-      await supabase.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
+      await supabaseAdmin.from("profiles").insert({ id: userId, handle, full_name, avatar_url: user.imageUrl });
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("posts")
     .insert({ user_id: userId, content: content.trim(), image_url: image_url ?? null })
     .select()

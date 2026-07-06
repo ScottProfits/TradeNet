@@ -1,11 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from("notifications")
     .select(`
       *,
@@ -22,7 +22,7 @@ export async function PATCH() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  await supabase
+  await supabaseAdmin
     .from("notifications")
     .update({ read: true })
     .eq("user_id", userId)

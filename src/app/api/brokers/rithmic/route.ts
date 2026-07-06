@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
 const RITHMIC_URI = "wss://rituz00100.rithmic.com:443";
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     let imported = 0;
     for (const fill of todayFills) {
       const isBuy = fill.transactionType?.toUpperCase().includes("BUY");
-      const { error } = await supabase.from("trades").upsert(
+      const { error } = await supabaseAdmin.from("trades").upsert(
         {
           user_id: userId,
           ticker: fill.symbol,
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Store that this user has connected Rithmic
-    await supabase
+    await supabaseAdmin
       .from("broker_connections")
       .upsert({ user_id: userId, broker: "rithmic", connected_at: new Date().toISOString() }, { onConflict: "user_id,broker" });
 

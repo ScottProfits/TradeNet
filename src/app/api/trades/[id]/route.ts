@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,7 +28,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!trade) return new Response("Not found", { status: 404 });
   if (trade.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
-  await supabase.from("trades").delete().eq("id", id);
+  await supabaseAdmin.from("trades").delete().eq("id", id);
   return new Response("OK", { status: 200 });
 }
 
@@ -56,7 +57,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       : ((entryNum - exitNum) / entryNum) * 100;
   }
 
-  const { data: updated, error } = await supabase
+  const { data: updated, error } = await supabaseAdmin
     .from("trades")
     .update({ ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy })
     .eq("id", id)
