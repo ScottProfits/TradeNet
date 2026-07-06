@@ -8,6 +8,7 @@ import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
 import NativePushSetup from "@/components/ui/NativePushSetup";
 import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
+import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
 
 export const metadata: Metadata = {
   title: "Ryzr — Social Trading Network",
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PushNotificationSetup />
           <NativePushSetup />
           <ClientErrorLogger />
-          <ConditionalShell>{children}</ConditionalShell>
+          <NavVisibilityProvider>
+            <ConditionalShell>{children}</ConditionalShell>
+          </NavVisibilityProvider>
           <Analytics />
           <SpeedInsights />
         </body>

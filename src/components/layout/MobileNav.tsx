@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 
 const PILL_WIDTH = 46;
 const TAP_SIZE = 46;
@@ -19,6 +20,13 @@ export default function MobileNav() {
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const { isExploreActive } = useNavVisibility();
+  const [exploreRevealed, setExploreRevealed] = useState(false);
+
+  // Hide the nav the moment Explore becomes active; it stays hidden until the user scrolls down
+  useEffect(() => {
+    if (isExploreActive) setExploreRevealed(false);
+  }, [isExploreActive]);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -29,8 +37,12 @@ export default function MobileNav() {
       ticking = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        if (y > lastY && y > 40) setCollapsed(true);
-        else if (y < lastY) setCollapsed(false);
+        if (y > lastY && y > 40) {
+          setCollapsed(true);
+          setExploreRevealed(true);
+        } else if (y < lastY) {
+          setCollapsed(false);
+        }
         lastY = y;
         ticking = false;
       });
@@ -39,6 +51,8 @@ export default function MobileNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const hiddenForExplore = isExploreActive && !exploreRevealed;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -77,9 +91,10 @@ export default function MobileNav() {
           width: PILL_WIDTH,
           background: "rgba(15, 17, 23, 0.05)",
           borderRadius: 999,
-          transform: collapsed ? "scale(0.6)" : "scale(1)",
+          transform: hiddenForExplore ? "scale(0.6) translateX(20px)" : collapsed ? "scale(0.6)" : "scale(1)",
           transformOrigin: "bottom right",
-          opacity: collapsed ? 0.55 : 1,
+          opacity: hiddenForExplore ? 0 : collapsed ? 0.55 : 1,
+          pointerEvents: hiddenForExplore ? "none" : "auto",
         }}
       >
         {/* Home */}

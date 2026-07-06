@@ -11,6 +11,7 @@ import MarketPulse from "@/components/feed/MarketPulse";
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
+import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 
 interface RealTrade {
   id: string;
@@ -71,6 +72,12 @@ export default function FeedPage() {
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<"feed" | "following" | "explore">("feed");
+  const { setIsExploreActive } = useNavVisibility();
+
+  useEffect(() => {
+    setIsExploreActive(tab === "explore");
+    return () => setIsExploreActive(false);
+  }, [tab, setIsExploreActive]);
 
   // Redirect new users to onboarding if no trading style set
   useEffect(() => {
