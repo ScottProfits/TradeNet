@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Camera, ShieldCheck, Zap } from "lucide-react";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
+import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -26,6 +27,9 @@ export default function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
+  const [alpacaModalOpen, setAlpacaModalOpen] = useState(false);
+  const [alpacaConnected, setAlpacaConnected] = useState(false);
+  const [disconnectingAlpaca, setDisconnectingAlpaca] = useState(false);
   const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
   const [verifyReason, setVerifyReason] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
@@ -58,6 +62,9 @@ export default function SettingsPage() {
       });
     fetch("/api/verify-request").then((r) => r.ok ? r.json() : null).then((d) => {
       if (d) { setVerifyRequest(d); setVerifyReason(d.reason ?? ""); }
+    });
+    fetch("/api/brokers/alpaca").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d) setAlpacaConnected(!!d.connected);
     });
   }, [userId]);
 
@@ -95,6 +102,13 @@ export default function SettingsPage() {
     });
     setAvatarPreview(url);
     setUploadingAvatar(false);
+  }
+
+  async function handleDisconnectAlpaca() {
+    setDisconnectingAlpaca(true);
+    await fetch("/api/brokers/alpaca", { method: "DELETE" });
+    setAlpacaConnected(false);
+    setDisconnectingAlpaca(false);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -409,10 +423,55 @@ export default function SettingsPage() {
             <img src="/brokers/rithmic-logo-white.png" alt="Market Data by Rithmic" className="h-3 opacity-25" />
           </div>
         </div>
+
+        <div
+          className="rounded-xl p-4 flex items-center justify-between"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.2)" }}>
+              <ShieldCheck className="w-4 h-4 text-[#00C896]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Alpaca</p>
+              <p className="text-[11px] text-gray-500">Stocks — verify trade P&amp;L</p>
+            </div>
+          </div>
+          {alpacaConnected ? (
+            <button
+              onClick={handleDisconnectAlpaca}
+              disabled={disconnectingAlpaca}
+              className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
+              style={{
+                background: "rgba(255,77,77,0.1)",
+                border: "1px solid rgba(255,77,77,0.3)",
+                color: "var(--red)",
+              }}
+            >
+              {disconnectingAlpaca ? "..." : "Disconnect"}
+            </button>
+          ) : (
+            <button
+              onClick={() => setAlpacaModalOpen(true)}
+              className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
+              style={{
+                background: "rgba(0,200,150,0.12)",
+                border: "1px solid rgba(0,200,150,0.3)",
+                color: "#00C896",
+              }}
+            >
+              Connect
+            </button>
+          )}
+        </div>
       </div>
 
       {rithmicModalOpen && (
         <RithmicConnectModal onClose={() => setRithmicModalOpen(false)} />
+      )}
+      {alpacaModalOpen && (
+        <AlpacaConnectModal onClose={() => setAlpacaModalOpen(false)} onSuccess={() => setAlpacaConnected(true)} />
       )}
 
       <div className="flex items-center justify-center gap-4 pt-2 pb-4">

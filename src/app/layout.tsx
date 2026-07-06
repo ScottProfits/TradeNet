@@ -2,8 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/ui/themes";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
+import NativePushSetup from "@/components/ui/NativePushSetup";
+import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 
 export const metadata: Metadata = {
   title: "Ryzr — Social Trading Network",
@@ -34,7 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
           <PushNotificationSetup />
+          <NativePushSetup />
+          <ClientErrorLogger />
           <ConditionalShell>{children}</ConditionalShell>
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
