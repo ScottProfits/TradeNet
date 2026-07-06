@@ -119,7 +119,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4 lg:gap-6 pb-20 lg:pb-0">
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4 lg:gap-6">
       <aside className="hidden lg:block space-y-4">
         <SidebarProfile />
       </aside>
