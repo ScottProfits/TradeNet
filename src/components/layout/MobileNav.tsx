@@ -8,8 +8,8 @@ import { clsx } from "clsx";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 
-const PILL_WIDTH = 42;
-const TAP_SIZE = 44;
+const PILL_WIDTH = 46;
+const TAP_SIZE = 46;
 const TAP_OVERHANG = (TAP_SIZE - PILL_WIDTH) / 2;
 
 export default function MobileNav() {
@@ -77,19 +77,19 @@ export default function MobileNav() {
           width: PILL_WIDTH,
           background: "rgba(15, 17, 23, 0.05)",
           borderRadius: 999,
-          transform: collapsed ? "scale(0.72)" : "scale(1)",
+          transform: collapsed ? "scale(0.6)" : "scale(1)",
           transformOrigin: "bottom right",
           opacity: collapsed ? 0.55 : 1,
         }}
       >
         {/* Home */}
         <Link href="/feed" aria-label="Home" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Home className="w-5 h-5" style={{ color: tabColor(0), filter: tabGlow(0) }} />
+          <Home className="w-6 h-6" style={{ color: tabColor(0), filter: tabGlow(0) }} />
         </Link>
 
         {/* Market */}
         <Link href="/market" aria-label="Market" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <BarChart2 className="w-5 h-5" style={{ color: tabColor(1), filter: tabGlow(1) }} />
+          <BarChart2 className="w-6 h-6" style={{ color: tabColor(1), filter: tabGlow(1) }} />
         </Link>
 
         {/* Center post button */}
@@ -97,7 +97,7 @@ export default function MobileNav() {
           <span
             className="flex items-center justify-center"
             style={{
-              width: 26, height: 26,
+              width: 30, height: 30,
               borderRadius: 9,
               background: "linear-gradient(135deg, #00C896 0%, #00a87e 100%)",
               boxShadow: "0 0 10px rgba(0,200,150,0.5)",
@@ -109,7 +109,7 @@ export default function MobileNav() {
 
         {/* Alerts */}
         <Link href="/notifications" aria-label="Alerts" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Bell className="w-5 h-5" style={{ color: tabColor(3), filter: tabGlow(3) }} />
+          <Bell className="w-6 h-6" style={{ color: tabColor(3), filter: tabGlow(3) }} />
         </Link>
 
         {/* Profile */}
@@ -118,7 +118,7 @@ export default function MobileNav() {
             src={profileAvatar || user?.imageUrl}
             alt="Profile"
             initials={user?.username ?? "?"}
-            className={clsx("w-5 h-5 text-[9px]", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
+            className={clsx("w-6 h-6 text-[10px]", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
             style={{ filter: tabGlow(4) }}
           />
         </Link>
