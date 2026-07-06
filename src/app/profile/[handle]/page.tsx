@@ -242,7 +242,8 @@ export default function ProfilePage() {
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0 flex-1">
           <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => profile.avatar_url && setAvatarOpen(true)}
@@ -272,13 +273,23 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-white break-words">@{profile.handle}</h1>
-                {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
-              </div>
-              {isOwnProfile && (
-                <div ref={accountMenuRef} className="relative flex-shrink-0">
+            <h1 className="text-2xl font-bold text-white break-words">@{profile.handle}</h1>
+            {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {profile.trading_style && (
+                <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  {profile.trading_style}
+                </span>
+              )}
+              {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500 whitespace-nowrap">{profile.brokerage}</p>}
+            </div>
+          </div>
+          </div>
+
+          <div className="flex gap-2 flex-shrink-0 items-start">
+            {isOwnProfile ? (
+              <div className="flex flex-col items-end gap-2">
+                <div ref={accountMenuRef} className="relative">
                   <button
                     onClick={() => setAccountMenuOpen((o) => !o)}
                     className="flex items-center gap-[3px] p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
@@ -309,55 +320,40 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {profile.trading_style && (
-                <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  {profile.trading_style}
-                </span>
-              )}
-              {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500 whitespace-nowrap">{profile.brokerage}</p>}
-            </div>
+                <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
+                  Edit Profile
+                </Link>
+                <button
+                  onClick={() => setWatchlistOpen(true)}
+                  className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
+                >
+                  Watchlist
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={clsx(
+                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                    following
+                      ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                      : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+                  )}
+                >
+                  {following ? "Following ✓" : "Follow"}
+                </button>
+                <button
+                  onClick={() => router.push(`/messages/${handle}`)}
+                  className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                  title="Send message"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          {isOwnProfile ? (
-            <>
-              <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
-                Edit Profile
-              </Link>
-              <button
-                onClick={() => setWatchlistOpen(true)}
-                className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
-              >
-                Watchlist
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={clsx(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                  following
-                    ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
-                    : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
-                )}
-              >
-                {following ? "Following ✓" : "Follow"}
-              </button>
-              <button
-                onClick={() => router.push(`/messages/${handle}`)}
-                className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
-                title="Send message"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
-            </>
-          )}
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
