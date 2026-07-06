@@ -53,6 +53,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [localPnlPct, setLocalPnlPct] = useState(trade.pnlPct);
   const [localNotes, setLocalNotes] = useState(trade.notes ?? "");
   const [localStrategy, setLocalStrategy] = useState(initialStrategy ?? "");
+  const [localImageUrl, setLocalImageUrl] = useState(imageUrl ?? null);
   const positive = localPnl >= 0;
   const isOwner = userId === trade.traderId;
 
@@ -197,13 +198,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </div>
       )}
 
-      {imageUrl && (
+      {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
-          {/\.(mp4|mov|webm|avi|mkv)/i.test(imageUrl) ? (
-            <video src={imageUrl} controls className="w-full max-h-80 object-cover" />
+          {/\.(mp4|mov|webm|avi|mkv)/i.test(localImageUrl) ? (
+            <video src={localImageUrl} controls className="w-full max-h-80 object-cover" />
           ) : (
             <Image
-              src={imageUrl}
+              src={localImageUrl}
               alt="Trade screenshot"
               width={600}
               height={300}
@@ -316,8 +317,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       {showEditModal && (
         <EditTradeModal
           tradeId={trade.id}
-          initial={{ ticker: localTicker, direction: localDirection as "Long" | "Short", entry, exit, shares: rawShares, notes: localNotes, strategy: localStrategy }}
-          onSaved={(u) => { setLocalTicker(u.ticker); setLocalDirection(u.direction === "LONG" ? "Long" : "Short"); setLocalPnl(u.pnl); setLocalPnlPct(u.pnlPct); setLocalNotes(u.notes); setLocalStrategy(u.strategy); }}
+          initial={{ ticker: localTicker, direction: localDirection as "Long" | "Short", entry, exit, shares: rawShares, notes: localNotes, strategy: localStrategy, imageUrl: localImageUrl }}
+          onSaved={(u) => { setLocalTicker(u.ticker); setLocalDirection(u.direction === "LONG" ? "Long" : "Short"); setLocalPnl(u.pnl); setLocalPnlPct(u.pnlPct); setLocalNotes(u.notes); setLocalStrategy(u.strategy); setLocalImageUrl(u.imageUrl); }}
           onClose={() => setShowEditModal(false)}
         />
       )}

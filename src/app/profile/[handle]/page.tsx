@@ -247,14 +247,14 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => profile.avatar_url && setAvatarOpen(true)}
-                className={`w-16 h-16 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-2xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
+                className={`w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-3xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
               >
                 {profile.avatar_url && !avatarLoadFailed ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={profile.avatar_url}
                     alt={profile.handle}
-                    className="w-16 h-16 rounded-full object-cover"
+                    className="w-24 h-24 rounded-full object-cover"
                     onError={() => setAvatarLoadFailed(true)}
                   />
                 ) : initials}
@@ -272,8 +272,8 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-white truncate">@{profile.handle}</h1>
-              {profile.full_name && <p className="text-gray-400 text-sm truncate">{profile.full_name}</p>}
+              <h1 className="text-2xl font-bold text-white truncate">@{profile.handle}</h1>
+              {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {profile.trading_style && (
                   <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">

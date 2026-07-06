@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
-import { X, TrendingUp, TrendingDown } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, TrendingUp, TrendingDown, ImagePlus, Video, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@clerk/nextjs";
 
 interface EditTradeProps {
   tradeId: string;
@@ -13,12 +15,18 @@ interface EditTradeProps {
     shares: number;
     notes: string;
     strategy: string;
+    imageUrl?: string | null;
   };
-  onSaved: (updates: { ticker: string; direction: string; pnl: number; pnlPct: number; notes: string; strategy: string }) => void;
+  onSaved: (updates: { ticker: string; direction: string; pnl: number; pnlPct: number; notes: string; strategy: string; imageUrl: string | null }) => void;
   onClose: () => void;
 }
 
+function isVideo(url: string) {
+  return /\.(mp4|mov|webm|avi|mkv)/i.test(url);
+}
+
 export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: EditTradeProps) {
+  const { userId } = useAuth();
   const [ticker, setTicker] = useState(initial.ticker);
   const [direction, setDirection] = useState<"LONG" | "SHORT">(initial.direction === "Long" ? "LONG" : "SHORT");
   const [entry, setEntry] = useState(String(initial.entry));
@@ -28,6 +36,13 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   const [strategy, setStrategy] = useState(initial.strategy);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Media state: existingUrl (untouched), newMedia (replacement file), removed (explicit clear)
+  const [existingUrl, setExistingUrl] = useState<string | null>(initial.imageUrl ?? null);
+  const [newMedia, setNewMedia] = useState<File | null>(null);
+  const [newMediaPreview, setNewMediaPreview] = useState<string | null>(null);
+  const [newMediaType, setNewMediaType] = useState<"image" | "video" | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const entryNum = parseFloat(entry);
   const exitNum = parseFloat(exit);
@@ -39,14 +54,42 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
     previewPct = direction === "LONG" ? ((exitNum - entryNum) / entryNum) * 100 : ((entryNum - exitNum) / entryNum) * 100;
   }
 
+  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setNewMedia(file);
+    setNewMediaPreview(URL.createObjectURL(file));
+    setNewMediaType(file.type.startsWith("video/") ? "video" : "image");
+  }
+
+  function handleRemoveMedia() {
+    setExistingUrl(null);
+    setNewMedia(null);
+    setNewMediaPreview(null);
+    setNewMediaType(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    let image_url: string | null = existingUrl;
+
+    if (newMedia && userId) {
+      const ext = newMedia.name.split(".").pop();
+      const path = `${userId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, newMedia, { contentType: newMedia.type });
+      if (uploadError) { setError("Upload failed: " + uploadError.message); setSaving(false); return; }
+      const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+      image_url = data.publicUrl;
+    }
+
     const res = await fetch(`/api/trades/${tradeId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy }),
+      body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy, image_url }),
     });
     if (!res.ok) { setError(await res.text()); setSaving(false); return; }
     const updated = await res.json();
@@ -57,9 +100,13 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
       pnlPct: updated.pnl_percent,
       notes: updated.caption ?? "",
       strategy: updated.strategy ?? "",
+      imageUrl: updated.image_url ?? null,
     });
     onClose();
   }
+
+  const currentMediaUrl = newMediaPreview ?? existingUrl;
+  const currentMediaIsVideo = newMediaPreview ? newMediaType === "video" : currentMediaUrl ? isVideo(currentMediaUrl) : false;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -143,6 +190,46 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
             <input value={strategy} onChange={(e) => setStrategy(e.target.value)} maxLength={100}
               placeholder="e.g. Momentum breakout, VWAP reclaim..."
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]" />
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Photo or video</label>
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaPick} />
+            {currentMediaUrl ? (
+              <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
+                {currentMediaIsVideo ? (
+                  <video src={currentMediaUrl} controls className="w-full max-h-48 object-cover" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentMediaUrl} alt="preview" className="w-full max-h-48 object-cover" />
+                )}
+                <div className="absolute top-2 right-2 flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="bg-black/70 hover:bg-black/90 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemoveMedia}
+                    className="bg-black/70 hover:bg-[var(--red)]/80 text-white p-1.5 rounded-lg transition-colors"
+                    aria-label="Remove media"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-[var(--border)] text-gray-500 hover:text-white hover:border-[var(--green)]/40 transition-colors text-sm"
+              >
+                <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add photo or video
+              </button>
+            )}
           </div>
 
           {error && <p className="text-[var(--red)] text-sm">{error}</p>}

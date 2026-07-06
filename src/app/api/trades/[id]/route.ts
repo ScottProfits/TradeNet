@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const { id } = await params;
-  const { ticker, direction, entry, exit, shares, caption, strategy } = await req.json();
+  const { ticker, direction, entry, exit, shares, caption, strategy, image_url } = await req.json();
 
   const { data: trade } = await supabase.from("trades").select("user_id").eq("id", id).single();
   if (!trade) return new Response("Not found", { status: 404 });
@@ -57,9 +57,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       : ((entryNum - exitNum) / entryNum) * 100;
   }
 
+  const updateFields: Record<string, unknown> = { ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy };
+  if (image_url !== undefined) updateFields.image_url = image_url;
+
   const { data: updated, error } = await supabaseAdmin
     .from("trades")
-    .update({ ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy })
+    .update(updateFields)
     .eq("id", id)
     .select()
     .single();
