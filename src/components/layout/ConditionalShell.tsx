@@ -8,6 +8,7 @@ const AUTH_ROUTES = ["/sign-in", "/sign-up", "/"];
 export default function ConditionalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuth = pathname === "/" || AUTH_ROUTES.some((r) => r !== "/" && pathname.startsWith(r));
+  const isProfileRoute = pathname.startsWith("/profile/");
 
   if (isAuth) {
     return <>{children}</>;
@@ -15,9 +16,9 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
 
   return (
     <>
-      <Navbar />
+      {!isProfileRoute && <Navbar />}
       <main className="max-w-7xl mx-auto px-4 pt-6 pb-6">{children}</main>
-      <MobileNav />
+      {!isProfileRoute && <MobileNav />}
     </>
   );
 }
