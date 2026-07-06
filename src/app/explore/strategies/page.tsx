@@ -118,7 +118,7 @@ export default function StrategiesPage() {
       {selected && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setSelected(null)}>
           <div
-            className="glass-card rounded-t-2xl w-full max-w-lg flex flex-col"
+            className="solid-menu rounded-t-2xl w-full max-w-lg flex flex-col"
             style={{ height: "75vh" }}
             onClick={(e) => e.stopPropagation()}
           >

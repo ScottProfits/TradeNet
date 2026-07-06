@@ -242,54 +242,43 @@ export default function ProfilePage() {
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
-            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-              <button
-                onClick={() => profile.avatar_url && setAvatarOpen(true)}
-                className={`w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-3xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
-              >
-                {profile.avatar_url && !avatarLoadFailed ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.handle}
-                    className="w-24 h-24 rounded-full object-cover"
-                    onError={() => setAvatarLoadFailed(true)}
-                  />
-                ) : initials}
-              </button>
-              {profile.verified && (
-                <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-2 py-0.5">
-                  <VerifiedBadge className="w-3 h-3" />
-                  <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
-                </span>
-              )}
-              {profile.handle === "scottprofits" && <FounderBadge />}
-              {profile.logo_url && (
+        <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => profile.avatar_url && setAvatarOpen(true)}
+              className={`w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-3xl ${profile.avatar_url ? "cursor-pointer hover:opacity-90 transition-opacity" : "cursor-default"}`}
+            >
+              {profile.avatar_url && !avatarLoadFailed ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain mt-1" style={{ mixBlendMode: "screen" }} />
-              )}
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-white truncate">@{profile.handle}</h1>
-              {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                {profile.trading_style && (
-                  <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full">
-                    {profile.trading_style}
-                  </span>
-                )}
-                {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500">{profile.brokerage}</p>}
-              </div>
-            </div>
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.handle}
+                  className="w-24 h-24 rounded-full object-cover"
+                  onError={() => setAvatarLoadFailed(true)}
+                />
+              ) : initials}
+            </button>
+            {profile.verified && (
+              <span className="flex items-center gap-1 bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-2 py-0.5">
+                <VerifiedBadge className="w-3 h-3" />
+                <span className="text-xs text-[var(--green)] font-semibold">Verified</span>
+              </span>
+            )}
+            {profile.handle === "scottprofits" && <FounderBadge />}
+            {profile.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.logo_url} alt="brand logo" className="w-12 h-12 object-contain mt-1" style={{ mixBlendMode: "screen" }} />
+            )}
           </div>
 
-          <div className="flex gap-2 flex-shrink-0 items-start">
-            {isOwnProfile ? (
-              <div className="flex flex-col items-end gap-2">
-                {/* Account DotsMenu */}
-                <div ref={accountMenuRef} className="relative">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-white break-words">@{profile.handle}</h1>
+                {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
+              </div>
+              {isOwnProfile && (
+                <div ref={accountMenuRef} className="relative flex-shrink-0">
                   <button
                     onClick={() => setAccountMenuOpen((o) => !o)}
                     className="flex items-center gap-[3px] p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
@@ -299,7 +288,7 @@ export default function ProfilePage() {
                     <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
                   </button>
                   {accountMenuOpen && (
-                    <div className="absolute right-0 top-7 w-52 glass-card rounded-2xl shadow-xl z-50 overflow-hidden">
+                    <div className="absolute right-0 top-7 w-52 solid-menu rounded-2xl z-50 overflow-hidden">
                       <div className="px-3 py-2 border-b border-[var(--border)]">
                         <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
                       </div>
@@ -320,40 +309,55 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
-                  Edit Profile
-                </Link>
-                <button
-                  onClick={() => setWatchlistOpen(true)}
-                  className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
-                >
-                  Watchlist
-                </button>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={clsx(
-                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                    following
-                      ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
-                      : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
-                  )}
-                >
-                  {following ? "Following ✓" : "Follow"}
-                </button>
-                <button
-                  onClick={() => router.push(`/messages/${handle}`)}
-                  className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
-                  title="Send message"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-              </>
-            )}
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {profile.trading_style && (
+                <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  {profile.trading_style}
+                </span>
+              )}
+              {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500 whitespace-nowrap">{profile.brokerage}</p>}
+            </div>
           </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          {isOwnProfile ? (
+            <>
+              <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors">
+                Edit Profile
+              </Link>
+              <button
+                onClick={() => setWatchlistOpen(true)}
+                className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left"
+              >
+                Watchlist
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={clsx(
+                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                  following
+                    ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                    : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+                )}
+              >
+                {following ? "Following ✓" : "Follow"}
+              </button>
+              <button
+                onClick={() => router.push(`/messages/${handle}`)}
+                className="p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                title="Send message"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
@@ -615,7 +619,7 @@ export default function ProfilePage() {
       {/* Followers / Following modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setModal(null)}>
-          <div className="glass-card rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="solid-menu rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
               <h2 className="font-bold text-white capitalize">{modal}</h2>
               <button onClick={() => setModal(null)} className="text-gray-500 hover:text-white transition-colors">
