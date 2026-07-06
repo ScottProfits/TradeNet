@@ -102,6 +102,16 @@ export default function ProfilePage() {
   const { signOut, openUserProfile } = useClerk();
   const { user } = useUser();
   const router = useRouter();
+
+  function handleBack() {
+    // If there's no real navigation history (e.g. a shared link opened fresh), fall back to the feed
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
+  }
+
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [watchlistOpen, setWatchlistOpen] = useState(false);
@@ -211,7 +221,7 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto pt-20 text-center space-y-4">
         <p className="text-gray-400 text-lg">Trader not found.</p>
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mx-auto"
         >
           <ArrowLeft className="w-4 h-4" /> Back
@@ -240,7 +250,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <button
-        onClick={() => router.back()}
+        onClick={handleBack}
         className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Back
