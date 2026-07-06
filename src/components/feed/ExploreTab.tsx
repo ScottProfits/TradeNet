@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight, Trophy } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 
@@ -61,6 +61,16 @@ export default function ExploreTab() {
 
   return (
     <div className="space-y-8">
+
+      {/* Leaderboard */}
+      <Link href="/leaderboard" className="flex items-center gap-3 glass-card rounded-2xl p-4 hover:border-[var(--green)]/40 transition-colors group">
+        <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-white text-sm">Leaderboard</p>
+          <p className="text-xs text-gray-500">Ranked by real returns</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[var(--green)] transition-colors" />
+      </Link>
 
       {/* Top Today */}
       <section>

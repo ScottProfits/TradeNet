@@ -107,7 +107,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
+    <nav className="hidden lg:block border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-3 flex items-center gap-2 h-11 w-full">
         <Link href="/feed" className="flex items-center gap-2 font-bold text-white shrink-0">
           <TrendingUp className="w-5 h-5 text-[var(--green)]" />
@@ -208,19 +208,6 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          {isLoaded && isSignedIn && (
-            <span className="lg:hidden flex items-center gap-1">
-              <NotificationBell />
-              <Link href="/messages" className="relative p-1.5 text-gray-400 hover:text-white transition-colors">
-                <MessageSquare className="w-5 h-5" />
-                {unreadDms > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--red)] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unreadDms > 9 ? "9+" : unreadDms}
-                  </span>
-                )}
-              </Link>
-            </span>
-          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2">

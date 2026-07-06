@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import MobileNav from "@/components/layout/MobileNav";
+import MobileTopMenu from "@/components/layout/MobileTopMenu";
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/"];
 
@@ -17,7 +18,8 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
   return (
     <>
       {!isProfileRoute && <Navbar />}
-      <main className="max-w-7xl mx-auto px-4 pt-6 pb-6">{children}</main>
+      {!isProfileRoute && <MobileTopMenu />}
+      <main className="max-w-7xl mx-auto px-4 pt-3 lg:pt-6 pb-6">{children}</main>
       {!isProfileRoute && <MobileNav />}
     </>
   );
