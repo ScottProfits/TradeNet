@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { TrendingUp, Search, MessageSquare, X } from "lucide-react";
 import { clsx } from "clsx";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -33,14 +33,28 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tickerResults, setTickerResults] = useState<TickerResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [unreadDms, setUnreadDms] = useState(0);
+  const [profileHandle, setProfileHandle] = useState<string | null>(null);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch("/api/profile/me").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d?.handle) setProfileHandle(d.handle);
+      else setProfileHandle(user.username ?? null);
+      if (d?.avatar_url) setProfileAvatar(d.avatar_url);
+    });
+  }, [user?.id, user?.username]);
+
+  const profileHref = profileHandle ? `/profile/${profileHandle}` : "/settings";
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -227,6 +241,20 @@ export default function Navbar() {
                 )}
               </Link>
               <span className="hidden lg:block"><NotificationBell /></span>
+              <Link href={profileHref} className="shrink-0">
+                {profileAvatar || user?.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={(profileAvatar || user?.imageUrl) as string}
+                    alt="Profile"
+                    className={clsx("w-7 h-7 rounded-full object-cover", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                    {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
+                  </div>
+                )}
+              </Link>
             </>
           ) : isLoaded && !isSignedIn ? (
             <SignInButton mode="redirect">
