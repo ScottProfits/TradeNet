@@ -10,6 +10,7 @@ import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import { clsx } from "clsx";
+import { timeAgo } from "@/lib/timeAgo";
 
 interface RealPost {
   id: string;
@@ -107,7 +108,7 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
             {profile?.verified && <VerifiedBadge className="w-3.5 h-3.5" />}
           </div>
           <p className="text-xs text-gray-500">
-            {new Date(post.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {timeAgo(post.created_at)}
           </p>
         </div>
         {isOwner && !editing && (

@@ -22,6 +22,23 @@ export default function MobileNav() {
   const [collapsed, setCollapsed] = useState(false);
   const { isExploreActive } = useNavVisibility();
   const [exploreRevealed, setExploreRevealed] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    function load() {
+      Promise.all([
+        fetch("/api/messages?unread=1").then((r) => (r.ok ? r.json() : { count: 0 })),
+        fetch("/api/notifications").then((r) => (r.ok ? r.json() : [])),
+      ]).then(([dms, notifs]) => {
+        const unreadNotifs = Array.isArray(notifs) ? notifs.filter((n: { read: boolean }) => !n.read).length : 0;
+        setHasUnread(dms.count > 0 || unreadNotifs > 0);
+      });
+    }
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   // Hide the nav the moment Explore becomes active; it stays hidden until the user scrolls down
   useEffect(() => {
@@ -128,8 +145,21 @@ export default function MobileNav() {
         </button>
 
         {/* Alerts */}
-        <Link href="/notifications" aria-label="Alerts" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
+        <Link href="/notifications" aria-label="Alerts" className="relative flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
           <Bell className="w-6 h-6" style={{ color: tabColor(3), filter: tabGlow(3) }} />
+          {hasUnread && (
+            <span
+              className="absolute rounded-full"
+              style={{
+                top: TAP_SIZE / 2 - 13,
+                right: TAP_SIZE / 2 - 13,
+                width: 8,
+                height: 8,
+                background: "var(--green)",
+                boxShadow: "0 0 6px rgba(0,200,150,0.8)",
+              }}
+            />
+          )}
         </Link>
 
         {/* Profile */}

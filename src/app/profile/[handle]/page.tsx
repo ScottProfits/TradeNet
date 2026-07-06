@@ -16,6 +16,7 @@ import { clsx } from "clsx";
 import Link from "next/link";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
+import { timeAgo } from "@/lib/timeAgo";
 
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
@@ -451,7 +452,7 @@ export default function ProfilePage() {
               ticker: t.ticker,
               direction: t.direction === "LONG" ? "Long" : "Short",
               shares: 0,
-              time: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              time: timeAgo(t.created_at),
               pnl: t.pnl,
               pnlPct: t.pnl_percent,
               notes: t.caption ?? "",

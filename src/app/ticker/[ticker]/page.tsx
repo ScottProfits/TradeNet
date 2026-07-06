@@ -5,6 +5,7 @@ import TradeCard from "@/components/feed/TradeCard";
 import { Trade, Trader } from "@/types";
 import { TrendingUp } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
+import { timeAgo } from "@/lib/timeAgo";
 
 interface RealTrade {
   id: string;
@@ -60,7 +61,7 @@ export default function TickerPage() {
         const trade: Trade = {
           id: t.id, traderId: t.user_id, ticker: t.ticker,
           direction: t.direction === "LONG" ? "Long" : "Short", shares: 0,
-          time: new Date(t.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          time: timeAgo(t.created_at),
           pnl: t.pnl, pnlPct: t.pnl_percent, notes: t.caption ?? "",
           likes: t.likes_count, comments: t.comments_count,
         };

@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
+import { timeAgo } from "@/lib/timeAgo";
 
 interface RealTrade {
   id: string;
@@ -60,7 +61,7 @@ function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
   const trade: Trade = {
     id: rt.id, traderId: rt.user_id, ticker: rt.ticker,
     direction: rt.direction === "LONG" ? "Long" : "Short", shares: 0,
-    time: new Date(rt.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    time: timeAgo(rt.created_at),
     pnl: rt.pnl, pnlPct: rt.pnl_percent, notes: rt.caption ?? "",
     likes: rt.likes_count, comments: rt.comments_count,
   };

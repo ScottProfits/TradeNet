@@ -235,9 +235,22 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
 
           {error && <p className="text-[var(--red)] text-sm">{error}</p>}
 
-          <button type="submit" disabled={saving}
-            className="w-full py-2.5 bg-[var(--green)] text-black font-bold rounded-lg hover:bg-[var(--green)]/90 transition-colors disabled:opacity-50">
-            {saving ? "Saving..." : "Save Changes"}
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-3 rounded-2xl transition-all duration-300 disabled:opacity-40"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,150,0.25) 0%, rgba(0,168,126,0.15) 100%)",
+              boxShadow: "0 0 24px rgba(0,200,150,0.2), inset 0 1px 0 rgba(255,255,255,0.08)",
+              border: "1px solid rgba(0,200,150,0.35)",
+            }}
+          >
+            <span
+              className="text-[11px] tracking-[0.18em] font-semibold uppercase"
+              style={{ color: "#00C896", textShadow: "0 0 12px rgba(0,200,150,0.6)" }}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </span>
           </button>
         </form>
       </div>
