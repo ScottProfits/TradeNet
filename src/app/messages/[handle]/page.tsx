@@ -165,7 +165,7 @@ export default function ChatPage() {
                 </p>
                 {mine ? (
                   liked && (
-                    <span className={`absolute -bottom-3 left-1 w-6 h-6 rounded-full flex items-center justify-center solid-menu`}>
+                    <span className="absolute -bottom-3 left-1 w-6 h-6 rounded-full flex items-center justify-center solid-menu heart-pop">
                       <Heart className="w-3 h-3 fill-[var(--red)] text-[var(--red)]" />
                     </span>
                   )

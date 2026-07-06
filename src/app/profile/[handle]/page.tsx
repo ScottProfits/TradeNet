@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail, ArrowLeft } from "lucide-react";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
@@ -208,8 +208,14 @@ export default function ProfilePage() {
 
   if (notFound) {
     return (
-      <div className="max-w-2xl mx-auto pt-20 text-center">
+      <div className="max-w-2xl mx-auto pt-20 text-center space-y-4">
         <p className="text-gray-400 text-lg">Trader not found.</p>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mx-auto"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
       </div>
     );
   }
@@ -233,6 +239,13 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
