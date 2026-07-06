@@ -108,7 +108,7 @@ export default function Navbar() {
 
   return (
     <nav className="border-b border-[var(--border)] bg-[var(--bg)] sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-3 flex items-center gap-2 h-14 w-full">
+      <div className="max-w-7xl mx-auto px-3 flex items-center gap-2 h-11 w-full">
         <Link href="/feed" className="flex items-center gap-2 font-bold text-white shrink-0">
           <TrendingUp className="w-5 h-5 text-[var(--green)]" />
           Ryzr
