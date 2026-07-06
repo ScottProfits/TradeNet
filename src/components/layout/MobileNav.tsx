@@ -51,15 +51,15 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed right-2 top-1/2 -translate-y-1/2 z-50 lg:hidden flex flex-col items-center py-2 gap-1"
+        className="fixed right-2 bottom-10 z-50 lg:hidden flex flex-col items-center py-2 gap-1"
         style={{
           width: PILL_WIDTH,
-          background: "rgba(15, 17, 23, 0.28)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          border: "0.5px solid rgba(255,255,255,0.07)",
+          background: "rgba(15, 17, 23, 0.08)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          border: "0.5px solid rgba(255,255,255,0.04)",
           borderRadius: 999,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
         }}
       >
         {/* Home */}
