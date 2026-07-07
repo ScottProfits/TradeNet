@@ -18,14 +18,6 @@ import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
 
-function handleSizeClass(handle: string): string {
-  const len = handle.length;
-  if (len <= 8) return "text-lg sm:text-2xl";
-  if (len <= 11) return "text-base sm:text-xl";
-  if (len <= 15) return "text-sm sm:text-lg";
-  return "text-xs sm:text-base";
-}
-
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
   try {
@@ -250,7 +242,7 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3 -mb-3">
         <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
-        <span className="text-base font-semibold text-white truncate">@{profile.handle}</span>
+        <span className="text-lg font-semibold text-white truncate">@{profile.handle}</span>
       </div>
 
       {/* Profile header */}
@@ -286,7 +278,6 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className={clsx(handleSizeClass(profile.handle), "font-bold text-white whitespace-nowrap")}>@{profile.handle}</h1>
             {profile.full_name && <p className="text-gray-300 text-lg truncate">{profile.full_name}</p>}
             <div className="flex flex-col items-center gap-1 mt-1 w-fit">
               {profile.trading_style && (
