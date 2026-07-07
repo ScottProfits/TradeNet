@@ -17,6 +17,13 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
     backgroundColor: '#0F1117',
   },
+  plugins: {
+    PushNotifications: {
+      // Capacitor's own foreground notification handler suppresses banners
+      // unless these are explicitly listed.
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
 };
 
 export default config;
