@@ -37,28 +37,39 @@ function startOfMonthInTz(monthsAgo: number, timeZone = MARKET_TZ): Date {
   return new Date(asUTCMidnight.getTime() - tzOffsetMs(timeZone, asUTCMidnight));
 }
 
-function getRange(period: string): string | null {
-  if (period === "today") return startOfDayInTz(0).toISOString();
+function getRange(period: string, timeZone: string): string | null {
+  if (period === "today") return startOfDayInTz(0, timeZone).toISOString();
   if (period === "week") { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString(); }
-  if (period === "month") return startOfMonthInTz(0).toISOString();
+  if (period === "month") return startOfMonthInTz(0, timeZone).toISOString();
   return null;
 }
 
-function getPrevRange(period: string): [string, string] | null {
-  if (period === "today") return [startOfDayInTz(1).toISOString(), startOfDayInTz(0).toISOString()];
+function getPrevRange(period: string, timeZone: string): [string, string] | null {
+  if (period === "today") return [startOfDayInTz(1, timeZone).toISOString(), startOfDayInTz(0, timeZone).toISOString()];
   if (period === "week") {
     const s = new Date(); s.setDate(s.getDate() - 14);
     const e = new Date(); e.setDate(e.getDate() - 7);
     return [s.toISOString(), e.toISOString()];
   }
-  if (period === "month") return [startOfMonthInTz(1).toISOString(), startOfMonthInTz(0).toISOString()];
+  if (period === "month") return [startOfMonthInTz(1, timeZone).toISOString(), startOfMonthInTz(0, timeZone).toISOString()];
   return null;
+}
+
+function resolveTimeZone(tz: string | null): string {
+  if (!tz) return MARKET_TZ;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return MARKET_TZ;
+  }
 }
 
 export async function GET(req: NextRequest) {
   const period = req.nextUrl.searchParams.get("period") ?? "all";
-  const since = getRange(period);
-  const prevRange = getPrevRange(period);
+  const timeZone = resolveTimeZone(req.nextUrl.searchParams.get("tz"));
+  const since = getRange(period, timeZone);
+  const prevRange = getPrevRange(period, timeZone);
 
   let query = supabase
     .from("trades")

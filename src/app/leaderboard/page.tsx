@@ -51,7 +51,8 @@ export default function LeaderboardPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/leaderboard?period=${period}`);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const res = await fetch(`/api/leaderboard?period=${period}&tz=${encodeURIComponent(tz)}`);
     if (res.ok) setData(await res.json());
     setLoading(false);
   }, [period]);
