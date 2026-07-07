@@ -40,6 +40,7 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [testPushStatus, setTestPushStatus] = useState<string | null>(null);
   const [deleteWarnOpen, setDeleteWarnOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -387,6 +388,27 @@ export default function SettingsPage() {
               {sendingRequest ? "Submitting..." : "Submit Request"}
             </button>
           </div>
+        )}
+      </div>
+
+      {/* Push notification test */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <h2 className="font-bold text-white">Push Notifications</h2>
+        <p className="text-sm text-gray-400">Send yourself a test push to confirm native notifications are working.</p>
+        <button
+          onClick={async () => {
+            setTestPushStatus("sending");
+            const res = await fetch("/api/push/test", { method: "POST" });
+            const data = await res.json().catch(() => ({}));
+            setTestPushStatus(res.ok ? "sent" : `error: ${data.error ?? res.statusText}`);
+          }}
+          disabled={testPushStatus === "sending"}
+          className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors disabled:opacity-50"
+        >
+          {testPushStatus === "sending" ? "Sending..." : "Send Test Notification"}
+        </button>
+        {testPushStatus && testPushStatus !== "sending" && (
+          <p className="text-xs text-gray-500 select-text">{testPushStatus === "sent" ? "Sent — check your phone." : testPushStatus}</p>
         )}
       </div>
 
