@@ -5,7 +5,7 @@ let cachedToken: { token: string; issuedAt: number } | null = null;
 
 function getProviderToken(): string | null {
   const key = process.env.APNS_PRIVATE_KEY;
-  const keyId = process.env.APNS_KEY_ID;
+  const keyId = process.env.APNS_KEYS_ID ?? process.env.APNS_KEY_ID;
   const teamId = process.env.APNS_TEAM_ID;
   if (!key || !keyId || !teamId) return null;
 
