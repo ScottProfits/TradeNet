@@ -285,7 +285,7 @@ export default function ProfilePage() {
           <div className="min-w-0 flex-1">
             <h1 className={clsx(handleSizeClass(profile.handle), "font-bold text-white whitespace-nowrap")}>@{profile.handle}</h1>
             {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="flex flex-col items-center gap-1 mt-1 w-fit">
               {profile.trading_style && (
                 <span className="flex items-center text-xs leading-none bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
                   {profile.trading_style}
