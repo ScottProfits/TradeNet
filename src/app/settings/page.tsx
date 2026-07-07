@@ -40,6 +40,7 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [deleteWarnOpen, setDeleteWarnOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -498,7 +499,7 @@ export default function SettingsPage() {
           Permanently delete your account, including your trades, posts, messages, and profile. This can&apos;t be undone.
         </p>
         <button
-          onClick={() => setDeleteConfirmOpen(true)}
+          onClick={() => setDeleteWarnOpen(true)}
           className="text-[10px] tracking-[0.12em] font-semibold uppercase px-4 py-2 rounded-lg transition-all"
           style={{ background: "rgba(255,77,77,0.1)", border: "1px solid rgba(255,77,77,0.3)", color: "var(--red)" }}
         >
@@ -518,6 +519,33 @@ export default function SettingsPage() {
           onSave={handleCropSave}
           onClose={() => setCropSrc(null)}
         />
+      )}
+
+      {deleteWarnOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setDeleteWarnOpen(false)}>
+          <div className="solid-menu rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="bg-[var(--red)]/10 border border-[var(--red)]/30 rounded-xl p-2.5">
+                <Trash2 className="w-5 h-5 text-[var(--red)]" />
+              </div>
+              <p className="font-bold text-white text-sm">Are you sure you want to delete your account?</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteWarnOpen(false)}
+                className="flex-1 bg-white/5 border border-[var(--border)] text-gray-400 font-semibold py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setDeleteWarnOpen(false); setDeleteConfirmOpen(true); }}
+                className="flex-1 bg-[var(--red)]/10 border border-[var(--red)]/30 text-[var(--red)] font-semibold py-2.5 rounded-xl hover:bg-[var(--red)]/20 transition-colors"
+              >
+                Yes, continue
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {deleteConfirmOpen && (
