@@ -106,7 +106,10 @@ export default function MobileNav() {
         className="fixed left-1/2 bottom-2 z-50 lg:hidden flex flex-row items-center px-2 gap-1"
         style={{
           height: PILL_HEIGHT,
-          background: "rgba(15, 17, 23, 0.05)",
+          background: "rgba(15, 17, 23, 0.38)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 999,
           transform: hiddenForExplore
             ? "translateX(-50%) scale(0.6) translateY(20px)"
