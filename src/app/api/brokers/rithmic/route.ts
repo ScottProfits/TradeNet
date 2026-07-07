@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     // Only today's fills are ever imported below, so we only ever need a couple
     // days of history — well under Rithmic's 30-day-per-request cap.
     const startEpoch = Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60;
-    const fills = await fetchRithmicFills(
+    const { fills, uniqueUserId, loginAt } = await fetchRithmicFills(
       rithmicUser,
       rithmicPassword,
       RITHMIC_SYSTEM,
@@ -73,7 +73,15 @@ export async function POST(req: NextRequest) {
       .from("broker_connections")
       .upsert({ user_id: userId, broker: "rithmic", connected_at: new Date().toISOString() }, { onConflict: "user_id,broker" });
 
-    return NextResponse.json({ success: true, total: todayFills.length, imported, skipped: fills.length - todayFills.length });
+    return NextResponse.json({
+      success: true,
+      total: todayFills.length,
+      imported,
+      skipped: fills.length - todayFills.length,
+      uniqueUserId,
+      loginAt,
+      loginTimezone: "UTC",
+    });
   } catch (err: any) {
     console.error("Rithmic error:", err);
     return NextResponse.json({ error: err.message ?? "Connection failed" }, { status: 500 });

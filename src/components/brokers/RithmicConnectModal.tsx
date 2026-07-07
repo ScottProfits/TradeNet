@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X, Zap, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { X, Zap, CheckCircle, AlertCircle, Loader2, Copy } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -13,6 +13,7 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
   const [accountId, setAccountId] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [sessionInfo, setSessionInfo] = useState<{ uniqueUserId: string; loginAt: string; loginTimezone: string } | null>(null);
 
   async function handleConnect() {
     if (!user || !password) return;
@@ -35,6 +36,9 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
             ? `Connected! Imported ${data.imported} trade${data.imported !== 1 ? "s" : ""} from today.`
             : `Connected! No trades from today yet. Check back after you trade.`
         );
+        if (data.uniqueUserId) {
+          setSessionInfo({ uniqueUserId: data.uniqueUserId, loginAt: data.loginAt, loginTimezone: data.loginTimezone });
+        }
         onSuccess?.(data.imported);
       }
     } catch {
@@ -79,6 +83,28 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
             <CheckCircle className="w-10 h-10 text-[#00C896] mx-auto mb-3" />
             <p className="text-white font-semibold text-sm mb-1">Connected!</p>
             <p className="text-gray-400 text-xs">{message}</p>
+
+            {sessionInfo && (
+              <div className="mt-4 text-left rounded-xl p-3 space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold">Session info (for Rithmic)</span>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(
+                      `unique_user_id: ${sessionInfo.uniqueUserId}\ntimestamp: ${sessionInfo.loginAt}\ntimezone: ${sessionInfo.loginTimezone}`
+                    )}
+                    className="text-gray-500 hover:text-white transition-colors"
+                    aria-label="Copy session info"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-300 select-text break-all">unique_user_id: {sessionInfo.uniqueUserId}</p>
+                <p className="text-xs text-gray-300 select-text">timestamp: {sessionInfo.loginAt}</p>
+                <p className="text-xs text-gray-300 select-text">timezone: {sessionInfo.loginTimezone}</p>
+              </div>
+            )}
+
             <button
               onClick={onClose}
               className="mt-5 w-full py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.15em] transition-all"
@@ -135,9 +161,17 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
             </div>
 
             {status === "error" && (
-              <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {message}
+              <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span className="select-text flex-1 break-words">{message}</span>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(message)}
+                  className="text-red-400/70 hover:text-red-300 transition-colors shrink-0"
+                  aria-label="Copy error message"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 

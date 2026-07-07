@@ -10,6 +10,12 @@ export interface RithmicFill {
   accountId: string;
 }
 
+export interface RithmicFillsResult {
+  fills: RithmicFill[];
+  uniqueUserId: string;
+  loginAt: string;
+}
+
 export async function fetchRithmicFills(
   userId: string,
   password: string,
@@ -18,7 +24,7 @@ export async function fetchRithmicFills(
   accountId?: string,
   startEpoch?: number,
   endEpoch?: number
-): Promise<RithmicFill[]> {
+): Promise<RithmicFillsResult> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const protobuf = require("protobufjs") as any;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -84,6 +90,9 @@ export async function fetchRithmicFills(
   const loginResp = decode(root, "ResponseLogin", loginBuf) as any;
   if (loginResp.rpCode?.[0] !== "0") { ws.close(); throw new Error(`Rithmic login failed: ${loginResp.rpCode}`); }
 
+  const uniqueUserId: string = loginResp.uniqueUserId ?? "";
+  const loginAt = new Date().toISOString();
+
   const fcmId: string = loginResp.fcmId ?? "";
   const ibId: string = loginResp.ibId ?? "";
 
@@ -129,5 +138,5 @@ export async function fetchRithmicFills(
 
   ws.send(encode(root, "RequestLogout", { templateId: 12, userMsg: ["ryzr"] }));
   ws.close();
-  return fills;
+  return { fills, uniqueUserId, loginAt };
 }
