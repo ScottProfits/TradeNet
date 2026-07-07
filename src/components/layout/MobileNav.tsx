@@ -9,9 +9,9 @@ import PostTradeModal from "@/components/feed/PostTradeModal";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 
-const PILL_WIDTH = 46;
+const PILL_HEIGHT = 46;
 const TAP_SIZE = 46;
-const TAP_OVERHANG = (TAP_SIZE - PILL_WIDTH) / 2;
+const TAP_OVERHANG = (TAP_SIZE - PILL_HEIGHT) / 2;
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -103,17 +103,25 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed right-0.5 bottom-2 z-50 lg:hidden flex flex-col items-center py-2 gap-1"
+        className="fixed left-1/2 bottom-2 z-50 lg:hidden flex flex-row items-center px-2 gap-1"
         style={{
-          width: PILL_WIDTH,
+          height: PILL_HEIGHT,
           background: "rgba(15, 17, 23, 0.05)",
           borderRadius: 999,
-          transform: hiddenForExplore ? "scale(0.6) translateX(20px)" : collapsed ? "scale(0.6)" : "scale(1)",
-          transformOrigin: "bottom right",
+          transform: hiddenForExplore
+            ? "translateX(-50%) scale(0.6) translateY(20px)"
+            : collapsed
+            ? "translateX(-50%) scale(0.6)"
+            : "translateX(-50%) scale(1)",
+          transformOrigin: "bottom center",
           opacity: hiddenForExplore ? 0 : collapsed ? 0.55 : 1,
           pointerEvents: hiddenForExplore ? "none" : "auto",
           transition: "transform 300ms ease-out, opacity 300ms ease-out",
-          WebkitTransform: hiddenForExplore ? "scale(0.6) translateX(20px)" : collapsed ? "scale(0.6)" : "scale(1)",
+          WebkitTransform: hiddenForExplore
+            ? "translateX(-50%) scale(0.6) translateY(20px)"
+            : collapsed
+            ? "translateX(-50%) scale(0.6)"
+            : "translateX(-50%) scale(1)",
           willChange: "transform, opacity",
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
