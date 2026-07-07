@@ -6,6 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
 const RITHMIC_URI = "wss://rituz00100.rithmic.com:443";
 const RITHMIC_SYSTEM = "Rithmic Test";
 
+// The Rithmic handshake is several sequential round trips (system info,
+// login, account list, fill history) — give it more room than the default
+// function timeout so a slow round trip doesn't get killed mid-flight.
+export const maxDuration = 60;
+
 // POST /api/brokers/rithmic — connect & import fills
 export async function POST(req: NextRequest) {
   const { userId } = await auth();

@@ -56,10 +56,21 @@ export async function fetchRithmicFills(
     });
   }
 
-  function recv(ws: any, timeoutMs = 10000): Promise<Buffer> {
+  function recv(ws: any, step: string, timeoutMs = 10000): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error("Rithmic recv timeout")), timeoutMs);
-      ws.once("message", (data: Buffer) => { clearTimeout(t); resolve(data); });
+      const cleanup = () => {
+        clearTimeout(t);
+        ws.removeListener("message", onMessage);
+        ws.removeListener("close", onClose);
+        ws.removeListener("error", onError);
+      };
+      const t = setTimeout(() => { cleanup(); reject(new Error(`Rithmic timeout waiting for response to ${step}`)); }, timeoutMs);
+      const onMessage = (data: Buffer) => { cleanup(); resolve(data); };
+      const onClose = (code: number, reason: Buffer) => { cleanup(); reject(new Error(`Rithmic connection closed while waiting for ${step} (code ${code}${reason?.length ? `: ${reason}` : ""})`)); };
+      const onError = (err: Error) => { cleanup(); reject(new Error(`Rithmic connection error while waiting for ${step}: ${err.message}`)); };
+      ws.once("message", onMessage);
+      ws.once("close", onClose);
+      ws.once("error", onError);
     });
   }
 
@@ -67,7 +78,9 @@ export async function fetchRithmicFills(
   const ws = await connect(uri);
 
   ws.send(encode(root, "RequestRithmicSystemInfo", { templateId: 16, userMsg: ["ryzr"] }));
-  await recv(ws);
+  const sysInfoBuf = await recv(ws, "system info");
+  const sysInfoResp = decode(root, "ResponseRithmicSystemInfo", sysInfoBuf) as any;
+  console.log("Rithmic available systems:", sysInfoResp.systemName ?? []);
 
   const RequestLogin = root.lookupType("RequestLogin");
   ws.send(encode(root, "RequestLogin", {
@@ -76,7 +89,7 @@ export async function fetchRithmicFills(
     systemName, infraType: (RequestLogin as any).SysInfraType?.ORDER_PLANT ?? 3,
   }));
 
-  const loginBuf = await recv(ws);
+  const loginBuf = await recv(ws, "login");
   const loginResp = decode(root, "ResponseLogin", loginBuf) as any;
   if (loginResp.rpCode?.[0] !== "0") { ws.close(); throw new Error(`Rithmic login failed: ${loginResp.rpCode}`); }
 
@@ -89,7 +102,7 @@ export async function fetchRithmicFills(
   let resolvedAccountId = accountId;
   if (!resolvedAccountId) {
     ws.send(encode(root, "RequestAccountList", { templateId: 302, userMsg: ["ryzr"], fcmId, ibId }));
-    const acctResp = decode(root, "ResponseAccountList", await recv(ws)) as any;
+    const acctResp = decode(root, "ResponseAccountList", await recv(ws, "account list")) as any;
     resolvedAccountId = acctResp.accountId?.[0] ?? "";
   }
 
@@ -108,7 +121,7 @@ export async function fetchRithmicFills(
 
   while (true) {
     let buf: Buffer;
-    try { buf = await recv(ws, 15000); } catch { break; }
+    try { buf = await recv(ws, "fill history", 15000); } catch { break; }
 
     const base = Base.decode(buf) as any;
     if (base.templateId === 308) {
