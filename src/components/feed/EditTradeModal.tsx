@@ -150,12 +150,12 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Entry $</label>
-              <input value={entry} onChange={(e) => setEntry(e.target.value)} type="number" step="0.01" min="0" required
+              <input value={entry} onChange={(e) => setEntry(e.target.value)} type="number" step="0.01" required
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[var(--green)]" />
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Exit $</label>
-              <input value={exit} onChange={(e) => setExit(e.target.value)} type="number" step="0.01" min="0" required
+              <input value={exit} onChange={(e) => setExit(e.target.value)} type="number" step="0.01" required
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[var(--green)]" />
             </div>
             <div>

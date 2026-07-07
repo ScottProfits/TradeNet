@@ -349,7 +349,6 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 placeholder="150.00"
                 type="number"
                 step="0.01"
-                min="0"
                 required
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
               />
@@ -362,7 +361,6 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 placeholder="165.00"
                 type="number"
                 step="0.01"
-                min="0"
                 required
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
               />
