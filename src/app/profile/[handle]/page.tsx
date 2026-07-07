@@ -248,7 +248,10 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors -mb-3" />
+      <div className="flex items-center gap-3 -mb-3">
+        <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
+        <span className="text-base font-semibold text-white truncate">@{profile.handle}</span>
+      </div>
 
       {/* Profile header */}
       <div className="glass-card rounded-2xl p-6">
@@ -284,7 +287,7 @@ export default function ProfilePage() {
 
           <div className="min-w-0 flex-1">
             <h1 className={clsx(handleSizeClass(profile.handle), "font-bold text-white whitespace-nowrap")}>@{profile.handle}</h1>
-            {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
+            {profile.full_name && <p className="text-gray-300 text-lg truncate">{profile.full_name}</p>}
             <div className="flex flex-col items-center gap-1 mt-1 w-fit">
               {profile.trading_style && (
                 <span className="flex items-center text-xs leading-none bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
