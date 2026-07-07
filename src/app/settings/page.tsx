@@ -261,6 +261,8 @@ export default function SettingsPage() {
               <option>Fidelity</option>
               <option>Tastytrade</option>
               <option>TradeStation</option>
+              <option>NinjaTrader</option>
+              <option>Tradovate</option>
               <option>Other</option>
             </select>
           </div>
