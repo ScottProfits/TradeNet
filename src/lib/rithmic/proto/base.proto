@@ -1,0 +1,10 @@
+
+package rti;
+
+// Minimal "peek" message — every Rithmic response shares this exact field
+// number for template_id, so decoding any raw buffer as this message type
+// lets us read the template_id before decoding it as its real type.
+message Base
+	{
+	required int32  template_id = 154467;
+	}

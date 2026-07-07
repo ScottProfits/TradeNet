@@ -1,3 +1,8 @@
+// Precompiled from the .proto files (see scripts/build-rithmic-proto.js) so
+// this loads via a static import instead of an fs.readFileSync at runtime —
+// runtime proto file paths are not reliably included in serverless bundles.
+import protoBundle from "./proto-bundle.json";
+
 export interface RithmicFill {
   symbol: string;
   exchange: string;
@@ -29,24 +34,9 @@ export async function fetchRithmicFills(
   const protobuf = require("protobufjs") as any;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const WS = require("ws") as any;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require("path") as any;
-
-  const PROTO_DIR = path.join(process.cwd(), "src/lib/rithmic/proto");
 
   function loadProto(): any {
-    const root = new protobuf.Root();
-    const files = [
-      "base", "request_heartbeat", "response_heartbeat",
-      "request_rithmic_system_info", "response_rithmic_system_info",
-      "request_login", "response_login",
-      "request_logout", "response_logout",
-      "request_account_list", "response_account_list",
-      "request_login_info", "response_login_info",
-      "request_show_fill_history", "response_show_fill_history",
-    ];
-    for (const f of files) root.loadSync(path.join(PROTO_DIR, `${f}.proto`));
-    return root;
+    return protobuf.Root.fromJSON(protoBundle);
   }
 
   function encode(root: any, typeName: string, payload: Record<string, unknown>): Buffer {
