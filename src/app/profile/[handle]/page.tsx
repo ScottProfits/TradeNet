@@ -18,6 +18,14 @@ import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
 
+function handleSizeClass(handle: string): string {
+  const len = handle.length;
+  if (len <= 8) return "text-lg sm:text-2xl";
+  if (len <= 11) return "text-base sm:text-xl";
+  if (len <= 15) return "text-sm sm:text-lg";
+  return "text-xs sm:text-base";
+}
+
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
   try {
@@ -275,15 +283,17 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-2xl font-bold text-white break-words">@{profile.handle}</h1>
+            <h1 className={clsx(handleSizeClass(profile.handle), "font-bold text-white whitespace-nowrap")}>@{profile.handle}</h1>
             {profile.full_name && <p className="text-gray-400 text-base truncate">{profile.full_name}</p>}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {profile.trading_style && (
-                <span className="text-xs bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                <span className="flex items-center text-xs leading-none bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
                   {profile.trading_style}
                 </span>
               )}
-              {profile.brokerage && profile.brokerage !== "Other" && <p className="text-xs text-gray-500 whitespace-nowrap">{profile.brokerage}</p>}
+              {profile.brokerage && profile.brokerage !== "Other" && (
+                <span className="flex items-center text-xs leading-none text-gray-500 whitespace-nowrap">{profile.brokerage}</span>
+              )}
             </div>
           </div>
           </div>
