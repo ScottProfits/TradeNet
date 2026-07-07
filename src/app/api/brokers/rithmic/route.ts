@@ -20,12 +20,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const { fetchRithmicFills } = await import("@/lib/rithmic/client");
+    // Only today's fills are ever imported below, so we only ever need a couple
+    // days of history — well under Rithmic's 30-day-per-request cap.
+    const startEpoch = Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60;
     const fills = await fetchRithmicFills(
       rithmicUser,
       rithmicPassword,
       RITHMIC_SYSTEM,
       RITHMIC_URI,
-      accountId
+      accountId,
+      startEpoch
     );
 
     // Only import fills from today (ET timezone)

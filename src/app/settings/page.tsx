@@ -410,8 +410,18 @@ export default function SettingsPage() {
             >
               Connect
             </button>
-            <img src="/brokers/rithmic-logo-white.png" alt="Market Data by Rithmic" className="h-3 opacity-25" />
+            <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-3 opacity-25" />
+            <span className="text-[9px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
           </div>
+        </div>
+
+        {/* Required Rithmic/OMNE trademark & copyright notices */}
+        <div className="text-[10px] text-gray-600 leading-relaxed pt-1 border-t border-[var(--border)] mt-2">
+          {/* TODO: replace with the exact four notices from Rithmic's API agreement/docs */}
+          <p>Rithmic® is a registered trademark of Rithmic, LLC.</p>
+          <p>OMNE℠ is a service mark of Rithmic, LLC.</p>
+          <p>Trading Platform by Rithmic — used under license.</p>
+          <p>© Rithmic, LLC. All rights reserved.</p>
         </div>
 
         <div

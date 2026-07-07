@@ -34,6 +34,7 @@ interface RealTrade {
   verified_pnl: boolean;
   journal_note: string | null;
   created_at: string;
+  source?: string | null;
   profiles: { id: string; handle: string; avatar_url: string; brokerage: string; verified: boolean };
 }
 
@@ -63,6 +64,7 @@ function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
     direction: rt.direction === "LONG" ? "Long" : "Short", shares: 0,
     time: timeAgo(rt.created_at),
     createdAt: rt.created_at,
+    source: rt.source ?? null,
     pnl: rt.pnl, pnlPct: rt.pnl_percent, notes: rt.caption ?? "",
     likes: rt.likes_count, comments: rt.comments_count,
   };

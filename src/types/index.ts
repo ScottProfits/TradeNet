@@ -21,6 +21,7 @@ export interface Trade {
   shares: number;
   time: string;
   createdAt?: string;
+  source?: string | null;
   pnl: number;
   pnlPct: number;
   notes: string;

@@ -23,6 +23,7 @@ interface RealTrade {
   strategy: string | null;
   liked_by_me: boolean;
   created_at: string;
+  source?: string | null;
   profiles: { id: string; handle: string; avatar_url: string; brokerage: string; verified: boolean };
 }
 
@@ -63,6 +64,7 @@ export default function TickerPage() {
           direction: t.direction === "LONG" ? "Long" : "Short", shares: 0,
           time: timeAgo(t.created_at),
           createdAt: t.created_at,
+          source: t.source ?? null,
           pnl: t.pnl, pnlPct: t.pnl_percent, notes: t.caption ?? "",
           likes: t.likes_count, comments: t.comments_count,
         };

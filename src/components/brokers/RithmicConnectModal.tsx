@@ -90,6 +90,10 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
             >
               Done
             </button>
+            <div className="flex flex-col items-center gap-1.5 pt-5">
+              <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-4 opacity-40" />
+              <span className="text-[10px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -165,12 +169,13 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
               Your credentials are used only to fetch fills and are never stored.
             </p>
 
-            <div className="flex justify-center pt-2">
+            <div className="flex flex-col items-center gap-1.5 pt-2">
               <img
                 src="/brokers/rithmic-logo-white.png"
-                alt="Market Data by Rithmic"
+                alt="Trading Platform by Rithmic"
                 className="h-4 opacity-30"
               />
+              <span className="text-[10px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
             </div>
           </div>
         )}

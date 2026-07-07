@@ -233,6 +233,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </div>
       </div>
 
+      {trade.source === "rithmic" && (
+        <div className="flex items-center gap-2.5 opacity-60">
+          <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-3.5" />
+          <span className="text-[10px] text-gray-500 font-medium tracking-wide">Powered by OMNE</span>
+        </div>
+      )}
+
       <div className="flex items-center gap-4 pt-1">
         <button
           onClick={handleLike}

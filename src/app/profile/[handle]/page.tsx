@@ -71,6 +71,7 @@ interface Trade {
   image_url: string | null;
   likes_count: number;
   created_at: string;
+  source?: string | null;
 }
 
 interface ProfileData {
@@ -454,6 +455,7 @@ export default function ProfilePage() {
               shares: 0,
               time: timeAgo(t.created_at),
               createdAt: t.created_at,
+              source: t.source ?? null,
               pnl: t.pnl,
               pnlPct: t.pnl_percent,
               notes: t.caption ?? "",
