@@ -322,12 +322,12 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                <Link href="/settings" className="px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors whitespace-nowrap">
+                <Link href="/settings" className="px-5 py-2.5 text-sm sm:text-base font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors whitespace-nowrap">
                   Edit Profile
                 </Link>
                 <button
                   onClick={() => setWatchlistOpen(true)}
-                  className="px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left whitespace-nowrap"
+                  className="px-5 py-2.5 text-sm sm:text-base font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left whitespace-nowrap"
                 >
                   Watchlist
                 </button>
