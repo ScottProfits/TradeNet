@@ -2,7 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Camera, ShieldCheck, Zap, Trash2 } from "lucide-react";
+import { CheckCircle, Camera, ShieldCheck, Zap, Trash2, ChevronDown } from "lucide-react";
+import { clsx } from "clsx";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
 import { supabase } from "@/lib/supabase";
@@ -40,7 +41,7 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [testPushStatus, setTestPushStatus] = useState<string | null>(null);
+  const [dangerZoneOpen, setDangerZoneOpen] = useState(false);
   const [deleteWarnOpen, setDeleteWarnOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -391,36 +392,6 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Push notification test */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
-        <h2 className="font-bold text-white">Push Notifications</h2>
-        <p className="text-sm text-gray-400">Send yourself a test push to confirm native notifications are working.</p>
-        <button
-          onClick={async () => {
-            setTestPushStatus("sending");
-            const res = await fetch("/api/push/test", { method: "POST" });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) {
-              setTestPushStatus(`error: ${data.error ?? res.statusText}`);
-            } else {
-              const failed = (data.results ?? []).filter((r: { ok: boolean }) => !r.ok);
-              if (failed.length === 0) {
-                setTestPushStatus("sent");
-              } else {
-                setTestPushStatus(`APNs rejected it: ${JSON.stringify(failed)}`);
-              }
-            }
-          }}
-          disabled={testPushStatus === "sending"}
-          className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors disabled:opacity-50"
-        >
-          {testPushStatus === "sending" ? "Sending..." : "Send Test Notification"}
-        </button>
-        {testPushStatus && testPushStatus !== "sending" && (
-          <p className="text-xs text-gray-500 select-text">{testPushStatus === "sent" ? "Sent — check your phone." : testPushStatus}</p>
-        )}
-      </div>
-
       {/* Broker Connections */}
       <div className="glass-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
@@ -521,21 +492,31 @@ export default function SettingsPage() {
       )}
 
       {/* Danger Zone */}
-      <div className="glass-card rounded-2xl p-6 space-y-4" style={{ borderColor: "rgba(255,77,77,0.25)" }}>
-        <div className="flex items-center gap-2">
-          <Trash2 className="w-5 h-5 text-[var(--red)]" />
-          <h2 className="font-bold text-white">Danger Zone</h2>
-        </div>
-        <p className="text-sm text-gray-400">
-          Permanently delete your account, including your trades, posts, messages, and profile. This can&apos;t be undone.
-        </p>
+      <div className="glass-card rounded-2xl p-6" style={{ borderColor: "rgba(255,77,77,0.25)" }}>
         <button
-          onClick={() => setDeleteWarnOpen(true)}
-          className="text-[10px] tracking-[0.12em] font-semibold uppercase px-4 py-2 rounded-lg transition-all"
-          style={{ background: "rgba(255,77,77,0.1)", border: "1px solid rgba(255,77,77,0.3)", color: "var(--red)" }}
+          onClick={() => setDangerZoneOpen((o) => !o)}
+          className="w-full flex items-center justify-between gap-2"
         >
-          Delete Account
+          <div className="flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-[var(--red)]" />
+            <h2 className="font-bold text-white">Danger Zone</h2>
+          </div>
+          <ChevronDown className={clsx("w-4 h-4 text-gray-500 transition-transform", dangerZoneOpen && "rotate-180")} />
         </button>
+        {dangerZoneOpen && (
+          <div className="space-y-4 pt-4">
+            <p className="text-sm text-gray-400">
+              Permanently delete your account, including your trades, posts, messages, and profile. This can&apos;t be undone.
+            </p>
+            <button
+              onClick={() => setDeleteWarnOpen(true)}
+              className="text-[10px] tracking-[0.12em] font-semibold uppercase px-4 py-2 rounded-lg transition-all"
+              style={{ background: "rgba(255,77,77,0.1)", border: "1px solid rgba(255,77,77,0.3)", color: "var(--red)" }}
+            >
+              Delete Account
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-4 pt-2 pb-4">
