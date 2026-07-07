@@ -322,12 +322,12 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                <Link href="/settings" className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors whitespace-nowrap">
+                <Link href="/settings" className="px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors whitespace-nowrap">
                   Edit Profile
                 </Link>
                 <button
                   onClick={() => setWatchlistOpen(true)}
-                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left whitespace-nowrap"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors text-left whitespace-nowrap"
                 >
                   Watchlist
                 </button>
@@ -338,7 +338,7 @@ export default function ProfilePage() {
                   onClick={handleFollow}
                   disabled={followLoading}
                   className={clsx(
-                    "px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap",
+                    "px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap",
                     following
                       ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
                       : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"

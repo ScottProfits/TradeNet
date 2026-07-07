@@ -24,17 +24,18 @@ function getProviderToken(): string | null {
 export async function sendApnsNotification(
   deviceToken: string,
   payload: { title: string; body: string; url?: string }
-): Promise<{ ok: boolean; shouldRemove: boolean }> {
+): Promise<{ ok: boolean; shouldRemove: boolean; status?: number; body?: string; error?: string }> {
   const providerToken = getProviderToken();
   const bundleId = process.env.APNS_BUNDLE_ID;
-  if (!providerToken || !bundleId) return { ok: false, shouldRemove: false };
+  if (!providerToken) return { ok: false, shouldRemove: false, error: "Missing APNS_KEY_ID/APNS_TEAM_ID/APNS_PRIVATE_KEY" };
+  if (!bundleId) return { ok: false, shouldRemove: false, error: "Missing APNS_BUNDLE_ID" };
 
   const host =
     process.env.APNS_USE_SANDBOX === "true" ? "api.sandbox.push.apple.com" : "api.push.apple.com";
 
   return new Promise((resolve) => {
     const client = http2.connect(`https://${host}`);
-    client.on("error", () => resolve({ ok: false, shouldRemove: false }));
+    client.on("error", (err) => resolve({ ok: false, shouldRemove: false, error: `Connection error: ${err.message}` }));
 
     const req = client.request({
       ":method": "POST",
@@ -56,7 +57,7 @@ export async function sendApnsNotification(
     req.on("end", () => {
       client.close();
       const removable = status === 410 || (status === 400 && /BadDeviceToken|Unregistered/.test(body));
-      resolve({ ok: status === 200, shouldRemove: removable });
+      resolve({ ok: status === 200, shouldRemove: removable, status, body: body || undefined });
     });
 
     req.end(

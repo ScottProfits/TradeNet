@@ -400,7 +400,16 @@ export default function SettingsPage() {
             setTestPushStatus("sending");
             const res = await fetch("/api/push/test", { method: "POST" });
             const data = await res.json().catch(() => ({}));
-            setTestPushStatus(res.ok ? "sent" : `error: ${data.error ?? res.statusText}`);
+            if (!res.ok) {
+              setTestPushStatus(`error: ${data.error ?? res.statusText}`);
+            } else {
+              const failed = (data.results ?? []).filter((r: { ok: boolean }) => !r.ok);
+              if (failed.length === 0) {
+                setTestPushStatus("sent");
+              } else {
+                setTestPushStatus(`APNs rejected it: ${JSON.stringify(failed)}`);
+              }
+            }
           }}
           disabled={testPushStatus === "sending"}
           className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors disabled:opacity-50"
