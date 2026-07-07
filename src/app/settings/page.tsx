@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Camera, ShieldCheck, Zap } from "lucide-react";
+import { CheckCircle, Camera, ShieldCheck, Zap, Trash2 } from "lucide-react";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
 import { supabase } from "@/lib/supabase";
@@ -12,6 +12,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 
 export default function SettingsPage() {
   const { userId } = useAuth();
+  const { signOut } = useClerk();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +40,19 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    const res = await fetch("/api/account", { method: "DELETE" });
+    if (res.ok) {
+      await signOut(() => router.push("/"));
+    } else {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -474,6 +488,24 @@ export default function SettingsPage() {
         <AlpacaConnectModal onClose={() => setAlpacaModalOpen(false)} onSuccess={() => setAlpacaConnected(true)} />
       )}
 
+      {/* Danger Zone */}
+      <div className="glass-card rounded-2xl p-6 space-y-4" style={{ borderColor: "rgba(255,77,77,0.25)" }}>
+        <div className="flex items-center gap-2">
+          <Trash2 className="w-5 h-5 text-[var(--red)]" />
+          <h2 className="font-bold text-white">Danger Zone</h2>
+        </div>
+        <p className="text-sm text-gray-400">
+          Permanently delete your account, including your trades, posts, messages, and profile. This can&apos;t be undone.
+        </p>
+        <button
+          onClick={() => setDeleteConfirmOpen(true)}
+          className="text-[10px] tracking-[0.12em] font-semibold uppercase px-4 py-2 rounded-lg transition-all"
+          style={{ background: "rgba(255,77,77,0.1)", border: "1px solid rgba(255,77,77,0.3)", color: "var(--red)" }}
+        >
+          Delete Account
+        </button>
+      </div>
+
       <div className="flex items-center justify-center gap-4 pt-2 pb-4">
         <a href="/privacy" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Privacy Policy</a>
         <span className="text-gray-700">·</span>
@@ -486,6 +518,47 @@ export default function SettingsPage() {
           onSave={handleCropSave}
           onClose={() => setCropSrc(null)}
         />
+      )}
+
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => !deleting && setDeleteConfirmOpen(false)}>
+          <div className="solid-menu rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="bg-[var(--red)]/10 border border-[var(--red)]/30 rounded-xl p-2.5">
+                <Trash2 className="w-5 h-5 text-[var(--red)]" />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">Delete your account?</p>
+                <p className="text-xs text-gray-500">This permanently erases everything. It can&apos;t be undone.</p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Type DELETE to confirm</label>
+              <input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--red)]"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                disabled={deleting}
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="flex-1 bg-white/5 border border-[var(--border)] text-gray-400 font-semibold py-2.5 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                onClick={handleDeleteAccount}
+                className="flex-1 bg-[var(--red)]/10 border border-[var(--red)]/30 text-[var(--red)] font-semibold py-2.5 rounded-xl hover:bg-[var(--red)]/20 transition-colors disabled:opacity-40"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
