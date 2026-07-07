@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
                   className="border-b border-[var(--border)] last:border-0 hover:bg-white/[0.02] transition-colors"
                 >
                   <td className="px-3 py-3 text-sm font-mono text-gray-400">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                    {entry.pnl > 0 && i === 0 ? "🥇" : entry.pnl > 0 && i === 1 ? "🥈" : entry.pnl > 0 && i === 2 ? "🥉" : i + 1}
                   </td>
                   <td className="px-1 py-3">
                     <RankChange delta={entry.rankChange} />
