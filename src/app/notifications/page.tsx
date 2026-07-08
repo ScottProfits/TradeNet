@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bell, Heart, UserPlus, MessageCircle } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "message_like";
+  type: "follow" | "like" | "comment" | "message_like" | "explore";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -26,6 +26,7 @@ function timeAgo(date: string) {
 function icon(type: string) {
   if (type === "like" || type === "message_like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
   if (type === "follow") return <UserPlus className="w-4 h-4 text-green-400" />;
+  if (type === "explore") return <Star className="w-4 h-4 text-yellow-400 fill-current" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
@@ -33,6 +34,7 @@ function message(type: string) {
   if (type === "like") return "liked your trade";
   if (type === "message_like") return "liked your message";
   if (type === "follow") return "started following you";
+  if (type === "explore") return "You're featured on Explore right now";
   return "commented on your trade";
 }
 
@@ -112,7 +114,10 @@ export default function NotificationsPage() {
                 <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">{group}</p>
                 <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                   {items.map((n) => {
-                    const tradeHref = n.type === "message_like"
+                    const isExplore = n.type === "explore";
+                    const tradeHref = isExplore
+                      ? "/feed"
+                      : n.type === "message_like"
                       ? `/messages/${n.actor?.handle}`
                       : n.trade_id
                         ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
@@ -122,19 +127,29 @@ export default function NotificationsPage() {
                         key={n.id}
                         className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
                       >
-                        <Link href={`/profile/${n.actor?.handle}`} className="relative shrink-0">
-                          <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-10 h-10 text-sm" />
-                          <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
-                            {icon(n.type)}
-                          </span>
-                        </Link>
+                        {isExplore ? (
+                          <Link href={tradeHref} className="relative shrink-0 w-10 h-10 rounded-full bg-yellow-400/10 flex items-center justify-center">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          </Link>
+                        ) : (
+                          <Link href={`/profile/${n.actor?.handle}`} className="relative shrink-0">
+                            <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-10 h-10 text-sm" />
+                            <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
+                              {icon(n.type)}
+                            </span>
+                          </Link>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-200">
-                            <Link href={`/profile/${n.actor?.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
-                              @{n.actor?.handle}
-                            </Link>
-                            {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
-                            {" "}
+                            {!isExplore && (
+                              <>
+                                <Link href={`/profile/${n.actor?.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
+                                  @{n.actor?.handle}
+                                </Link>
+                                {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
+                                {" "}
+                              </>
+                            )}
                             <Link href={tradeHref} className="hover:text-white transition-colors">
                               {message(n.type)}
                             </Link>

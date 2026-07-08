@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Bell, Heart, UserPlus, MessageCircle } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment";
+  type: "follow" | "like" | "comment" | "explore";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -61,12 +61,14 @@ export default function NotificationBell() {
   function icon(type: string) {
     if (type === "like") return <Heart className="w-3.5 h-3.5 text-pink-400 fill-current" />;
     if (type === "follow") return <UserPlus className="w-3.5 h-3.5 text-[var(--green)]" />;
+    if (type === "explore") return <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />;
     return <MessageCircle className="w-3.5 h-3.5 text-blue-400" />;
   }
 
   function message(n: Notification) {
     if (n.type === "like") return "liked your trade";
     if (n.type === "follow") return "started following you";
+    if (n.type === "explore") return "You're featured on Explore right now";
     return "commented on your trade";
   }
 
@@ -99,30 +101,44 @@ export default function NotificationBell() {
             {notifs.length === 0 ? (
               <p className="text-gray-500 text-sm text-center py-8">No notifications yet</p>
             ) : (
-              notifs.map((n) => (
-                <Link
-                  key={n.id}
-                  href={`/profile/${n.actor?.handle}`}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-white/5 transition-colors ${!n.read ? "bg-[var(--green)]/5" : ""}`}
-                >
-                  <div className="relative shrink-0">
-                    <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-8 h-8 text-xs" />
-                    <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
-                      {icon(n.type)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-200">
-                      <span className="font-semibold text-white">@{n.actor?.handle}</span>
-                      {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
-                      {" "}{message(n)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
-                  </div>
-                  {!n.read && <div className="w-2 h-2 bg-[var(--green)] rounded-full mt-1.5 shrink-0" />}
-                </Link>
-              ))
+              notifs.map((n) => {
+                const isExplore = n.type === "explore";
+                return (
+                  <Link
+                    key={n.id}
+                    href={isExplore ? "/feed" : `/profile/${n.actor?.handle}`}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-white/5 transition-colors ${!n.read ? "bg-[var(--green)]/5" : ""}`}
+                  >
+                    {isExplore ? (
+                      <div className="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
+                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+                      </div>
+                    ) : (
+                      <div className="relative shrink-0">
+                        <SafeAvatar src={n.actor?.avatar_url} alt={n.actor?.handle ?? ""} initials={n.actor?.handle ?? "?"} className="w-8 h-8 text-xs" />
+                        <span className="absolute -bottom-0.5 -right-0.5 bg-[var(--card)] rounded-full p-0.5">
+                          {icon(n.type)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-200">
+                        {!isExplore && (
+                          <>
+                            <span className="font-semibold text-white">@{n.actor?.handle}</span>
+                            {n.actor?.verified && <VerifiedBadge className="w-3 h-3 inline ml-1" />}
+                            {" "}
+                          </>
+                        )}
+                        {message(n)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
+                    </div>
+                    {!n.read && <div className="w-2 h-2 bg-[var(--green)] rounded-full mt-1.5 shrink-0" />}
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>

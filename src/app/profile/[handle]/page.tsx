@@ -18,6 +18,14 @@ import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
 
+function nameSizeClass(name: string): string {
+  const len = name.length;
+  if (len <= 12) return "text-lg";
+  if (len <= 18) return "text-base";
+  if (len <= 24) return "text-sm";
+  return "text-xs";
+}
+
 function extractHandle(val: string): string {
   // Strip common domain prefixes and extract just the username/handle
   try {
@@ -278,7 +286,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            {profile.full_name && <p className="text-gray-300 text-lg truncate">{profile.full_name}</p>}
+            {profile.full_name && <p className={clsx(nameSizeClass(profile.full_name), "text-gray-300 whitespace-nowrap")}>{profile.full_name}</p>}
             <div className="flex flex-col items-center gap-1 mt-1 w-fit">
               {profile.trading_style && (
                 <span className="flex items-center text-xs leading-none bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
