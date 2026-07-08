@@ -2,20 +2,25 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const name = req.nextUrl.searchParams.get("name");
+  const name = req.nextUrl.searchParams.get("name")?.trim();
   if (!name) return NextResponse.json([]);
+
+  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const { data: trades, error } = await supabase
     .from("trades")
-    .select("user_id, pnl")
-    .eq("strategy", name);
+    .select("user_id, pnl, strategy")
+    .not("strategy", "is", null)
+    .gte("created_at", since7d.toISOString())
+    .limit(500);
 
   if (error) console.error("strategy-users trades error:", error);
-  if (!trades?.length) return NextResponse.json([]);
+  const matching = (trades ?? []).filter((t) => t.strategy?.trim() === name);
+  if (!matching.length) return NextResponse.json([]);
 
   // Aggregate per user
   const byUser: Record<string, { pnl: number; trades: number }> = {};
-  for (const t of trades) {
+  for (const t of matching) {
     if (!byUser[t.user_id]) byUser[t.user_id] = { pnl: 0, trades: 0 };
     byUser[t.user_id].pnl += t.pnl ?? 0;
     byUser[t.user_id].trades += 1;

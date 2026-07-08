@@ -4,6 +4,7 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Camera, ShieldCheck, Zap, Trash2, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
+import BackButton from "@/components/ui/BackButton";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
 import { supabase } from "@/lib/supabase";
@@ -164,6 +165,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
+      {!isNewUser && <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors -mb-3" fallbackHref="/feed" />}
       {isNewUser && (
         <div className="bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-xl px-4 py-3">
           <p className="text-green-400 text-sm font-semibold">Welcome to Ryzr! 👋</p>
