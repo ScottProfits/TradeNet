@@ -11,6 +11,7 @@ interface Notification {
   read: boolean;
   created_at: string;
   trade_id: string | null;
+  post_id: string | null;
   comment_id: string | null;
   actor: { handle: string; avatar_url: string; verified: boolean };
 }
@@ -30,11 +31,12 @@ function icon(type: string) {
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
-function message(type: string) {
-  if (type === "like") return "liked your trade";
-  if (type === "message_like") return "liked your message";
-  if (type === "follow") return "started following you";
-  if (type === "explore") return "You're featured on Explore right now";
+function message(n: Notification) {
+  if (n.type === "like") return "liked your trade";
+  if (n.type === "message_like") return "liked your message";
+  if (n.type === "follow") return "started following you";
+  if (n.type === "explore") return "You're featured on Explore right now";
+  if (n.type === "comment" && !n.trade_id && n.post_id) return "commented on your post";
   return "commented on your trade";
 }
 
@@ -121,7 +123,9 @@ export default function NotificationsPage() {
                       ? `/messages/${n.actor?.handle}`
                       : n.trade_id
                         ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
-                        : `/profile/${n.actor?.handle}`;
+                        : n.post_id
+                          ? "/feed"
+                          : `/profile/${n.actor?.handle}`;
                     return (
                       <div
                         key={n.id}
@@ -151,7 +155,7 @@ export default function NotificationsPage() {
                               </>
                             )}
                             <Link href={tradeHref} className="hover:text-white transition-colors">
-                              {message(n.type)}
+                              {message(n)}
                             </Link>
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>

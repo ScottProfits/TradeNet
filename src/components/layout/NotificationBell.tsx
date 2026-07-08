@@ -11,6 +11,7 @@ interface Notification {
   read: boolean;
   created_at: string;
   trade_id: string | null;
+  post_id: string | null;
   actor: {
     handle: string;
     avatar_url: string;
@@ -69,6 +70,7 @@ export default function NotificationBell() {
     if (n.type === "like") return "liked your trade";
     if (n.type === "follow") return "started following you";
     if (n.type === "explore") return "You're featured on Explore right now";
+    if (n.type === "comment" && !n.trade_id && n.post_id) return "commented on your post";
     return "commented on your trade";
   }
 
@@ -106,7 +108,7 @@ export default function NotificationBell() {
                 return (
                   <Link
                     key={n.id}
-                    href={isExplore ? "/feed" : `/profile/${n.actor?.handle}`}
+                    href={isExplore || n.post_id ? "/feed" : `/profile/${n.actor?.handle}`}
                     onClick={() => setOpen(false)}
                     className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-white/5 transition-colors ${!n.read ? "bg-[var(--green)]/5" : ""}`}
                   >
