@@ -436,13 +436,13 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Required Rithmic/OMNE trademark & copyright notices */}
+        {/* Required Rithmic/OMNE trademark & copyright notices — exact text provided by Rithmic support */}
         <div className="text-[10px] text-gray-600 leading-relaxed pt-1 border-t border-[var(--border)] mt-2">
-          {/* TODO: replace with the exact four notices from Rithmic's API agreement/docs */}
-          <p>Rithmic® is a registered trademark of Rithmic, LLC.</p>
-          <p>OMNE℠ is a service mark of Rithmic, LLC.</p>
-          <p>Trading Platform by Rithmic — used under license.</p>
-          <p>© Rithmic, LLC. All rights reserved.</p>
+          <p>The R | API+™ software is Copyright © 2026 by Rithmic, LLC. All rights reserved.</p>
+          <p>The R | Protocol API™ software is Copyright © 2026 by Rithmic, LLC. All rights reserved.</p>
+          <p>Trading Platform by Rithmic™ is a trademark of Rithmic, LLC. All rights reserved.</p>
+          <p>The OMNE™ software is Copyright © 2026 by Omnesys, LLC and Omnesys Technologies, Inc. All rights reserved.</p>
+          <p>Powered by OMNE™ is a trademark of Omnesys, LLC and Omnesys Technologies, Inc. All rights reserved.</p>
         </div>
 
         <div

@@ -75,13 +75,18 @@ export async function fetchRithmicFills(
   }
 
   const root = loadProto();
-  const ws = await connect(uri);
 
-  ws.send(encode(root, "RequestRithmicSystemInfo", { templateId: 16, userMsg: ["ryzr"] }));
-  const sysInfoBuf = await recv(ws, "system info");
+  // Rithmic closes the connection a second or two after answering a system
+  // list request — per Rithmic support, this is expected. We reconnect and
+  // log in immediately on the fresh connection using the system name.
+  const infoWs = await connect(uri);
+  infoWs.send(encode(root, "RequestRithmicSystemInfo", { templateId: 16, userMsg: ["ryzr"] }));
+  const sysInfoBuf = await recv(infoWs, "system info");
   const sysInfoResp = decode(root, "ResponseRithmicSystemInfo", sysInfoBuf) as any;
   console.log("Rithmic available systems:", sysInfoResp.systemName ?? []);
+  infoWs.close();
 
+  const ws = await connect(uri);
   const RequestLogin = root.lookupType("RequestLogin");
   ws.send(encode(root, "RequestLogin", {
     templateId: 10, templateVersion: "3.9", userMsg: ["ryzr"],
