@@ -54,7 +54,8 @@ export default function ExploreTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/explore")
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setData(d); setLoading(false); });
   }, []);

@@ -36,7 +36,8 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/explore").then((r) => r.ok ? r.json() : null).then((d) => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    fetch(`/api/explore?tz=${encodeURIComponent(tz)}`).then((r) => r.ok ? r.json() : null).then((d) => {
       if (d?.suggested) setSuggestions(d.suggested);
       else if (d?.topTraders) setSuggestions(d.topTraders.slice(0, 5));
     });

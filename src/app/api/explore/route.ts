@@ -1,13 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
+import { NextRequest } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
+import { startOfDayInTz, resolveTimeZone } from "@/lib/tzDayBoundary";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  const now = new Date();
+  const timeZone = resolveTimeZone(req.nextUrl.searchParams.get("tz"));
 
-  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+  const todayStart = startOfDayInTz(0, timeZone);
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const since14d = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
