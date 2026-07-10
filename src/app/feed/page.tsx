@@ -162,12 +162,12 @@ function FeedPageInner() {
           <>
             <button
               onClick={() => setFollowingOnly((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors"
+              className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border transition-colors"
               style={followingOnly
                 ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
                 : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
             >
-              <Users className="w-3.5 h-3.5" />
+              <Users className="w-3 h-3" />
               Following only
             </button>
 

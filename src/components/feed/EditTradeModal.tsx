@@ -50,9 +50,11 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   const sharesNum = parseFloat(shares) || 1;
   let preview: number | null = null;
   let previewPct: number | null = null;
-  if (!isNaN(entryNum) && !isNaN(exitNum) && entryNum > 0) {
+  if (!isNaN(entryNum) && !isNaN(exitNum)) {
     preview = direction === "LONG" ? (exitNum - entryNum) * sharesNum : (entryNum - exitNum) * sharesNum;
-    previewPct = direction === "LONG" ? ((exitNum - entryNum) / entryNum) * 100 : ((entryNum - exitNum) / entryNum) * 100;
+    previewPct = entryNum !== 0
+      ? (direction === "LONG" ? ((exitNum - entryNum) / entryNum) * 100 : ((entryNum - exitNum) / entryNum) * 100)
+      : 0;
   }
 
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {

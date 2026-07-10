@@ -55,13 +55,13 @@ export async function POST(req: NextRequest) {
   const shares = parseFloat(body.shares) || 100;
 
   let pnl: number;
-  let pnl_percent: number;
+  let pnl_percent = 0;
   if (direction === "LONG") {
     pnl = (exitNum - entryNum) * shares;
-    pnl_percent = ((exitNum - entryNum) / entryNum) * 100;
+    if (entryNum !== 0) pnl_percent = ((exitNum - entryNum) / entryNum) * 100;
   } else {
     pnl = (entryNum - exitNum) * shares;
-    pnl_percent = ((entryNum - exitNum) / entryNum) * 100;
+    if (entryNum !== 0) pnl_percent = ((entryNum - exitNum) / entryNum) * 100;
   }
 
   const { data, error } = await supabaseAdmin

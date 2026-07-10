@@ -69,13 +69,13 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
 
   let preview: number | null = null;
   let previewPct: number | null = null;
-  if (!isNaN(entryNum) && !isNaN(exitNum) && entryNum > 0) {
+  if (!isNaN(entryNum) && !isNaN(exitNum)) {
     if (direction === "LONG") {
       preview = (exitNum - entryNum) * effectiveShares;
-      previewPct = ((exitNum - entryNum) / entryNum) * 100;
+      previewPct = entryNum !== 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
     } else {
       preview = (entryNum - exitNum) * effectiveShares;
-      previewPct = ((entryNum - exitNum) / entryNum) * 100;
+      previewPct = entryNum !== 0 ? ((entryNum - exitNum) / entryNum) * 100 : 0;
     }
   }
 

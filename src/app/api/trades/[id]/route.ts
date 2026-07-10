@@ -48,13 +48,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const sharesNum = parseFloat(shares) || 1;
   let pnl = 0;
   let pnl_percent = 0;
-  if (!isNaN(entryNum) && !isNaN(exitNum) && entryNum > 0) {
+  if (!isNaN(entryNum) && !isNaN(exitNum)) {
     pnl = direction === "LONG"
       ? (exitNum - entryNum) * sharesNum
       : (entryNum - exitNum) * sharesNum;
-    pnl_percent = direction === "LONG"
-      ? ((exitNum - entryNum) / entryNum) * 100
-      : ((entryNum - exitNum) / entryNum) * 100;
+    if (entryNum !== 0) {
+      pnl_percent = direction === "LONG"
+        ? ((exitNum - entryNum) / entryNum) * 100
+        : ((entryNum - exitNum) / entryNum) * 100;
+    }
   }
 
   const updateFields: Record<string, unknown> = { ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy };
