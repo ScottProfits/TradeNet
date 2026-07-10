@@ -29,7 +29,7 @@ interface RealPost {
   } | null;
 }
 
-export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?: (id: string) => void }) {
+export default function PostCard({ post, onDelete, autoPlayVideo = false }: { post: RealPost; onDelete?: (id: string) => void; autoPlayVideo?: boolean }) {
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(post.liked_by_me ?? false);
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
@@ -149,7 +149,12 @@ export default function PostCard({ post, onDelete }: { post: RealPost; onDelete?
       {post.image_url && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {/\.(mp4|mov|webm)/i.test(post.image_url) ? (
-            <video src={post.image_url} controls className="w-full max-h-80 object-cover" />
+            <video
+              src={post.image_url}
+              controls
+              className="w-full max-h-80 object-cover"
+              {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
+            />
           ) : (
             <Image src={post.image_url} alt="Post media" width={600} height={300} className="w-full object-cover" unoptimized />
           )}

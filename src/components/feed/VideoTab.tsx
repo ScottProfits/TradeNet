@@ -70,10 +70,11 @@ export default function VideoTab() {
               exit={item.exit}
               rawShares={item.shares ?? 0}
               onDelete={handleDelete}
+              autoPlayVideo
             />
           );
         }
-        return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
+        return <PostCard key={item.id} post={item} onDelete={handleDelete} autoPlayVideo />;
       })}
     </div>
   );

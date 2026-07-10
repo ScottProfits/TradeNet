@@ -27,9 +27,10 @@ interface TradeCardProps {
   exit?: number;
   rawShares?: number;
   onDelete?: (id: string) => void;
+  autoPlayVideo?: boolean;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [liked, setLiked] = useState(likedByMe ?? false);
@@ -202,7 +203,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {/\.(mp4|mov|webm|avi|mkv)/i.test(localImageUrl) ? (
-            <video src={localImageUrl} controls className="w-full max-h-80 object-cover" />
+            <video
+              src={localImageUrl}
+              controls
+              className="w-full max-h-80 object-cover"
+              {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
+            />
           ) : (
             <Image
               src={localImageUrl}
