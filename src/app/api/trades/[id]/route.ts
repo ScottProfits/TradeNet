@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const { id } = await params;
-  const { ticker, direction, entry, exit, shares, caption, strategy, image_url } = await req.json();
+  const { ticker, direction, entry, exit, shares, caption, strategy, image_url, pnl_sign } = await req.json();
 
   const { data: trade } = await supabase.from("trades").select("user_id").eq("id", id).single();
   if (!trade) return new Response("Not found", { status: 404 });
@@ -57,6 +57,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ? ((exitNum - entryNum) / entryNum) * 100
         : ((entryNum - exitNum) / entryNum) * 100;
     }
+  }
+
+  // A short can still be a profit — let the poster explicitly say which,
+  // rather than forcing the sign implied by entry/exit direction math.
+  if (pnl_sign === "profit" || pnl_sign === "loss") {
+    const sign = pnl_sign === "loss" ? -1 : 1;
+    pnl = Math.abs(pnl) * sign;
+    pnl_percent = Math.abs(pnl_percent) * sign;
   }
 
   const updateFields: Record<string, unknown> = { ticker, direction, entry: entryNum, exit: exitNum, pnl, pnl_percent, caption, strategy };

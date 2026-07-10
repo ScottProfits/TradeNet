@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { ticker, direction, entry, exit, caption, strategy, image_url } = body;
+  const { ticker, direction, entry, exit, caption, strategy, image_url, pnl_sign } = body;
 
   if (!ticker || !direction || !entry || !exit) {
     return new Response("Missing required fields", { status: 400 });
@@ -62,6 +62,14 @@ export async function POST(req: NextRequest) {
   } else {
     pnl = (entryNum - exitNum) * shares;
     if (entryNum !== 0) pnl_percent = ((entryNum - exitNum) / entryNum) * 100;
+  }
+
+  // A short can still be a profit — let the poster explicitly say which,
+  // rather than forcing the sign implied by entry/exit direction math.
+  if (pnl_sign === "profit" || pnl_sign === "loss") {
+    const sign = pnl_sign === "loss" ? -1 : 1;
+    pnl = Math.abs(pnl) * sign;
+    pnl_percent = Math.abs(pnl_percent) * sign;
   }
 
   const { data, error } = await supabaseAdmin

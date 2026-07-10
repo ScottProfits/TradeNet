@@ -31,6 +31,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
   }, []);
   const [direction, setDirection] = useState<"LONG" | "SHORT">(prefill?.direction ?? "LONG");
+  const [pnlSign, setPnlSign] = useState<"profit" | "loss">("profit");
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
   const [shares, setShares] = useState(prefill?.shares ?? "100");
@@ -77,6 +78,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       preview = (entryNum - exitNum) * effectiveShares;
       previewPct = entryNum !== 0 ? ((entryNum - exitNum) / entryNum) * 100 : 0;
     }
+    const sign = pnlSign === "loss" ? -1 : 1;
+    preview = Math.abs(preview) * sign;
+    previewPct = Math.abs(previewPct) * sign;
   }
 
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -147,7 +151,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       const res = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, direction, entry, exit, shares: String(effectiveShares), caption, strategy, image_url }),
+        body: JSON.stringify({ ticker, direction, entry, exit, shares: String(effectiveShares), caption, strategy, image_url, pnl_sign: pnlSign }),
       });
 
       if (!res.ok) {
@@ -336,6 +340,37 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                   <TrendingDown className="w-3.5 h-3.5" /> Short
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Result — overrides the computed P&L sign, since a short can still be a profit */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Result</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPnlSign("profit")}
+                className={clsx(
+                  "flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  pnlSign === "profit"
+                    ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                    : "bg-[var(--bg)] text-gray-500 border border-[var(--border)] hover:text-white"
+                )}
+              >
+                Profit
+              </button>
+              <button
+                type="button"
+                onClick={() => setPnlSign("loss")}
+                className={clsx(
+                  "flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  pnlSign === "loss"
+                    ? "bg-[var(--red)]/20 text-[var(--red)] border border-[var(--red)]/40"
+                    : "bg-[var(--bg)] text-gray-500 border border-[var(--border)] hover:text-white"
+                )}
+              >
+                Loss
+              </button>
             </div>
           </div>
 

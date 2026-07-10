@@ -30,6 +30,10 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   const { userId } = useAuth();
   const [ticker, setTicker] = useState(initial.ticker);
   const [direction, setDirection] = useState<"LONG" | "SHORT">(initial.direction === "Long" ? "LONG" : "SHORT");
+  const initialPnl = initial.direction === "Long"
+    ? (initial.exit - initial.entry)
+    : (initial.entry - initial.exit);
+  const [pnlSign, setPnlSign] = useState<"profit" | "loss">(initialPnl < 0 ? "loss" : "profit");
   const [entry, setEntry] = useState(String(initial.entry));
   const [exit, setExit] = useState(String(initial.exit));
   const [shares, setShares] = useState(String(initial.shares || 100));
@@ -55,6 +59,9 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
     previewPct = entryNum !== 0
       ? (direction === "LONG" ? ((exitNum - entryNum) / entryNum) * 100 : ((entryNum - exitNum) / entryNum) * 100)
       : 0;
+    const sign = pnlSign === "loss" ? -1 : 1;
+    preview = Math.abs(preview) * sign;
+    previewPct = Math.abs(previewPct) * sign;
   }
 
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -92,7 +99,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
     const res = await fetch(`/api/trades/${tradeId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy, image_url }),
+      body: JSON.stringify({ ticker, direction, entry, exit, shares, caption, strategy, image_url, pnl_sign: pnlSign }),
     });
     if (!res.ok) { setError(await res.text()); setSaving(false); return; }
     const updated = await res.json();
@@ -146,6 +153,22 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
                   <TrendingDown className="w-3.5 h-3.5" /> Short
                 </button>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Result</label>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setPnlSign("profit")}
+                className={clsx("flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  pnlSign === "profit" ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40" : "bg-[var(--bg)] text-gray-500 border border-[var(--border)]")}>
+                Profit
+              </button>
+              <button type="button" onClick={() => setPnlSign("loss")}
+                className={clsx("flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  pnlSign === "loss" ? "bg-[var(--red)]/20 text-[var(--red)] border border-[var(--red)]/40" : "bg-[var(--bg)] text-gray-500 border border-[var(--border)]")}>
+                Loss
+              </button>
             </div>
           </div>
 
