@@ -6,73 +6,19 @@ import SidebarProfile from "@/components/feed/SidebarProfile";
 import SidebarRight from "@/components/feed/SidebarRight";
 import PostTradeModal from "@/components/feed/PostTradeModal";
 import ExploreTab from "@/components/feed/ExploreTab";
+import VideoTab from "@/components/feed/VideoTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
-import { Trade, Trader } from "@/types";
+import { Plus, Users } from "lucide-react";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
-import { timeAgo } from "@/lib/timeAgo";
-
-interface RealTrade {
-  id: string;
-  user_id: string;
-  ticker: string;
-  direction: "LONG" | "SHORT";
-  entry: number;
-  exit: number;
-  shares: number;
-  pnl: number;
-  pnl_percent: number;
-  caption: string;
-  likes_count: number;
-  comments_count: number;
-  image_url: string | null;
-  strategy: string | null;
-  liked_by_me: boolean;
-  verified_pnl: boolean;
-  journal_note: string | null;
-  created_at: string;
-  source?: string | null;
-  profiles: { id: string; handle: string; avatar_url: string; brokerage: string; verified: boolean };
-}
-
-interface RealPost {
-  id: string;
-  user_id: string;
-  content: string;
-  image_url: string | null;
-  likes_count: number;
-  comments_count?: number;
-  liked_by_me?: boolean;
-  created_at: string;
-  profiles: { id: string; handle: string; avatar_url: string; verified: boolean } | null;
-}
+import { realTradeToCardProps, RealTrade, RealPost } from "@/lib/tradeCardProps";
 
 type FeedItem = ({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost);
 
-function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Trader } {
-  const handle = rt.profiles?.handle ?? "unknown";
-  const trader: Trader = {
-    id: rt.user_id, handle, displayName: handle, initials: handle.slice(0, 2).toUpperCase(),
-    color: "#6366F1", brokerage: rt.profiles?.brokerage ?? "", verified: rt.profiles?.verified ?? false,
-    followers: 0, following: 0, winRate: 0, pnlMonth: 0, categories: [],
-  };
-  const trade: Trade = {
-    id: rt.id, traderId: rt.user_id, ticker: rt.ticker,
-    direction: rt.direction === "LONG" ? "Long" : "Short", shares: 0,
-    time: timeAgo(rt.created_at),
-    createdAt: rt.created_at,
-    source: rt.source ?? null,
-    pnl: rt.pnl, pnlPct: rt.pnl_percent, notes: rt.caption ?? "",
-    likes: rt.likes_count, comments: rt.comments_count,
-  };
-  return { trade, trader };
-}
-
-function isValidTab(t: string | null): t is "feed" | "following" | "explore" {
-  return t === "feed" || t === "following" || t === "explore";
+function isValidTab(t: string | null): t is "feed" | "video" | "explore" {
+  return t === "feed" || t === "video" || t === "explore";
 }
 
 export default function FeedPage() {
@@ -91,10 +37,11 @@ function FeedPageInner() {
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const initialTab = searchParams.get("tab");
-  const [tab, setTabState] = useState<"feed" | "following" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
+  const [tab, setTabState] = useState<"feed" | "video" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
+  const [followingOnly, setFollowingOnly] = useState(false);
   const { setIsExploreActive } = useNavVisibility();
 
-  function setTab(t: "feed" | "following" | "explore") {
+  function setTab(t: "feed" | "video" | "explore") {
     setTabState(t);
     router.replace(t === "feed" ? "/feed" : `/feed?tab=${t}`, { scroll: false });
   }
@@ -178,7 +125,7 @@ function FeedPageInner() {
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          {(["feed", "explore", "following"] as const).map((t) => (
+          {(["feed", "explore", "video"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -201,7 +148,7 @@ function FeedPageInner() {
                   textShadow: tab === t ? "0 0 12px rgba(0,200,150,0.6)" : "none",
                 }}
               >
-                {t === "feed" ? "Feed" : t === "following" ? "Following" : "Explore"}
+                {t === "feed" ? "Feed" : t === "video" ? "Video" : "Explore"}
               </span>
             </button>
           ))}
@@ -209,46 +156,65 @@ function FeedPageInner() {
 
         {tab === "explore" && <ExploreTab />}
 
-        {tab === "following" && (
-          followingItems.length === 0
-            ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
-            : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                if (item.type === "trade") {
-                  const { trade, trader } = realTradeToCardProps(item);
-                  return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
-                }
-                return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-              })
+        {tab === "video" && <VideoTab />}
+
+        {tab === "feed" && (
+          <>
+            <button
+              onClick={() => setFollowingOnly((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors"
+              style={followingOnly
+                ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
+                : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Following only
+            </button>
+
+            {followingOnly ? (
+              followingItems.length === 0
+                ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
+                : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+                    if (item.type === "trade") {
+                      const { trade, trader } = realTradeToCardProps(item);
+                      return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
+                    }
+                    return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
+                  })
+            ) : (
+              <>
+                {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+                  if (item.type === "trade") {
+                    const { trade, trader } = realTradeToCardProps(item);
+                    return (
+                      <TradeCard
+                        key={item.id}
+                        trade={trade}
+                        trader={trader}
+                        imageUrl={item.image_url ?? undefined}
+                        avatarUrl={item.profiles?.avatar_url ?? undefined}
+                        strategy={item.strategy ?? undefined}
+                        likedByMe={item.liked_by_me}
+                        verifiedPnl={item.verified_pnl}
+                        journalNote={item.journal_note ?? undefined}
+                        entry={item.entry}
+                        exit={item.exit}
+                        rawShares={item.shares ?? 0}
+                        onDelete={handleDelete}
+                      />
+                    );
+                  }
+                  return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
+                })}
+
+                {feedTrades.map((trade) => {
+                  const trader = traders.find((t) => t.id === trade.traderId)!;
+                  return <TradeCard key={trade.id} trade={trade} trader={trader} />;
+                })}
+              </>
+            )}
+          </>
         )}
-
-        {tab === "feed" && feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-          if (item.type === "trade") {
-            const { trade, trader } = realTradeToCardProps(item);
-            return (
-              <TradeCard
-                key={item.id}
-                trade={trade}
-                trader={trader}
-                imageUrl={item.image_url ?? undefined}
-                avatarUrl={item.profiles?.avatar_url ?? undefined}
-                strategy={item.strategy ?? undefined}
-                likedByMe={item.liked_by_me}
-                verifiedPnl={item.verified_pnl}
-                journalNote={item.journal_note ?? undefined}
-                entry={item.entry}
-                exit={item.exit}
-                rawShares={item.shares ?? 0}
-                onDelete={handleDelete}
-              />
-            );
-          }
-          return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-        })}
-
-        {tab === "feed" && feedTrades.map((trade) => {
-          const trader = traders.find((t) => t.id === trade.traderId)!;
-          return <TradeCard key={trade.id} trade={trade} trader={trader} />;
-        })}
       </section>
 
       <aside className="hidden lg:block">
