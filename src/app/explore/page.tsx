@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import ExploreTab from "@/components/feed/ExploreTab";
 
 export default function ExplorePage() {
@@ -8,7 +9,9 @@ export default function ExplorePage() {
         <h1 className="text-2xl font-bold text-white">Explore</h1>
         <p className="text-gray-500 text-sm mt-1">Discover top traders and trending tickers</p>
       </div>
-      <ExploreTab />
+      <Suspense fallback={null}>
+        <ExploreTab />
+      </Suspense>
     </div>
   );
 }
