@@ -132,12 +132,12 @@ export default function MobileNav() {
       >
         {/* Home */}
         <Link href="/feed" aria-label="Home" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Home className="w-6 h-6" style={{ color: tabColor(0), filter: tabGlow(0) }} />
+          <Home className="w-[26px] h-[26px]" style={{ color: tabColor(0), filter: tabGlow(0) }} />
         </Link>
 
         {/* Market */}
         <Link href="/market" aria-label="Market" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <BarChart2 className="w-6 h-6" style={{ color: tabColor(1), filter: tabGlow(1) }} />
+          <BarChart2 className="w-[26px] h-[26px]" style={{ color: tabColor(1), filter: tabGlow(1) }} />
         </Link>
 
         {/* Center post button */}
@@ -157,7 +157,7 @@ export default function MobileNav() {
 
         {/* Alerts */}
         <Link href="/notifications" aria-label="Alerts" className="relative flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Bell className="w-6 h-6" style={{ color: tabColor(3), filter: tabGlow(3) }} />
+          <Bell className="w-[26px] h-[26px]" style={{ color: tabColor(3), filter: tabGlow(3) }} />
           {hasUnread && (
             <span
               className="absolute rounded-full"
@@ -179,7 +179,7 @@ export default function MobileNav() {
             src={profileAvatar || user?.imageUrl}
             alt="Profile"
             initials={user?.username ?? "?"}
-            className={clsx("w-6 h-6 text-[10px]", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
+            className={clsx("w-[26px] h-[26px] text-[10px]", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
             style={{ filter: tabGlow(4) }}
           />
         </Link>
