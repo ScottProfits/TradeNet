@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Send, ArrowLeft, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import { demoPartner, demoMessages } from "@/lib/demoData";
 
 interface Message {
   id: string;
@@ -25,10 +26,20 @@ interface Profile {
 }
 
 export default function ChatPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
+  );
+}
+
+function ChatPageInner() {
   const { handle } = useParams<{ handle: string }>();
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
   const { userId } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [partner, setPartner] = useState<Profile | null>(null);
+  const [messages, setMessages] = useState<Message[]>(isDemo ? demoMessages : []);
+  const [partner, setPartner] = useState<Profile | null>(isDemo ? demoPartner : null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -42,13 +53,15 @@ export default function ChatPage() {
   }
 
   useEffect(() => {
+    if (isDemo) return;
     // Load partner profile
     fetch(`/api/profile/${handle}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.profile) setPartner(d.profile); });
-  }, [handle]);
+  }, [handle, isDemo]);
 
   useEffect(() => {
+    if (isDemo) return;
     if (!partner) return;
     // Initial load
     fetch(`/api/messages?with=${partner.id}`)
@@ -77,11 +90,17 @@ export default function ChatPage() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [partner]);
+  }, [partner, isDemo]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() || sending || !partner) return;
+    if (isDemo) {
+      setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: "me", receiver_id: partner.id, content: text, created_at: new Date().toISOString(), sender: { handle: "you", avatar_url: "", verified: false } }]);
+      setText("");
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      return;
+    }
     setSending(true);
     const res = await fetch("/api/messages", {
       method: "POST",
@@ -108,6 +127,7 @@ export default function ChatPage() {
           : msg
       )
     );
+    if (isDemo) return;
     await fetch("/api/messages/like", {
       method: alreadyLiked ? "DELETE" : "POST",
       headers: { "Content-Type": "application/json" },

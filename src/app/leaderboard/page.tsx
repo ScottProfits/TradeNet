@@ -1,11 +1,13 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus, Trophy } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import BackButton from "@/components/ui/BackButton";
+import { demoLeaderboard } from "@/lib/demoData";
 
 interface LeaderEntry {
   profile: {
@@ -45,17 +47,28 @@ function RankChange({ delta }: { delta: number | null }) {
 }
 
 export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <LeaderboardPageInner />
+    </Suspense>
+  );
+}
+
+function LeaderboardPageInner() {
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
   const [period, setPeriod] = useState("today");
-  const [data, setData] = useState<LeaderEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<LeaderEntry[]>(isDemo ? demoLeaderboard : []);
+  const [loading, setLoading] = useState(!isDemo);
 
   const load = useCallback(async () => {
+    if (isDemo) { setData(demoLeaderboard); setLoading(false); return; }
     setLoading(true);
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const res = await fetch(`/api/leaderboard?period=${period}&tz=${encodeURIComponent(tz)}`);
     if (res.ok) setData(await res.json());
     setLoading(false);
-  }, [period]);
+  }, [period, isDemo]);
 
   useEffect(() => { load(); }, [load]);
 

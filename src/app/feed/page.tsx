@@ -1,5 +1,5 @@
 "use client";
-import { feedTrades, traders } from "@/lib/mock-data";
+import { demoFeedItems } from "@/lib/demoData";
 import TradeCard from "@/components/feed/TradeCard";
 import PostCard from "@/components/feed/PostCard";
 import SidebarProfile from "@/components/feed/SidebarProfile";
@@ -40,6 +40,7 @@ function FeedPageInner() {
   const [tab, setTabState] = useState<"feed" | "video" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
   const [followingOnly, setFollowingOnly] = useState(false);
   const { setIsExploreActive } = useNavVisibility();
+  const isDemo = searchParams.get("demo") === "1";
 
   function setTab(t: "feed" | "video" | "explore") {
     setTabState(t);
@@ -53,14 +54,16 @@ function FeedPageInner() {
 
   // Redirect new users to onboarding if no trading style set
   useEffect(() => {
+    if (isDemo) return;
     fetch("/api/profile/me").then((r) => r.ok ? r.json() : null).then((d) => {
       if (d && !d.trading_style) {
         window.location.href = "/onboarding";
       }
     });
-  }, []);
+  }, [isDemo]);
 
   const loadFeed = useCallback(async () => {
+    if (isDemo) { setFeedItems(demoFeedItems); return; }
     try {
       const [tradesRes, postsRes] = await Promise.all([
         fetch("/api/trades"),
@@ -76,7 +79,7 @@ function FeedPageInner() {
 
       setFeedItems(merged);
     } catch { /* silently fail */ }
-  }, []);
+  }, [isDemo]);
 
   const loadFollowing = useCallback(async () => {
     try {
@@ -205,11 +208,6 @@ function FeedPageInner() {
                     );
                   }
                   return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-                })}
-
-                {feedTrades.map((trade) => {
-                  const trader = traders.find((t) => t.id === trade.traderId)!;
-                  return <TradeCard key={trade.id} trade={trade} trader={trader} />;
                 })}
               </>
             )}
