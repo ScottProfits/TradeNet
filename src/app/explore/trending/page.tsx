@@ -1,21 +1,34 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Flame } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
+import { demoExplore } from "@/lib/demoData";
 
 interface TrendingTicker { ticker: string; count: number; }
 
 export default function TrendingPage() {
-  const [trending, setTrending] = useState<TrendingTicker[]>([]);
-  const [loading, setLoading] = useState(true);
+  return (
+    <Suspense fallback={null}>
+      <TrendingPageInner />
+    </Suspense>
+  );
+}
+
+function TrendingPageInner() {
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [trending, setTrending] = useState<TrendingTicker[]>(isDemo ? demoExplore.trending : []);
+  const [loading, setLoading] = useState(!isDemo);
 
   useEffect(() => {
+    if (isDemo) { setTrending(demoExplore.trending); setLoading(false); return; }
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.trending) setTrending(d.trending); setLoading(false); });
-  }, []);
+  }, [isDemo]);
 
   return (
     <div className="max-w-xl mx-auto space-y-4">

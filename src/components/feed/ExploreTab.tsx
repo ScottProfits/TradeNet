@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight, Trophy } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
+import { demoExplore } from "@/lib/demoData";
 
 interface Trader {
   id: string;
@@ -50,15 +52,18 @@ function SkeletonList({ rows = 3 }: { rows?: number }) {
 }
 
 export default function ExploreTab() {
-  const [data, setData] = useState<ExploreData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [data, setData] = useState<ExploreData | null>(isDemo ? demoExplore : null);
+  const [loading, setLoading] = useState(!isDemo);
 
   useEffect(() => {
+    if (isDemo) { setData(demoExplore); setLoading(false); return; }
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setData(d); setLoading(false); });
-  }, []);
+  }, [isDemo]);
 
   return (
     <div className="space-y-8">

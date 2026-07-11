@@ -116,3 +116,45 @@ export const demoAutoReplies = [
   "Appreciate you bro 🙏",
   "That's the move right there 🔥",
 ];
+
+export const demoExplore = {
+  topTraders: [
+    { id: "demo-twolfgang", handle: "twolfgang", full_name: "T Wolfgang", avatar_url: "", verified: true, trading_style: "Momentum" },
+    { id: "demo-kmscalper", handle: "kmscalper", full_name: "KM Scalper", avatar_url: "", verified: true, trading_style: "Scalper" },
+    { id: "demo-mikefxpro", handle: "mikefxpro", full_name: "Mike FX Pro", avatar_url: "", verified: false, trading_style: "Swing" },
+    { id: "demo-newtrader99", handle: "newtrader99", full_name: "New Trader 99", avatar_url: "", verified: false, trading_style: "Day Trader" },
+    { id: "demo-sarahreads", handle: "sarahreads", full_name: "Sarah Reads", avatar_url: "", verified: false, trading_style: "Options" },
+  ],
+  trending: [
+    { ticker: "NVDA", count: 41 },
+    { ticker: "TSLA", count: 33 },
+    { ticker: "SPY", count: 29 },
+    { ticker: "AAPL", count: 22 },
+    { ticker: "QQQ", count: 18 },
+    { ticker: "NQ", count: 14 },
+    { ticker: "AMD", count: 11 },
+    { ticker: "MSFT", count: 9 },
+    { ticker: "META", count: 8 },
+    { ticker: "ES", count: 6 },
+  ],
+  hotStrategies: [
+    { name: "Momentum breakout", count: 22, winRate: 73, avgPnl: 640 },
+    { name: "VWAP reclaim", count: 17, winRate: 65, avgPnl: 410 },
+    { name: "Reversal", count: 12, winRate: 58, avgPnl: 280 },
+    { name: "Gap and go", count: 9, winRate: 61, avgPnl: 505 },
+  ],
+  topToday: [
+    { profile: { id: "demo-twolfgang", handle: "twolfgang", avatar_url: "", verified: true }, pnl: 4820, trades: 6 },
+    { profile: { id: "demo-kmscalper", handle: "kmscalper", avatar_url: "", verified: true }, pnl: 3140, trades: 9 },
+    { profile: { id: "demo-mikefxpro", handle: "mikefxpro", avatar_url: "", verified: false }, pnl: 2210, trades: 4 },
+  ],
+  mostImproved: [
+    { profile: { id: "demo-newtrader99", handle: "newtrader99", avatar_url: "", verified: false }, delta: 1840 },
+    { profile: { id: "demo-sarahreads", handle: "sarahreads", avatar_url: "", verified: false }, delta: 920 },
+  ],
+  suggested: [
+    { id: "demo-mikefxpro", handle: "mikefxpro", full_name: "Mike FX Pro", avatar_url: "", verified: false, trading_style: "Swing" },
+    { id: "demo-newtrader99", handle: "newtrader99", full_name: "New Trader 99", avatar_url: "", verified: false, trading_style: "Day Trader" },
+    { id: "demo-sarahreads", handle: "sarahreads", full_name: "Sarah Reads", avatar_url: "", verified: false, trading_style: "Options" },
+  ],
+};

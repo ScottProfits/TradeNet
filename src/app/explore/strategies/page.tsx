@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Zap, X, UserPlus, Check } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import BackButton from "@/components/ui/BackButton";
+import { demoExplore } from "@/lib/demoData";
 
 interface HotStrategy { name: string; count: number; winRate: number; avgPnl: number; }
 
@@ -30,20 +32,31 @@ function Avatar({ url, handle }: { url: string; handle: string }) {
 }
 
 export default function StrategiesPage() {
+  return (
+    <Suspense fallback={null}>
+      <StrategiesPageInner />
+    </Suspense>
+  );
+}
+
+function StrategiesPageInner() {
   const { userId } = useAuth();
-  const [strategies, setStrategies] = useState<HotStrategy[]>([]);
-  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [strategies, setStrategies] = useState<HotStrategy[]>(isDemo ? demoExplore.hotStrategies : []);
+  const [loading, setLoading] = useState(!isDemo);
   const [selected, setSelected] = useState<HotStrategy | null>(null);
   const [users, setUsers] = useState<StrategyUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [following, setFollowing] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    if (isDemo) { setStrategies(demoExplore.hotStrategies); setLoading(false); return; }
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.hotStrategies) setStrategies(d.hotStrategies); setLoading(false); });
-  }, []);
+  }, [isDemo]);
 
   async function openStrategy(s: HotStrategy) {
     setSelected(s);
