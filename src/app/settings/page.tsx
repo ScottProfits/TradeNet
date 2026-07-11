@@ -486,6 +486,33 @@ export default function SettingsPage() {
             </button>
           )}
         </div>
+
+        <div
+          className="rounded-xl p-4 flex items-center justify-between"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.2)" }}>
+              <Zap className="w-4 h-4 text-[#00C896]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Tradovate</p>
+              <p className="text-[11px] text-gray-500">Futures — verified fills</p>
+            </div>
+          </div>
+          <button
+            disabled
+            className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all opacity-50 cursor-not-allowed"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.4)",
+            }}
+          >
+            Coming soon
+          </button>
+        </div>
       </div>
 
       {rithmicModalOpen && (
