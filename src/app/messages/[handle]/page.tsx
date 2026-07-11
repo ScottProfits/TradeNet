@@ -123,12 +123,14 @@ function ChatPageInner() {
   }
 
   async function toggleLike(m: Message) {
-    if (!userId || m.sender_id === userId) return;
-    const alreadyLiked = (m.liked_by ?? []).includes(userId);
+    const myId = isDemo ? "me" : userId;
+    if (isDemo ? m.sender_id === "me" : (!userId || m.sender_id === userId)) return;
+    if (!myId) return;
+    const alreadyLiked = (m.liked_by ?? []).includes(myId);
     setMessages((msgs) =>
       msgs.map((msg) =>
         msg.id === m.id
-          ? { ...msg, liked_by: alreadyLiked ? (msg.liked_by ?? []).filter((id) => id !== userId) : [...(msg.liked_by ?? []), userId] }
+          ? { ...msg, liked_by: alreadyLiked ? (msg.liked_by ?? []).filter((id) => id !== myId) : [...(msg.liked_by ?? []), myId] }
           : msg
       )
     );
@@ -163,7 +165,7 @@ function ChatPageInner() {
           <p className="text-center text-gray-600 text-sm pt-8">Start the conversation with @{handle}</p>
         )}
         {messages.map((m) => {
-          const mine = m.sender_id === userId;
+          const mine = isDemo ? m.sender_id === "me" : m.sender_id === userId;
           const liked = (m.liked_by ?? []).length > 0;
           return (
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
