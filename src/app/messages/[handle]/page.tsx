@@ -6,7 +6,7 @@ import { Send, ArrowLeft, Heart } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
-import { demoPartner, demoMessages } from "@/lib/demoData";
+import { demoPartner, demoMessages, demoAutoReplies } from "@/lib/demoData";
 
 interface Message {
   id: string;
@@ -99,6 +99,11 @@ function ChatPageInner() {
       setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: "me", receiver_id: partner.id, content: text, created_at: new Date().toISOString(), sender: { handle: "you", avatar_url: "", verified: false } }]);
       setText("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      setTimeout(() => {
+        const reply = demoAutoReplies[Math.floor(Math.random() * demoAutoReplies.length)];
+        setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: partner.id, receiver_id: "me", content: reply, created_at: new Date().toISOString(), sender: { handle: partner.handle, avatar_url: partner.avatar_url, verified: partner.verified } }]);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }, 1400);
       return;
     }
     setSending(true);

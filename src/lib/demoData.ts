@@ -108,3 +108,11 @@ export const demoMessages = [
   { id: "dm-7", sender_id: "demo-alphawave", receiver_id: "me", content: "Appreciate you bro 🙏 keep posting", created_at: minsAgo(38), sender: { handle: "alphawave", avatar_url: "", verified: true }, liked_by: ["me"] },
   { id: "dm-8", sender_id: "me", receiver_id: "demo-alphawave", content: "Always — got a setup loading now", created_at: minsAgo(37), sender: { handle: "you", avatar_url: "", verified: false }, liked_by: [] },
 ];
+
+export const demoAutoReplies = [
+  "Let's get it 🚀",
+  "Sending me the chart when you see it",
+  "Following you — don't miss the next one",
+  "Appreciate you bro 🙏",
+  "That's the move right there 🔥",
+];
