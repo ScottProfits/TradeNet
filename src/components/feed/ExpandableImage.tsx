@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { Maximize2 } from "lucide-react";
+import { X } from "lucide-react";
 
 interface ExpandableImageProps {
   src: string;
@@ -13,11 +13,8 @@ export default function ExpandableImage({ src, alt }: ExpandableImageProps) {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="relative block w-full cursor-zoom-in">
+      <button type="button" onClick={() => setOpen(true)} className="block w-full cursor-zoom-in">
         <Image src={src} alt={alt} width={600} height={300} className="w-full max-h-80 object-cover" unoptimized />
-        <span className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded-full">
-          <Maximize2 className="w-3 h-3" /> Tap to view full
-        </span>
       </button>
 
       {open && (
@@ -25,6 +22,14 @@ export default function ExpandableImage({ src, alt }: ExpandableImageProps) {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setOpen(false)}
         >
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="absolute top-4 right-4 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
