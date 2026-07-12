@@ -1,18 +1,23 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Video } from "lucide-react";
 import TradeCard from "@/components/feed/TradeCard";
 import PostCard from "@/components/feed/PostCard";
 import { realTradeToCardProps, RealTrade, RealPost } from "@/lib/tradeCardProps";
+import { demoVideoItems } from "@/lib/demoData";
 
 type VideoItem = ({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost);
 
 export default function VideoTab() {
-  const [items, setItems] = useState<VideoItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [items, setItems] = useState<VideoItem[]>(isDemo ? (demoVideoItems as VideoItem[]) : []);
+  const [loading, setLoading] = useState(!isDemo);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
+    if (isDemo) { setItems(demoVideoItems as VideoItem[]); setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/videos");
@@ -20,7 +25,7 @@ export default function VideoTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -88,6 +88,25 @@ export const demoFeedItems: (DemoTrade | DemoPost)[] = [
   },
 ];
 
+export const demoVideoItems: (DemoTrade | DemoPost)[] = [
+  {
+    type: "trade", id: "demo-v1", user_id: "demo-twolfgang",
+    ticker: "NQ", direction: "LONG", entry: 21840, exit: 21920, shares: 2,
+    pnl: 1600, pnl_percent: 3.7,
+    caption: "Quick recap of the NQ open drive long — walked through my entry trigger and where I trailed the stop.",
+    likes_count: 96, comments_count: 21, image_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", strategy: "Momentum breakout",
+    liked_by_me: false, verified_pnl: true, journal_note: null, created_at: minsAgo(18), source: "rithmic",
+    profiles: { id: "demo-twolfgang", handle: "twolfgang", avatar_url: "", brokerage: "Rithmic", verified: true },
+  },
+  {
+    type: "post", id: "demo-v2", user_id: "demo-sarahreads",
+    content: "Recorded my full pre-market routine this morning — how I build my watchlist and set levels before the bell.",
+    image_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    likes_count: 54, comments_count: 13, liked_by_me: false, created_at: minsAgo(63),
+    profiles: { id: "demo-sarahreads", handle: "sarahreads", avatar_url: "", verified: false },
+  },
+];
+
 export const demoLeaderboard = [
   { profile: { id: "demo-twolfgang", handle: "twolfgang", full_name: "T Wolfgang", avatar_url: "", verified: true, brokerage: "Rithmic" }, pnl: 4820, tradeCount: 6, winRate: 83, rankChange: 2 },
   { profile: { id: "demo-kmscalper", handle: "kmscalper", full_name: "KM Scalper", avatar_url: "", verified: true, brokerage: "Rithmic" }, pnl: 3140, tradeCount: 9, winRate: 71, rankChange: -1 },
