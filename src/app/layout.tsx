@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     startupImage: "/apple-touch-icon.png",
   },
   icons: {
-    apple: "/apple-touch-icon-v3.png",
+    apple: "/apple-touch-icon-180.png",
   },
 };
 
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
       <html lang="en">
         <head>
-          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
         </head>
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />

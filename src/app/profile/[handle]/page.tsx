@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
@@ -17,6 +17,7 @@ import Link from "next/link";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
+import { demoProfileData, demoLikedItems } from "@/lib/demoData";
 
 function nameSizeClass(name: string): string {
   const len = name.length;
@@ -108,7 +109,17 @@ interface LikedItem {
 }
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfilePageInner />
+    </Suspense>
+  );
+}
+
+function ProfilePageInner() {
   const { handle } = useParams<{ handle: string }>();
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
   const { userId } = useAuth();
   const { signOut, openUserProfile } = useClerk();
   const { user } = useUser();
@@ -119,17 +130,17 @@ export default function ProfilePage() {
   const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<ProfileData | null>(null);
+  const [data, setData] = useState<ProfileData | null>(isDemo ? (demoProfileData as unknown as ProfileData) : null);
   const [notFound, setNotFound] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(isDemo ? demoProfileData.followersCount : 0);
   const [modal, setModal] = useState<"followers" | "following" | null>(null);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
-  const [likedItems, setLikedItems] = useState<LikedItem[]>([]);
-  const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(null);
+  const [likedItems, setLikedItems] = useState<LikedItem[]>(isDemo ? (demoLikedItems as unknown as LikedItem[]) : []);
+  const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -143,6 +154,7 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    if (isDemo) return;
     fetch(`/api/profile/${handle}`)
       .then((r) => {
         if (r.status === 404) { setNotFound(true); return null; }
@@ -158,17 +170,24 @@ export default function ProfilePage() {
         for (const t of d.trades) vis[t.id] = (t as any).is_public !== false;
         setTradeVisibility(vis);
       });
-  }, [handle]);
+  }, [handle, isDemo]);
 
   useEffect(() => {
+    if (isDemo) return;
     if (!data || !userId || userId !== data.profile.id) return;
     fetch("/api/liked")
       .then((r) => r.ok ? r.json() : [])
       .then(setLikedItems);
-  }, [data, userId]);
+  }, [data, userId, isDemo]);
 
   async function handleFollow() {
-    if (!userId || followLoading) return;
+    if (followLoading) return;
+    if (isDemo) {
+      setFollowing((f) => !f);
+      setFollowerCount((c) => c + (following ? -1 : 1));
+      return;
+    }
+    if (!userId) return;
     setFollowLoading(true);
     const next = !following;
     setFollowing(next);
@@ -189,6 +208,7 @@ export default function ProfilePage() {
   async function toggleVisibility(tradeId: string) {
     const next = !tradeVisibility[tradeId];
     setTradeVisibility((v) => ({ ...v, [tradeId]: next }));
+    if (isDemo) return;
     await fetch(`/api/trades/${tradeId}/visibility`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -199,6 +219,7 @@ export default function ProfilePage() {
   async function handlePin(tradeId: string) {
     const next = pinnedTradeId === tradeId ? null : tradeId;
     setPinnedTradeId(next);
+    if (isDemo) return;
     await fetch("/api/pin-trade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -209,6 +230,15 @@ export default function ProfilePage() {
   async function openModal(type: "followers" | "following") {
     setModal(type);
     setModalUsers([]);
+    if (isDemo) {
+      setModalUsers([
+        { id: "demo-twolfgang", handle: "twolfgang", avatar_url: "", verified: true },
+        { id: "demo-mikefxpro", handle: "mikefxpro", avatar_url: "", verified: false },
+        { id: "demo-sarahreads", handle: "sarahreads", avatar_url: "", verified: false },
+      ]);
+      setModalLoading(false);
+      return;
+    }
     setModalLoading(true);
     const res = await fetch(`/api/profile/${handle}/followers`);
     if (res.ok) {

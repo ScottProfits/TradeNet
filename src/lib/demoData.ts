@@ -117,6 +117,68 @@ export const demoAutoReplies = [
   "That's the move right there 🔥",
 ];
 
+export const demoProfileData = {
+  profile: {
+    id: "demo-me",
+    handle: "kmscalper",
+    full_name: "KM Scalper",
+    avatar_url: "",
+    bio: "Momentum & scalp trader. Posting real fills, wins and losses. NQ / ES / large caps.",
+    brokerage: "Rithmic",
+    trading_style: "Scalper",
+    win_rate: 71,
+    pnl_month: 3140,
+    verified: true,
+    pinned_trade_id: "demo-p1",
+  },
+  trades: [
+    {
+      id: "demo-p1", ticker: "NVDA", direction: "LONG" as const, entry: 118.4, exit: 125.9,
+      pnl: 1240, pnl_percent: 6.2,
+      caption: "Nailed the NVDA breakout at open. Waited for the 9:45 candle confirmation then scaled out at +$1,240.",
+      image_url: null, likes_count: 84, created_at: minsAgo(4), source: "rithmic",
+    },
+    {
+      id: "demo-p2", ticker: "TSLA", direction: "SHORT" as const, entry: 261.2, exit: 251.7,
+      pnl: 940, pnl_percent: 2.2,
+      caption: "TSLA failed at the 200 SMA again. Shorted the rejection with a tight stop, covered into support.",
+      image_url: null, likes_count: 67, created_at: minsAgo(52), source: "rithmic",
+    },
+    {
+      id: "demo-p3", ticker: "SPY", direction: "LONG" as const, entry: 512.1, exit: 508.6,
+      pnl: -350, pnl_percent: -0.7,
+      caption: "Faded the open too early, stopped out. Good reminder to wait for the range to set.",
+      image_url: null, likes_count: 21, created_at: minsAgo(180), source: "rithmic",
+    },
+  ],
+  followersCount: 2840,
+  followingCount: 96,
+  isOwner: true,
+};
+
+export const demoLikedItems = [
+  {
+    type: "trade" as const, id: "demo-4", created_at: minsAgo(52),
+    ticker: "TSLA", direction: "SHORT", pnl: 940, pnl_percent: 2.2,
+    caption: "TSLA failed at the 200 SMA again. Shorted the rejection with a tight stop, covered into support.",
+    profiles: { handle: "mikefxpro", avatar_url: "", verified: false },
+  },
+  {
+    type: "post" as const, id: "demo-3", created_at: minsAgo(41),
+    content: "Pre-market watchlist for tomorrow: NQ, TSLA, SPY. Levels loading in the morning post. Stay disciplined out there 🎯",
+    profiles: { handle: "mikefxpro", avatar_url: "", verified: false },
+  },
+];
+
+export const demoNotifications = [
+  { id: "n-1", type: "like" as const, read: true, created_at: minsAgo(6), trade_id: "demo-1", post_id: null, comment_id: null, actor: { handle: "twolfgang", avatar_url: "", verified: true } },
+  { id: "n-2", type: "follow" as const, read: true, created_at: minsAgo(30), trade_id: null, post_id: null, comment_id: null, actor: { handle: "sarahreads", avatar_url: "", verified: false } },
+  { id: "n-3", type: "comment" as const, read: true, created_at: minsAgo(55), trade_id: "demo-1", post_id: null, comment_id: "demo-c1", actor: { handle: "mikefxpro", avatar_url: "", verified: false } },
+  { id: "n-4", type: "explore" as const, read: true, created_at: minsAgo(120), trade_id: null, post_id: null, comment_id: null, actor: { handle: "", avatar_url: "", verified: false } },
+  { id: "n-5", type: "message_like" as const, read: true, created_at: minsAgo(240), trade_id: null, post_id: null, comment_id: null, actor: { handle: "alphawave", avatar_url: "", verified: true } },
+  { id: "n-6", type: "follow" as const, read: true, created_at: minsAgo(1500), trade_id: null, post_id: null, comment_id: null, actor: { handle: "newtrader99", avatar_url: "", verified: false } },
+];
+
 export const demoExplore = {
   topTraders: [
     { id: "demo-twolfgang", handle: "twolfgang", full_name: "T Wolfgang", avatar_url: "", verified: true, trading_style: "Momentum" },

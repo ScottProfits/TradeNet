@@ -3,8 +3,8 @@ import { Heart, Share2, MessageCircle, Check, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import Image from "next/image";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import ExpandableImage from "@/components/feed/ExpandableImage";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
@@ -156,7 +156,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
               {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
             />
           ) : (
-            <Image src={post.image_url} alt="Post media" width={600} height={300} className="w-full object-cover" unoptimized />
+            <ExpandableImage src={post.image_url} alt="Post media" />
           )}
         </div>
       )}

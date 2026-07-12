@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
@@ -41,10 +43,21 @@ function message(n: Notification) {
 }
 
 export default function NotificationsPage() {
-  const [notifs, setNotifs] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  return (
+    <Suspense fallback={null}>
+      <NotificationsPageInner />
+    </Suspense>
+  );
+}
+
+function NotificationsPageInner() {
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [notifs, setNotifs] = useState<Notification[]>(isDemo ? demoNotifications : []);
+  const [loading, setLoading] = useState(!isDemo);
 
   useEffect(() => {
+    if (isDemo) return;
     fetch("/api/notifications")
       .then((r) => r.ok ? r.json() : [])
       .then((data) => {
@@ -55,7 +68,7 @@ export default function NotificationsPage() {
           setNotifs(data.map((n: Notification) => ({ ...n, read: true })));
         }
       });
-  }, []);
+  }, [isDemo]);
 
   const grouped = notifs.reduce<Record<string, Notification[]>>((acc, n) => {
     const date = new Date(n.created_at);
