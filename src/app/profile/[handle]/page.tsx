@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, Mail } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
@@ -284,8 +284,12 @@ function ProfilePageInner() {
           <span className="text-lg font-semibold text-white truncate">@{profile.handle}</span>
         </div>
         {isOwnProfile && (
-          <Link href="/messages" aria-label="Messages" className="text-gray-400 hover:text-white transition-colors shrink-0">
-            <Mail className="w-5 h-5" />
+          <Link
+            href="/messages"
+            aria-label="Messages"
+            className="w-9 h-9 flex items-center justify-center rounded-full solid-menu text-gray-300 hover:text-white transition-colors shrink-0"
+          >
+            <MessageSquare className="w-4 h-4" />
           </Link>
         )}
       </div>

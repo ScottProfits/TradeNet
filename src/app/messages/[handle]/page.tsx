@@ -57,6 +57,7 @@ function ChatPageInner() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+  const stickToBottom = useRef(true);
 
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -79,6 +80,19 @@ function ChatPageInner() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   }
 
+  // Keep pinned to bottom as late-loading media (images/videos) change the
+  // container's height — a single scrollIntoView on load can land short if
+  // media hasn't finished loading/growing to its final size yet.
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      if (stickToBottom.current) bottomRef.current?.scrollIntoView({ block: "end" });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (isDemo) return;
     // Load partner profile
@@ -91,12 +105,13 @@ function ChatPageInner() {
     if (isDemo) return;
     if (!partner) return;
     // Initial load
+    stickToBottom.current = true;
     fetch(`/api/messages?with=${partner.id}`)
       .then((r) => r.ok ? r.json() : [])
       .then((d: Message[]) => {
         setMessages(d);
         lastMessageIdRef.current = d.at(-1)?.id ?? null;
-        setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 50);
       });
 
     // Poll for new messages (messages table is server-only now, no client Realtime access)
@@ -122,6 +137,7 @@ function ChatPageInner() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if ((!text.trim() && !media) || sending || !partner) return;
+    stickToBottom.current = true;
     if (isDemo) {
       setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: "me", receiver_id: partner.id, content: text, image_url: mediaPreview, created_at: new Date().toISOString(), sender: { handle: "you", avatar_url: "", verified: false } }]);
       setText("");
@@ -213,7 +229,11 @@ function ChatPageInner() {
       </div>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto glass-card border-t-0 border-b-0 rounded-none p-4 space-y-3">
+      <div
+        ref={scrollContainerRef}
+        onScroll={() => { stickToBottom.current = isNearBottom(); }}
+        className="flex-1 overflow-y-auto glass-card border-t-0 border-b-0 rounded-none p-4 space-y-3"
+      >
         {messages.length === 0 && (
           <p className="text-center text-gray-600 text-sm pt-8">Start the conversation with @{handle}</p>
         )}
