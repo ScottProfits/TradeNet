@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader2, ArrowDown } from "lucide-react";
 
-const PULL_THRESHOLD = 70;
-const MAX_PULL = 110;
+const PULL_THRESHOLD = 95;
+const MAX_PULL = 140;
+const DRAG_RESISTANCE = 0.35;
+const DEAD_ZONE = 12;
 
 export default function PullToRefresh({ onRefresh, children }: { onRefresh: () => Promise<unknown>; children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,11 +32,11 @@ export default function PullToRefresh({ onRefresh, children }: { onRefresh: () =
 
     function onTouchMove(e: TouchEvent) {
       if (!pulling.current || startY.current === null || refreshing) return;
-      const delta = e.touches[0].clientY - startY.current;
-      if (delta <= 0) { setDistance(0); return; }
+      const rawDelta = e.touches[0].clientY - startY.current - DEAD_ZONE;
+      if (rawDelta <= 0) { setDistance(0); return; }
       if (window.scrollY > 0) { reset(); return; }
       e.preventDefault();
-      setDistance(Math.min(delta * 0.5, MAX_PULL));
+      setDistance(Math.min(rawDelta * DRAG_RESISTANCE, MAX_PULL));
     }
 
     async function onTouchEnd() {
@@ -68,12 +70,17 @@ export default function PullToRefresh({ onRefresh, children }: { onRefresh: () =
   }, [distance, refreshing, onRefresh, reset]);
 
   const progress = Math.min(distance / PULL_THRESHOLD, 1);
+  const indicatorHeight = refreshing ? PULL_THRESHOLD : distance;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef}>
       <div
-        className="absolute left-0 right-0 flex items-center justify-center overflow-hidden transition-[height] duration-150"
-        style={{ height: distance, top: -distance, opacity: progress }}
+        className="flex items-center justify-center overflow-hidden"
+        style={{
+          height: indicatorHeight,
+          opacity: progress,
+          transition: pulling.current ? "none" : "height 0.2s ease, opacity 0.2s ease",
+        }}
       >
         {refreshing ? (
           <Loader2 className="w-5 h-5 text-[var(--green)] animate-spin" />
@@ -84,14 +91,7 @@ export default function PullToRefresh({ onRefresh, children }: { onRefresh: () =
           />
         )}
       </div>
-      <div
-        style={{
-          transform: `translateY(${refreshing ? PULL_THRESHOLD : distance}px)`,
-          transition: pulling.current ? "none" : "transform 0.2s ease",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
