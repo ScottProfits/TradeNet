@@ -278,9 +278,16 @@ function ProfilePageInner() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 -mb-3">
-        <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
-        <span className="text-lg font-semibold text-white truncate">@{profile.handle}</span>
+      <div className="flex items-center justify-between gap-3 -mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
+          <span className="text-lg font-semibold text-white truncate">@{profile.handle}</span>
+        </div>
+        {isOwnProfile && (
+          <Link href="/messages" aria-label="Messages" className="text-gray-400 hover:text-white transition-colors shrink-0">
+            <Mail className="w-5 h-5" />
+          </Link>
+        )}
       </div>
 
       {/* Profile header */}
