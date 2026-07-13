@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
+import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
@@ -152,6 +153,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
             <video
               src={post.image_url}
               controls
+              poster={VIDEO_POSTER_DATA_URI}
               className="w-full max-h-80 object-cover"
               {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
             />

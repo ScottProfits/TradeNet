@@ -13,6 +13,7 @@ import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 import EditTradeModal from "@/components/feed/EditTradeModal";
+import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
 import { isToday } from "@/lib/timeAgo";
 
 interface TradeCardProps {
@@ -207,6 +208,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
             <video
               src={localImageUrl}
               controls
+              poster={VIDEO_POSTER_DATA_URI}
               className="w-full max-h-80 object-cover"
               {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
             />
