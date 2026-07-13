@@ -9,6 +9,8 @@ import BadgeDisplay from "@/components/ui/BadgeDisplay";
 import JournalSection from "@/components/profile/JournalSection";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
+import PostCard from "@/components/feed/PostCard";
+import { RealPost } from "@/lib/tradeCardProps";
 import { Trade as TradeCardTrade, Trader } from "@/types";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -87,6 +89,7 @@ interface Trade {
 interface ProfileData {
   profile: Profile;
   trades: Trade[];
+  posts: RealPost[];
   followersCount: number;
   followingCount: number;
   isOwner: boolean;
@@ -269,7 +272,7 @@ function ProfilePageInner() {
     );
   }
 
-  const { profile, trades } = data;
+  const { profile, trades, posts = [] } = data;
   const initials = profile.handle.slice(0, 2).toUpperCase();
   const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
   const winningTrades = trades.filter((t) => t.pnl > 0).length;
@@ -508,14 +511,21 @@ function ProfilePageInner() {
         </div>
 
         {(() => {
-          const displayedTrades = tradeHistoryTab === "videos" ? trades.filter((t) => isVideoUrl(t.image_url)) : trades;
+          type HistoryItem = ({ kind: "trade" } & Trade) | ({ kind: "post" } & RealPost);
+          const merged: HistoryItem[] = [
+            ...trades.map((t) => ({ kind: "trade" as const, ...t })),
+            ...posts.map((p) => ({ kind: "post" as const, ...p })),
+          ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+          const displayedItems = tradeHistoryTab === "videos" ? merged.filter((item) => isVideoUrl(item.image_url)) : merged;
+
           return (
             <>
               <h2 className="font-semibold text-white">
-                {tradeHistoryTab === "videos" ? "Trader Videos" : "Trade history"} ({displayedTrades.length})
+                {tradeHistoryTab === "videos" ? "Trader Videos" : "Trade history"} ({displayedItems.length})
               </h2>
 
-              {displayedTrades.length === 0 && (
+              {displayedItems.length === 0 && (
                 <div className="glass-card rounded-2xl p-8 text-center">
                   <p className="text-gray-500 text-sm">
                     {tradeHistoryTab === "videos" ? "No videos posted yet." : "No trades posted yet."}
@@ -523,13 +533,17 @@ function ProfilePageInner() {
                 </div>
               )}
 
-              {[...displayedTrades]
+              {[...displayedItems]
           .sort((a, b) => {
-            if (a.id === pinnedTradeId) return -1;
-            if (b.id === pinnedTradeId) return 1;
+            if (a.kind === "trade" && a.id === pinnedTradeId) return -1;
+            if (b.kind === "trade" && b.id === pinnedTradeId) return 1;
             return 0;
           })
-          .map((t) => {
+          .map((item) => {
+            if (item.kind === "post") {
+              return <PostCard key={item.id} post={item} />;
+            }
+            const t = item;
             const isPinned = t.id === pinnedTradeId;
             const tradeObj: TradeCardTrade = {
               id: t.id,

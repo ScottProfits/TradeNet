@@ -25,6 +25,27 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
 
   const { data: trades } = await tradesQuery;
 
+  const { data: postsRaw } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("user_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  let posts: Array<Record<string, unknown>> = postsRaw ?? [];
+  if (posts.length > 0) {
+    const postIds = posts.map((p) => p.id as string);
+    const { data: myLikes } = userId
+      ? await supabase.from("post_likes").select("post_id").eq("user_id", userId).in("post_id", postIds)
+      : { data: [] };
+    const likedSet = new Set((myLikes ?? []).map((l: { post_id: string }) => l.post_id));
+    posts = posts.map((p) => ({
+      ...p,
+      profiles: { id: profile.id, handle: profile.handle, avatar_url: profile.avatar_url, verified: profile.verified },
+      liked_by_me: likedSet.has(p.id as string),
+    }));
+  }
+
   const { count: followersCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
@@ -50,6 +71,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
   return Response.json({
     profile,
     trades: trades ?? [],
+    posts,
     followersCount: followersCount ?? 0,
     followingCount: followingCount ?? 0,
     isFollowing,
