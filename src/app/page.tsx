@@ -17,7 +17,7 @@ const FEATURES = [
   { emoji: "📊", title: "Post Your Trades", desc: "Share ticker, direction, P&L, and charts. Your track record, public and permanent." },
   { emoji: "✅", title: "Verified P&L", desc: "Connect Alpaca to verify real trades. Verified traders earn a badge that can't be faked." },
   { emoji: "🏆", title: "Leaderboard", desc: "Ranked by actual returns. Not followers. Not hype. Real performance, updated live." },
-  { emoji: "🤝", title: "Trader Network", desc: "Follow traders who match your style. DM them, copy their setups, debate the market — build real connections with people who actually trade." },
+  { emoji: "🤝", title: "Trader Network", desc: "Follow traders who match your style. DM them, discuss their setups, debate the market — build real connections with people who actually trade." },
   { emoji: "💬", title: "Market Talk", desc: "Comment on any trade, share your take on a ticker, post market opinions. A live conversation between people with real skin in the game." },
   { emoji: "📈", title: "Live Ticker", desc: "Watch real trades from real traders scroll by in real time. Feel the pulse of the market." },
   { emoji: "🎯", title: "Earned Badges", desc: "Win Streak, Sharpshooter, Whale, Six Figures — badges you earn, not buy." },
@@ -148,7 +148,7 @@ export default async function LandingPage() {
                     "Follow traders by style — day, swing, scalp, options",
                     "Direct messages with any trader on the platform",
                     "Comment threads on every trade and post",
-                    "Copy trades from traders you trust",
+                    "Discuss setups with traders you trust",
                     "Get notified when traders you follow post",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
@@ -228,8 +228,11 @@ export default async function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-4 text-center text-xs text-gray-600">
+      <footer className="border-t border-white/5 py-8 px-4 text-center text-xs text-gray-600 space-y-2">
         <p>© 2026 Ryzr. Built for traders, by traders.</p>
+        <p>
+          Not financial advice — see our <Link href="/terms" className="underline hover:text-gray-400">Terms</Link>.
+        </p>
       </footer>
     </div>
   );
