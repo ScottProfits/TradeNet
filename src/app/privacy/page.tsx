@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FinancialDisclosures from "@/components/ui/FinancialDisclosures";
 
 export const metadata = { title: "Privacy Policy — Ryzr" };
 
@@ -96,6 +97,7 @@ export default function PrivacyPage() {
       <div className="border-t border-[var(--border)] pt-6 text-center">
         <p className="text-gray-600 text-sm">© 2026 Ryzr. All rights reserved.</p>
       </div>
+      <FinancialDisclosures />
     </div>
   );
 }

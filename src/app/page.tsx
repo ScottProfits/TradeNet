@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import FinancialDisclosures from "@/components/ui/FinancialDisclosures";
 
 function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
   return (
@@ -209,6 +211,57 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      <div className="max-w-5xl mx-auto border-t border-white/5" />
+
+      {/* Recommended trading platform / market data partners */}
+      <section className="py-20 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/15 rounded-3xl p-8 sm:p-12 space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <div className="inline-block bg-white rounded-xl px-5 py-4">
+                  <Image src="/partners/ninjatrader-logo.png" alt="NinjaTrader" width={792} height={100} className="h-6 w-auto" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Our Recommended Trading Platform</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  NinjaTrader® is our #1 recommended trading software platform, preferred by traders worldwide including our own team. Download NinjaTrader and get immediate free access to real-time futures data, advanced charting, a trade simulator, and strategy development &amp; backtesting — used by over 500,000 traders for advanced market analysis and fast order execution.
+                </p>
+                <a
+                  href="https://ninjatraderus.pxf.io/QYGaez"
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="inline-block text-sm font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+                >
+                  Get Started for Free →
+                </a>
+              </div>
+
+              <div className="space-y-4">
+                <div className="inline-block bg-white rounded-xl px-5 py-4">
+                  <Image src="/partners/kinetick-logo.png" alt="Kinetick" width={400} height={100} className="h-10 w-auto" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Our Recommended Market Data Feed</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Kinetick® delivers reliable, fast, and cost-effective market data to help level the playing field for active traders — unfiltered, real-time quotes for stocks, futures, and forex. Get started with free end-of-day historical market data directly through the NinjaTrader platform.
+                </p>
+                <a
+                  href="http://kinetick.com/NinjaTrader"
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="inline-block text-sm font-semibold text-orange-400 hover:text-orange-300 transition-colors"
+                >
+                  Get Started with Free EOD Data →
+                </a>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-600 leading-relaxed border-t border-white/5 pt-6">
+              NinjaTrader® is a registered trademark of NinjaTrader Group, LLC. No NinjaTrader company has any affiliation with the owner, developer, or provider of the products or services described herein, or any interest, ownership or otherwise, in any such product or service, or endorses, recommends or approves any such product or service.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-4 sm:px-6 text-center">
         <div className="max-w-xl mx-auto space-y-6">
@@ -234,6 +287,7 @@ export default async function LandingPage() {
           Not financial advice — see our <Link href="/terms" className="underline hover:text-gray-400">Terms</Link>.
         </p>
       </footer>
+      <FinancialDisclosures />
     </div>
   );
 }

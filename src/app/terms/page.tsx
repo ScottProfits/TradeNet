@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FinancialDisclosures from "@/components/ui/FinancialDisclosures";
 
 export const metadata = { title: "Terms of Service — Ryzr" };
 
@@ -103,6 +104,7 @@ export default function TermsPage() {
         <p className="text-gray-600 text-sm">© 2026 Ryzr. All rights reserved.</p>
         <Link href="/privacy" className="text-xs text-[var(--green)] hover:underline">Privacy Policy</Link>
       </div>
+      <FinancialDisclosures />
     </div>
   );
 }
