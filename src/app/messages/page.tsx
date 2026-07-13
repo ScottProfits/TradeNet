@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import BackButton from "@/components/ui/BackButton";
 
 interface Conversation {
   id: string;
@@ -31,6 +32,7 @@ export default function MessagesPage() {
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
+      <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
       <h1 className="text-2xl font-bold text-white">Messages</h1>
 
       <div className="glass-card rounded-2xl overflow-hidden">
