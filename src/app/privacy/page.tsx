@@ -22,6 +22,7 @@ export default function PrivacyPage() {
           <li><span className="text-gray-300 font-medium">Account information</span> — name, email address, username, and profile photo provided during sign-up via Clerk.</li>
           <li><span className="text-gray-300 font-medium">Trading data</span> — trade details (ticker, P&L, direction, notes) that you voluntarily post to the platform.</li>
           <li><span className="text-gray-300 font-medium">Brokerage credentials</span> — if you connect a brokerage account to verify your trades: Alpaca API keys are stored securely on our servers and used only to confirm your trade fills against your real account. Rithmic login credentials are used only at the moment of connection to fetch your fills and are never stored on our servers.</li>
+          <li><span className="text-gray-300 font-medium">Private journal entries</span> — personal notes and reflections you attach to your trades. These are private by default and never shown to other users.</li>
           <li><span className="text-gray-300 font-medium">Social activity</span> — follows, likes, comments, and direct messages between users.</li>
           <li><span className="text-gray-300 font-medium">Device information</span> — browser type, device type, and push notification tokens (if you opt in).</li>
           <li><span className="text-gray-300 font-medium">Usage data</span> — pages visited and features used, collected to improve the app.</li>
@@ -53,7 +54,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">5. Public vs. Private Data</h2>
-        <p>Trades, comments, and profile information you post are <span className="text-white font-medium">public</span> and visible to all users. Direct messages are <span className="text-white font-medium">private</span> and only visible to the sender and recipient. Your email address is never displayed publicly.</p>
+        <p>Trades, comments, and profile information you post are <span className="text-white font-medium">public</span> and visible to all users. Direct messages and private journal entries are <span className="text-white font-medium">private</span> and only visible to you (or, for messages, the sender and recipient). Your email address is never displayed publicly.</p>
       </section>
 
       <section className="space-y-3">
