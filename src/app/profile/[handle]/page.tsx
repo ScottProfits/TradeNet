@@ -17,6 +17,7 @@ import Link from "next/link";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
+import { isVideoUrl } from "@/lib/isVideoUrl";
 import { demoProfileData, demoLikedItems } from "@/lib/demoData";
 
 function nameSizeClass(name: string): string {
@@ -142,6 +143,7 @@ function ProfilePageInner() {
   const [likedItems, setLikedItems] = useState<LikedItem[]>(isDemo ? (demoLikedItems as unknown as LikedItem[]) : []);
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
+  const [tradeHistoryTab, setTradeHistoryTab] = useState<"history" | "videos">("history");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -484,15 +486,44 @@ function ProfilePageInner() {
 
       {/* Trade history */}
       <div className="space-y-3">
-        <h2 className="font-semibold text-white">Trade history ({trades.length})</h2>
+        <div className="flex gap-1 rounded-xl p-1 w-fit" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <button
+            onClick={() => setTradeHistoryTab("history")}
+            className={clsx(
+              "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors",
+              tradeHistoryTab === "history" ? "bg-[var(--green)]/15 text-[var(--green)]" : "text-gray-500 hover:text-gray-300"
+            )}
+          >
+            Trade History
+          </button>
+          <button
+            onClick={() => setTradeHistoryTab("videos")}
+            className={clsx(
+              "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors",
+              tradeHistoryTab === "videos" ? "bg-[var(--green)]/15 text-[var(--green)]" : "text-gray-500 hover:text-gray-300"
+            )}
+          >
+            Trader Videos
+          </button>
+        </div>
 
-        {trades.length === 0 && (
-          <div className="glass-card rounded-2xl p-8 text-center">
-            <p className="text-gray-500 text-sm">No trades posted yet.</p>
-          </div>
-        )}
+        {(() => {
+          const displayedTrades = tradeHistoryTab === "videos" ? trades.filter((t) => isVideoUrl(t.image_url)) : trades;
+          return (
+            <>
+              <h2 className="font-semibold text-white">
+                {tradeHistoryTab === "videos" ? "Trader Videos" : "Trade history"} ({displayedTrades.length})
+              </h2>
 
-        {[...trades]
+              {displayedTrades.length === 0 && (
+                <div className="glass-card rounded-2xl p-8 text-center">
+                  <p className="text-gray-500 text-sm">
+                    {tradeHistoryTab === "videos" ? "No videos posted yet." : "No trades posted yet."}
+                  </p>
+                </div>
+              )}
+
+              {[...displayedTrades]
           .sort((a, b) => {
             if (a.id === pinnedTradeId) return -1;
             if (b.id === pinnedTradeId) return 1;
@@ -555,7 +586,10 @@ function ProfilePageInner() {
                 )}
               </div>
             );
-          })}
+              })}
+            </>
+          );
+        })()}
       </div>
 
       {/* Liked posts — only visible to profile owner */}
