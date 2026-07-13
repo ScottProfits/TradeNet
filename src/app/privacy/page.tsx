@@ -21,6 +21,7 @@ export default function PrivacyPage() {
         <ul className="list-disc list-inside space-y-2 text-gray-400">
           <li><span className="text-gray-300 font-medium">Account information</span> — name, email address, username, and profile photo provided during sign-up via Clerk.</li>
           <li><span className="text-gray-300 font-medium">Trading data</span> — trade details (ticker, P&L, direction, notes) that you voluntarily post to the platform.</li>
+          <li><span className="text-gray-300 font-medium">Brokerage credentials</span> — if you connect a brokerage account to verify your trades: Alpaca API keys are stored securely on our servers and used only to confirm your trade fills against your real account. Rithmic login credentials are used only at the moment of connection to fetch your fills and are never stored on our servers.</li>
           <li><span className="text-gray-300 font-medium">Social activity</span> — follows, likes, comments, and direct messages between users.</li>
           <li><span className="text-gray-300 font-medium">Device information</span> — browser type, device type, and push notification tokens (if you opt in).</li>
           <li><span className="text-gray-300 font-medium">Usage data</span> — pages visited and features used, collected to improve the app.</li>
@@ -45,6 +46,7 @@ export default function PrivacyPage() {
           <li><span className="text-gray-300 font-medium">Clerk</span> — authentication provider that manages sign-in and account security.</li>
           <li><span className="text-gray-300 font-medium">Supabase</span> — database provider that stores your profile and trading data.</li>
           <li><span className="text-gray-300 font-medium">Vercel</span> — hosting provider that serves the app.</li>
+          <li><span className="text-gray-300 font-medium">Alpaca / Rithmic</span> — if you choose to connect a brokerage account, your API credentials are sent directly to the respective brokerage's servers solely to verify your trade history.</li>
           <li>Law enforcement or regulators when required by law.</li>
         </ul>
       </section>
@@ -71,7 +73,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">9. Security</h2>
-        <p>We use industry-standard security measures including encrypted connections (HTTPS), secure authentication via Clerk, and access controls on our database. No method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.</p>
+        <p>We use industry-standard security measures including encrypted connections (HTTPS), secure authentication via Clerk, and access controls on our database. Brokerage API credentials (such as Alpaca keys) are stored on secure servers and are never exposed to other users or accessible from your device after being saved. No method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.</p>
       </section>
 
       <section className="space-y-3">
