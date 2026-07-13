@@ -2,7 +2,8 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Send, ArrowLeft, Heart, ImagePlus, Video, X } from "lucide-react";
+import { Send, Heart, ImagePlus, Video, X } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -10,6 +11,7 @@ import ExpandableImage from "@/components/feed/ExpandableImage";
 import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
+import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
 import { demoPartner, demoMessages, demoAutoReplies } from "@/lib/demoData";
 
 interface Message {
@@ -18,6 +20,7 @@ interface Message {
   receiver_id: string;
   content: string;
   image_url?: string | null;
+  poster_url?: string | null;
   created_at: string;
   sender: { handle: string; avatar_url: string; verified: boolean };
   liked_by?: string[];
@@ -134,20 +137,34 @@ function ChatPageInner() {
     setSending(true);
 
     let imageUrl: string | null = null;
+    let posterUrl: string | null = null;
     if (media && userId) {
       const ext = media.name.split(".").pop();
-      const path = `${userId}/${Date.now()}.${ext}`;
+      const ts = Date.now();
+      const path = `${userId}/${ts}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, media, { contentType: media.type });
       if (!uploadError) {
         const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
         imageUrl = data.publicUrl;
+      }
+
+      if (mediaType === "video") {
+        const thumb = await extractVideoThumbnail(media);
+        if (thumb) {
+          const posterPath = `${userId}/${ts}-poster.jpg`;
+          const { error: posterError } = await supabase.storage.from("trade-images").upload(posterPath, thumb, { contentType: "image/jpeg" });
+          if (!posterError) {
+            const { data } = supabase.storage.from("trade-images").getPublicUrl(posterPath);
+            posterUrl = data.publicUrl;
+          }
+        }
       }
     }
 
     const res = await fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: partner.id, content: text, imageUrl }),
+      body: JSON.stringify({ receiverId: partner.id, content: text, imageUrl, posterUrl }),
     });
     if (res.ok) {
       const msg = await res.json();
@@ -185,9 +202,7 @@ function ChatPageInner() {
     <div className="max-w-xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
       <div className="glass-card rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
-        <Link href="/messages" className="text-gray-500 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+        <BackButton fallbackHref="/messages" iconOnly className="text-gray-500 hover:text-white transition-colors" />
         <SafeAvatar src={partner?.avatar_url} alt={partner?.handle ?? handle} initials={partner?.handle ?? handle} className="w-9 h-9 text-sm" />
         <div className="flex items-center gap-1.5">
           <Link href={`/profile/${handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
@@ -227,7 +242,7 @@ function ChatPageInner() {
                 {m.image_url && (
                   <div className="mb-1.5 -mx-1 rounded-lg overflow-hidden max-w-[220px]">
                     {isVideoUrl(m.image_url) ? (
-                      <video src={m.image_url} controls poster={VIDEO_POSTER_DATA_URI} className="w-full max-h-56 object-cover rounded-lg" />
+                      <video src={m.image_url} controls poster={m.poster_url ?? VIDEO_POSTER_DATA_URI} className="w-full max-h-56 object-cover rounded-lg" />
                     ) : (
                       <ExpandableImage src={m.image_url} alt="Attachment" />
                     )}

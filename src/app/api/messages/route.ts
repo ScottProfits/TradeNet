@@ -86,13 +86,13 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { receiverId, content, imageUrl } = await req.json();
+  const { receiverId, content, imageUrl, posterUrl } = await req.json();
   const trimmedContent = content?.trim() ?? "";
   if (!receiverId || (!trimmedContent && !imageUrl)) return new Response("Missing fields", { status: 400 });
 
   const { data, error } = await supabaseAdmin
     .from("messages")
-    .insert({ sender_id: userId, receiver_id: receiverId, content: trimmedContent, image_url: imageUrl ?? null })
+    .insert({ sender_id: userId, receiver_id: receiverId, content: trimmedContent, image_url: imageUrl ?? null, poster_url: posterUrl ?? null })
     .select()
     .single();
 
