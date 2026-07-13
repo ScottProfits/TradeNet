@@ -284,13 +284,37 @@ function ProfilePageInner() {
           <span className="text-lg font-semibold text-white truncate">@{profile.handle}</span>
         </div>
         {isOwnProfile && (
-          <Link
-            href="/messages"
-            aria-label="Messages"
-            className="w-9 h-9 flex items-center justify-center rounded-full solid-menu text-gray-300 hover:text-white transition-colors shrink-0"
-          >
-            <MessageSquare className="w-4 h-4" />
-          </Link>
+          <div ref={accountMenuRef} className="relative shrink-0">
+            <button
+              onClick={() => setAccountMenuOpen((o) => !o)}
+              className="flex items-center gap-[3px] p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
+              aria-label="Account options"
+            >
+              <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+              <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
+            </button>
+            {accountMenuOpen && (
+              <div className="absolute right-0 top-7 w-52 solid-menu rounded-2xl z-50 overflow-hidden">
+                <div className="px-3 py-2 border-b border-[var(--border)]">
+                  <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+                </div>
+                <button
+                  onClick={() => { setAccountMenuOpen(false); openUserProfile(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                >
+                  <Settings className="w-4 h-4" />
+                  Manage account
+                </button>
+                <button
+                  onClick={() => { setAccountMenuOpen(false); signOut(() => router.push("/")); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -344,37 +368,13 @@ function ProfilePageInner() {
           <div className="flex gap-2 flex-shrink-0 items-start">
             {isOwnProfile ? (
               <div className="flex flex-col items-end gap-2">
-                <div ref={accountMenuRef} className="relative">
-                  <button
-                    onClick={() => setAccountMenuOpen((o) => !o)}
-                    className="flex items-center gap-[3px] p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
-                    aria-label="Account options"
-                  >
-                    <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
-                    <span className="w-[4px] h-[4px] rounded-[1px] bg-current" />
-                  </button>
-                  {accountMenuOpen && (
-                    <div className="absolute right-0 top-7 w-52 solid-menu rounded-2xl z-50 overflow-hidden">
-                      <div className="px-3 py-2 border-b border-[var(--border)]">
-                        <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
-                      </div>
-                      <button
-                        onClick={() => { setAccountMenuOpen(false); openUserProfile(); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-left"
-                      >
-                        <Settings className="w-4 h-4" />
-                        Manage account
-                      </button>
-                      <button
-                        onClick={() => { setAccountMenuOpen(false); signOut(() => router.push("/")); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign out
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <Link
+                  href="/messages"
+                  aria-label="Messages"
+                  className="w-9 h-9 flex items-center justify-center rounded-full solid-menu text-gray-300 hover:text-white transition-colors shrink-0"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </Link>
                 <Link href="/settings" className="px-4 py-2 text-sm font-medium border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors whitespace-nowrap">
                   Edit Profile
                 </Link>

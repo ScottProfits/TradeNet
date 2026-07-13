@@ -215,7 +215,7 @@ function ChatPageInner() {
 
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col h-[calc(100vh-80px)]">
+    <div className="max-w-xl mx-auto flex flex-col h-[calc(100dvh-96px)]">
       {/* Header */}
       <div className="glass-card rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <BackButton fallbackHref="/messages" iconOnly className="text-gray-500 hover:text-white transition-colors" />
