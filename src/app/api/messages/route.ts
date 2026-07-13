@@ -86,12 +86,13 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { receiverId, content } = await req.json();
-  if (!receiverId || !content?.trim()) return new Response("Missing fields", { status: 400 });
+  const { receiverId, content, imageUrl } = await req.json();
+  const trimmedContent = content?.trim() ?? "";
+  if (!receiverId || (!trimmedContent && !imageUrl)) return new Response("Missing fields", { status: 400 });
 
   const { data, error } = await supabaseAdmin
     .from("messages")
-    .insert({ sender_id: userId, receiver_id: receiverId, content: content.trim() })
+    .insert({ sender_id: userId, receiver_id: receiverId, content: trimmedContent, image_url: imageUrl ?? null })
     .select()
     .single();
 
@@ -105,9 +106,11 @@ export async function POST(req: NextRequest) {
 
   // Push notification to receiver
   if (senderProfile) {
+    const isVideo = imageUrl && /\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(imageUrl);
+    const fallbackBody = imageUrl ? (isVideo ? "🎥 Video" : "📷 Photo") : "";
     void sendPushToUser(receiverId, {
       title: `💬 @${senderProfile.handle}`,
-      body: content.trim().slice(0, 100),
+      body: (trimmedContent || fallbackBody).slice(0, 100),
       url: `/messages/${senderProfile.handle}`,
     });
   }

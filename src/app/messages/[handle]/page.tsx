@@ -2,10 +2,14 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Send, ArrowLeft, Heart } from "lucide-react";
+import { Send, ArrowLeft, Heart, ImagePlus, Video, X } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import ExpandableImage from "@/components/feed/ExpandableImage";
+import { supabase } from "@/lib/supabase";
+import { isVideoUrl } from "@/lib/isVideoUrl";
+import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
 import { demoPartner, demoMessages, demoAutoReplies } from "@/lib/demoData";
 
 interface Message {
@@ -13,6 +17,7 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
+  image_url?: string | null;
   created_at: string;
   sender: { handle: string; avatar_url: string; verified: boolean };
   liked_by?: string[];
@@ -42,9 +47,28 @@ function ChatPageInner() {
   const [partner, setPartner] = useState<Profile | null>(isDemo ? demoPartner : null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [media, setMedia] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+
+  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMedia(file);
+    setMediaPreview(URL.createObjectURL(file));
+    setMediaType(file.type.startsWith("video/") ? "video" : "image");
+  }
+
+  function clearMedia() {
+    setMedia(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   function isNearBottom() {
     const el = scrollContainerRef.current;
@@ -94,10 +118,11 @@ function ChatPageInner() {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!text.trim() || sending || !partner) return;
+    if ((!text.trim() && !media) || sending || !partner) return;
     if (isDemo) {
-      setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: "me", receiver_id: partner.id, content: text, created_at: new Date().toISOString(), sender: { handle: "you", avatar_url: "", verified: false } }]);
+      setMessages((m) => [...m, { id: `dm-${Date.now()}`, sender_id: "me", receiver_id: partner.id, content: text, image_url: mediaPreview, created_at: new Date().toISOString(), sender: { handle: "you", avatar_url: "", verified: false } }]);
       setText("");
+      clearMedia();
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       setTimeout(() => {
         const reply = demoAutoReplies[Math.floor(Math.random() * demoAutoReplies.length)];
@@ -107,16 +132,29 @@ function ChatPageInner() {
       return;
     }
     setSending(true);
+
+    let imageUrl: string | null = null;
+    if (media && userId) {
+      const ext = media.name.split(".").pop();
+      const path = `${userId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, media, { contentType: media.type });
+      if (!uploadError) {
+        const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+        imageUrl = data.publicUrl;
+      }
+    }
+
     const res = await fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: partner.id, content: text }),
+      body: JSON.stringify({ receiverId: partner.id, content: text, imageUrl }),
     });
     if (res.ok) {
       const msg = await res.json();
       setMessages((m) => [...m, msg]);
       lastMessageIdRef.current = msg.id;
       setText("");
+      clearMedia();
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
     setSending(false);
@@ -186,7 +224,16 @@ function ChatPageInner() {
                 }
                 onDoubleClick={() => { if (!mine) toggleLike(m); }}
               >
-                <p className="text-sm leading-relaxed">{m.content}</p>
+                {m.image_url && (
+                  <div className="mb-1.5 -mx-1 rounded-lg overflow-hidden max-w-[220px]">
+                    {isVideoUrl(m.image_url) ? (
+                      <video src={m.image_url} controls poster={VIDEO_POSTER_DATA_URI} className="w-full max-h-56 object-cover rounded-lg" />
+                    ) : (
+                      <ExpandableImage src={m.image_url} alt="Attachment" />
+                    )}
+                  </div>
+                )}
+                {m.content && <p className="text-sm leading-relaxed">{m.content}</p>}
                 <p className={`text-xs mt-1 ${mine ? "text-black/60" : "text-gray-500"}`}>
                   {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
@@ -215,25 +262,54 @@ function ChatPageInner() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="glass-card rounded-b-2xl px-4 py-3 flex gap-2 flex-shrink-0">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Send a message..."
-          className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)] transition-colors"
-        />
-        <button
-          type="submit"
-          disabled={sending || !text.trim()}
-          className="p-2.5 rounded-xl transition-all disabled:opacity-40"
-          style={{
-            background: "linear-gradient(135deg, rgba(0,200,150,0.9) 0%, rgba(0,168,126,0.9) 100%)",
-            boxShadow: "0 0 16px rgba(0,200,150,0.3)",
-          }}
-        >
-          <Send className="w-4 h-4 text-black" />
-        </button>
-      </form>
+      <div className="glass-card rounded-b-2xl px-4 py-3 flex-shrink-0 space-y-2">
+        {mediaPreview && (
+          <div className="relative inline-block">
+            {mediaType === "video" ? (
+              <video src={mediaPreview} className="h-20 rounded-lg border border-[var(--border)]" muted />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={mediaPreview} alt="Attachment preview" className="h-20 rounded-lg border border-[var(--border)] object-cover" />
+            )}
+            <button
+              type="button"
+              onClick={clearMedia}
+              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-black/80 text-white flex items-center justify-center"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+        <form onSubmit={handleSend} className="flex gap-2">
+          <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaPick} />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="p-2.5 rounded-xl text-gray-400 hover:text-white transition-colors shrink-0"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+            aria-label="Attach photo or video"
+          >
+            {mediaType === "video" ? <Video className="w-4 h-4" /> : <ImagePlus className="w-4 h-4" />}
+          </button>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Send a message..."
+            className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)] transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={sending || (!text.trim() && !media)}
+            className="p-2.5 rounded-xl transition-all disabled:opacity-40"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,150,0.9) 0%, rgba(0,168,126,0.9) 100%)",
+              boxShadow: "0 0 16px rgba(0,200,150,0.3)",
+            }}
+          >
+            <Send className="w-4 h-4 text-black" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import DotsMenu from "@/components/ui/DotsMenu";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 import EditTradeModal from "@/components/feed/EditTradeModal";
 import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
+import { isVideoUrl } from "@/lib/isVideoUrl";
 import { isToday } from "@/lib/timeAgo";
 
 interface TradeCardProps {
@@ -204,7 +205,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
 
       {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
-          {/\.(mp4|mov|webm|avi|mkv)/i.test(localImageUrl) ? (
+          {isVideoUrl(localImageUrl) ? (
             <video
               src={localImageUrl}
               controls

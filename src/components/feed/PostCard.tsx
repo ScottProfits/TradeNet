@@ -6,6 +6,7 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
 import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
+import { isVideoUrl } from "@/lib/isVideoUrl";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
@@ -149,7 +150,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
       {/* Image/Video */}
       {post.image_url && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
-          {/\.(mp4|mov|webm)/i.test(post.image_url) ? (
+          {isVideoUrl(post.image_url) ? (
             <video
               src={post.image_url}
               controls
