@@ -9,6 +9,7 @@ import ExploreTab from "@/components/feed/ExploreTab";
 import VideoTab from "@/components/feed/VideoTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
+import PullToRefresh from "@/components/ui/PullToRefresh";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Users } from "lucide-react";
@@ -96,6 +97,15 @@ function FeedPageInner() {
 
   useEffect(() => { loadFeed(); loadFollowing(); }, [loadFeed, loadFollowing]);
 
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([loadFeed(), loadFollowing()]);
+  }, [loadFeed, loadFollowing]);
+
+  useEffect(() => {
+    window.addEventListener("ryzr:feed-refresh", handleRefresh);
+    return () => window.removeEventListener("ryzr:feed-refresh", handleRefresh);
+  }, [handleRefresh]);
+
   function handleDelete(id: string) {
     setDeletedIds((s) => new Set(s).add(id));
   }
@@ -107,6 +117,8 @@ function FeedPageInner() {
       </aside>
 
       <section className="space-y-3 min-w-0">
+        <PullToRefresh onRefresh={handleRefresh}>
+        <div className="space-y-3">
         <LiveTicker />
         <MarketPulse />
         {/* Post button — hidden on mobile since nav bar has + button */}
@@ -213,6 +225,8 @@ function FeedPageInner() {
             )}
           </>
         )}
+        </div>
+        </PullToRefresh>
       </section>
 
       <aside className="hidden lg:block">
@@ -220,7 +234,7 @@ function FeedPageInner() {
       </aside>
 
       {showModal && (
-        <PostTradeModal onClose={() => setShowModal(false)} onPosted={loadFeed} />
+        <PostTradeModal onClose={() => setShowModal(false)} onPosted={handleRefresh} />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BarChart2, Plus, Bell, Home } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ const TAP_OVERHANG = (TAP_SIZE - PILL_HEIGHT) / 2;
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useUser();
   const [showModal, setShowModal] = useState(false);
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
@@ -185,7 +186,15 @@ export default function MobileNav() {
         </Link>
       </div>
 
-      {showModal && <PostTradeModal onClose={() => setShowModal(false)} onPosted={() => {}} />}
+      {showModal && (
+        <PostTradeModal
+          onClose={() => setShowModal(false)}
+          onPosted={() => {
+            window.dispatchEvent(new Event("ryzr:feed-refresh"));
+            if (pathname !== "/feed") router.push("/feed");
+          }}
+        />
+      )}
     </>
   );
 }
