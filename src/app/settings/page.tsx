@@ -7,6 +7,7 @@ import { clsx } from "clsx";
 import BackButton from "@/components/ui/BackButton";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import AlpacaConnectModal from "@/components/brokers/AlpacaConnectModal";
+import TradovateConnectModal from "@/components/brokers/TradovateConnectModal";
 import { supabase } from "@/lib/supabase";
 import AvatarCropModal from "@/components/ui/AvatarCropModal";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
+  const [tradovateModalOpen, setTradovateModalOpen] = useState(false);
   const [alpacaModalOpen, setAlpacaModalOpen] = useState(false);
   const [alpacaConnected, setAlpacaConnected] = useState(false);
   const [disconnectingAlpaca, setDisconnectingAlpaca] = useState(false);
@@ -502,15 +504,15 @@ export default function SettingsPage() {
             </div>
           </div>
           <button
-            disabled
-            className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all opacity-50 cursor-not-allowed"
+            onClick={() => setTradovateModalOpen(true)}
+            className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.4)",
+              background: "rgba(0,200,150,0.12)",
+              border: "1px solid rgba(0,200,150,0.3)",
+              color: "#00C896",
             }}
           >
-            Coming soon
+            Connect
           </button>
         </div>
 
@@ -547,6 +549,9 @@ export default function SettingsPage() {
       )}
       {alpacaModalOpen && (
         <AlpacaConnectModal onClose={() => setAlpacaModalOpen(false)} onSuccess={() => setAlpacaConnected(true)} />
+      )}
+      {tradovateModalOpen && (
+        <TradovateConnectModal onClose={() => setTradovateModalOpen(false)} />
       )}
 
       {/* Danger Zone */}
