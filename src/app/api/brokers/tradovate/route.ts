@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { importTodaysFills } from "@/lib/tradovate/importFills";
 import { NextRequest, NextResponse } from "next/server";
 
 // Tradovate's auth + account-list + fill-list + per-contract lookups are
@@ -25,55 +26,36 @@ export async function POST(req: NextRequest) {
     // No sandbox is offered for Tradovate — Tradovate's own guidance is to
     // develop/test against the Demo environment (simulated trading, real
     // market data) until this integration is validated for live accounts.
-    const { fills, userId: tradovateUserId, loginAt } = await fetchTradovateFills(
+    const { fills, loginAt, session } = await fetchTradovateFills(
       tradovateUser,
       tradovatePassword,
       "demo",
       accountId
     );
 
-    // Only import fills from today (ET timezone) — matches the same
-    // same-day-only import behavior used for Rithmic.
-    const todayET = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); // YYYY-MM-DD
-    const todayFills = fills.filter((fill) => fill.fillDate === todayET);
+    const { total, imported, skipped } = await importTodaysFills(userId, fills);
 
-    // Upsert today's fills as trades into Supabase
-    let imported = 0;
-    for (const fill of todayFills) {
-      const isBuy = fill.transactionType === "Buy";
-      const { error } = await supabaseAdmin.from("trades").upsert(
-        {
-          user_id: userId,
-          ticker: fill.symbol,
-          asset_type: "futures",
-          direction: isBuy ? "long" : "short",
-          entry_price: fill.fillPrice,
-          exit_price: fill.fillPrice,
-          pnl: 0,
-          quantity: fill.fillSize,
-          strategy: "Tradovate Import",
-          notes: `Fill ID: ${fill.fillId} | Exchange: ${fill.exchange}`,
-          trade_date: todayET,
-          source: "tradovate",
-          external_id: fill.fillId,
-          is_public: true,
-        },
-        { onConflict: "external_id", ignoreDuplicates: true }
-      );
-      if (!error) imported++;
-    }
-
-    // Store that this user has connected Tradovate
-    await supabaseAdmin
-      .from("broker_connections")
-      .upsert({ user_id: userId, broker: "tradovate", connected_at: new Date().toISOString() }, { onConflict: "user_id,broker" });
+    // Store the session (access token, never the username/password) so a
+    // scheduled job can keep syncing fills without the user reconnecting
+    // every day — see src/app/api/cron/tradovate-sync/route.ts.
+    await supabaseAdmin.from("broker_connections").upsert(
+      {
+        user_id: userId,
+        broker: "tradovate",
+        connected_at: new Date().toISOString(),
+        access_token: session.accessToken,
+        token_expiry: session.expirationTime,
+        account_id: session.accountId,
+        needs_reconnect: false,
+      },
+      { onConflict: "user_id,broker" }
+    );
 
     return NextResponse.json({
       success: true,
-      total: todayFills.length,
+      total,
       imported,
-      skipped: fills.length - todayFills.length,
-      tradovateUserId,
+      skipped,
       loginAt,
       loginTimezone: "UTC",
     });
@@ -91,10 +73,14 @@ export async function GET() {
 
   const { data } = await supabase
     .from("broker_connections")
-    .select("connected_at")
+    .select("connected_at, needs_reconnect")
     .eq("user_id", userId)
     .eq("broker", "tradovate")
     .single();
 
-  return NextResponse.json({ connected: !!data, connectedAt: data?.connected_at ?? null });
+  return NextResponse.json({
+    connected: !!data,
+    connectedAt: data?.connected_at ?? null,
+    needsReconnect: data?.needs_reconnect ?? false,
+  });
 }
