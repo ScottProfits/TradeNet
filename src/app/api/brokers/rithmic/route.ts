@@ -1,5 +1,4 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -98,7 +97,11 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ connected: false });
 
-  const { data } = await supabase
+  // broker_connections' RLS checks auth.uid() (Supabase Auth), but this app
+  // authenticates via Clerk — the anon client never has a Supabase session,
+  // so RLS silently blocks this read and it always looks disconnected.
+  // supabaseAdmin bypasses RLS; the userId above is already Clerk-verified.
+  const { data } = await supabaseAdmin
     .from("broker_connections")
     .select("connected_at")
     .eq("user_id", userId)
