@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [tradovateModalOpen, setTradovateModalOpen] = useState(false);
+  const [tradovateConnected, setTradovateConnected] = useState(false);
   const [alpacaModalOpen, setAlpacaModalOpen] = useState(false);
   const [alpacaConnected, setAlpacaConnected] = useState(false);
   const [disconnectingAlpaca, setDisconnectingAlpaca] = useState(false);
@@ -86,6 +87,9 @@ export default function SettingsPage() {
     });
     fetch("/api/brokers/alpaca").then((r) => r.ok ? r.json() : null).then((d) => {
       if (d) setAlpacaConnected(!!d.connected);
+    });
+    fetch("/api/brokers/tradovate").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d) setTradovateConnected(!!d.connected && !d.needsReconnect);
     });
   }, [userId]);
 
@@ -503,17 +507,25 @@ export default function SettingsPage() {
               <p className="text-[11px] text-gray-500">Futures — verified fills</p>
             </div>
           </div>
-          <button
-            onClick={() => setTradovateModalOpen(true)}
-            className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
-            style={{
-              background: "rgba(0,200,150,0.12)",
-              border: "1px solid rgba(0,200,150,0.3)",
-              color: "#00C896",
-            }}
-          >
-            Connect
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={() => setTradovateModalOpen(true)}
+              className="text-[10px] tracking-[0.12em] font-semibold uppercase px-3 py-1.5 rounded-lg transition-all"
+              style={{
+                background: "rgba(0,200,150,0.12)",
+                border: "1px solid rgba(0,200,150,0.3)",
+                color: "#00C896",
+              }}
+            >
+              {tradovateConnected ? "Reconnect" : "Connect"}
+            </button>
+            {tradovateConnected && (
+              <span className="flex items-center gap-1 text-[10px] text-[#00C896]">
+                <CheckCircle className="w-3 h-3" />
+                Connected
+              </span>
+            )}
+          </div>
         </div>
 
         <div
@@ -551,7 +563,7 @@ export default function SettingsPage() {
         <AlpacaConnectModal onClose={() => setAlpacaModalOpen(false)} onSuccess={() => setAlpacaConnected(true)} />
       )}
       {tradovateModalOpen && (
-        <TradovateConnectModal onClose={() => setTradovateModalOpen(false)} />
+        <TradovateConnectModal onClose={() => setTradovateModalOpen(false)} onSuccess={() => setTradovateConnected(true)} />
       )}
 
       {/* Danger Zone */}
