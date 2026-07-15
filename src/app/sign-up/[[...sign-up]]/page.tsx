@@ -1,5 +1,6 @@
 "use client";
 import { SignUp } from "@clerk/nextjs";
+import FinancialDisclosures from "@/components/ui/FinancialDisclosures";
 
 function VerifiedCandle({ className = "w-7 h-7" }: { className?: string }) {
   return (
@@ -30,7 +31,8 @@ const LEADERBOARD = [
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen bg-[#080808] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#080808] flex flex-col">
+    <div className="flex flex-col lg:flex-row">
 
       {/* LEFT — social proof panel, desktop only */}
       <div className="relative hidden lg:flex flex-col justify-between w-1/2 p-12 overflow-hidden border-r border-white/5">
@@ -118,6 +120,9 @@ export default function SignUpPage() {
           <SignUp forceRedirectUrl="/onboarding" />
         </div>
       </div>
+    </div>
+
+      <FinancialDisclosures />
     </div>
   );
 }
