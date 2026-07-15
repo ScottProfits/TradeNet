@@ -29,6 +29,24 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<VerifyRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [broadcastState, setBroadcastState] = useState<"idle" | "confirming" | "sending" | "done">("idle");
+  const [broadcastCount, setBroadcastCount] = useState<number | null>(null);
+  const [broadcastResult, setBroadcastResult] = useState<{ notified: number; pushSent: number } | null>(null);
+
+  async function startBroadcastConfirm() {
+    const res = await fetch("/api/admin/broadcast-announcement?dryRun=1", { method: "POST" });
+    const data = await res.json();
+    setBroadcastCount(data.recipientCount ?? 0);
+    setBroadcastState("confirming");
+  }
+
+  async function sendBroadcast() {
+    setBroadcastState("sending");
+    const res = await fetch("/api/admin/broadcast-announcement", { method: "POST" });
+    const data = await res.json();
+    setBroadcastResult({ notified: data.notified ?? 0, pushSent: data.pushSent ?? 0 });
+    setBroadcastState("done");
+  }
 
   useEffect(() => {
     if (userId === undefined) return;
@@ -63,6 +81,51 @@ export default function AdminPage() {
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
         <VerifiedBadge className="w-6 h-6" />
+      </div>
+
+      {/* One-off Tradovate launch announcement */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+        <h2 className="font-semibold text-white">Broadcast: Tradovate is live</h2>
+        <p className="text-sm text-gray-400">
+          Sends an in-app notification + push to every user: &ldquo;🎉 Tradovate is now live! Connect it in Settings for a Verified P&amp;L badge — read/fill-only, no order placement.&rdquo;
+        </p>
+
+        {broadcastState === "idle" && (
+          <button
+            onClick={startBroadcastConfirm}
+            className="px-4 py-2 text-sm font-medium bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/30 rounded-lg hover:bg-[var(--green)]/30 transition-colors"
+          >
+            Preview recipients
+          </button>
+        )}
+
+        {broadcastState === "confirming" && (
+          <div className="space-y-2">
+            <p className="text-sm text-white">This will notify <span className="font-bold">{broadcastCount}</span> users. This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={sendBroadcast}
+                className="px-4 py-2 text-sm font-medium bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors"
+              >
+                Send to {broadcastCount} users
+              </button>
+              <button
+                onClick={() => setBroadcastState("idle")}
+                className="px-4 py-2 text-sm font-medium bg-white/5 text-gray-400 border border-[var(--border)] rounded-lg hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {broadcastState === "sending" && <p className="text-sm text-gray-400">Sending...</p>}
+
+        {broadcastState === "done" && broadcastResult && (
+          <p className="text-sm text-[var(--green)]">
+            Done — notified {broadcastResult.notified} users, {broadcastResult.pushSent} push notifications sent.
+          </p>
+        )}
       </div>
 
       {/* Pending verification requests */}

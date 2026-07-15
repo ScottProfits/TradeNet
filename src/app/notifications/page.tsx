@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, Star, Megaphone } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -9,7 +9,7 @@ import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "message_like" | "explore";
+  type: "follow" | "like" | "comment" | "message_like" | "explore" | "announcement";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -30,6 +30,7 @@ function icon(type: string) {
   if (type === "like" || type === "message_like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
   if (type === "follow") return <UserPlus className="w-4 h-4 text-green-400" />;
   if (type === "explore") return <Star className="w-4 h-4 text-yellow-400 fill-current" />;
+  if (type === "announcement") return <Megaphone className="w-4 h-4 text-[var(--green)]" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
@@ -38,6 +39,7 @@ function message(n: Notification) {
   if (n.type === "message_like") return "liked your message";
   if (n.type === "follow") return "started following you";
   if (n.type === "explore") return "You're featured on Explore right now";
+  if (n.type === "announcement") return "🎉 Tradovate is now live! Connect it in Settings for a Verified P&L badge — read/fill-only, no order placement.";
   if (n.type === "comment" && !n.trade_id && n.post_id) return "commented on your post";
   return "commented on your trade";
 }
@@ -130,7 +132,10 @@ function NotificationsPageInner() {
                 <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
                   {items.map((n) => {
                     const isExplore = n.type === "explore";
-                    const tradeHref = isExplore
+                    const isAnnouncement = n.type === "announcement";
+                    const tradeHref = isAnnouncement
+                      ? "/settings"
+                      : isExplore
                       ? "/feed"
                       : n.type === "message_like"
                       ? `/messages/${n.actor?.handle}`
@@ -144,7 +149,11 @@ function NotificationsPageInner() {
                         key={n.id}
                         className="flex items-start gap-3 px-4 py-4 hover:bg-white/5 transition-colors"
                       >
-                        {isExplore ? (
+                        {isAnnouncement ? (
+                          <Link href={tradeHref} className="relative shrink-0 w-10 h-10 rounded-full bg-[var(--green)]/10 flex items-center justify-center">
+                            <Megaphone className="w-4 h-4 text-[var(--green)]" />
+                          </Link>
+                        ) : isExplore ? (
                           <Link href={tradeHref} className="relative shrink-0 w-10 h-10 rounded-full bg-yellow-400/10 flex items-center justify-center">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           </Link>
@@ -158,7 +167,7 @@ function NotificationsPageInner() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-200">
-                            {!isExplore && (
+                            {!isExplore && !isAnnouncement && (
                               <>
                                 <Link href={`/profile/${n.actor?.handle}`} className="font-semibold text-white hover:text-[var(--green)] transition-colors">
                                   @{n.actor?.handle}
