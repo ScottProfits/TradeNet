@@ -262,7 +262,15 @@ function ChatPageInner() {
                 {m.image_url && (
                   <div className="mb-1.5 -mx-1 rounded-lg overflow-hidden max-w-[220px]">
                     {isVideoUrl(m.image_url) ? (
-                      <video src={m.image_url} controls poster={m.poster_url ?? VIDEO_POSTER_DATA_URI} className="w-full max-h-56 object-cover rounded-lg" />
+                      <video
+                        src={m.image_url}
+                        poster={m.poster_url ?? VIDEO_POSTER_DATA_URI}
+                        className="w-full max-h-56 object-cover rounded-lg"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
                     ) : (
                       <ExpandableImage src={m.image_url} alt="Attachment" />
                     )}

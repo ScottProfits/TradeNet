@@ -208,10 +208,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {isVideoUrl(localImageUrl) ? (
             <video
               src={localImageUrl}
-              controls
               poster={VIDEO_POSTER_DATA_URI}
               className="w-full max-h-80 object-cover"
-              {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
+              autoPlay
+              muted
+              loop
+              playsInline
             />
           ) : (
             <ExpandableImage src={localImageUrl} alt="Trade screenshot" />

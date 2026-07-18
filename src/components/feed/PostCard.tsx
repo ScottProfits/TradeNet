@@ -153,10 +153,12 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
           {isVideoUrl(post.image_url) ? (
             <video
               src={post.image_url}
-              controls
               poster={VIDEO_POSTER_DATA_URI}
               className="w-full max-h-80 object-cover"
-              {...(autoPlayVideo ? { autoPlay: true, muted: true, loop: true, playsInline: true } : {})}
+              autoPlay
+              muted
+              loop
+              playsInline
             />
           ) : (
             <ExpandableImage src={post.image_url} alt="Post media" />
