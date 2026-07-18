@@ -31,16 +31,19 @@ function nameSizeClass(name: string): string {
 }
 
 function extractHandle(val: string): string {
+  // Strip a leading "@" up front — otherwise "@handle" parses as a URL with
+  // userinfo syntax (https://@handle), which silently mangles the result.
+  const cleaned = val.trim().replace(/^@/, "");
   // Strip common domain prefixes and extract just the username/handle
   try {
-    const url = val.includes("://") ? new URL(val) : new URL(`https://${val}`);
+    const url = cleaned.includes("://") ? new URL(cleaned) : new URL(`https://${cleaned}`);
     // pathname is like "/@scottprofits" or "/scottprofits" or "/channel/UCxxx"
     const parts = url.pathname.replace(/^\//, "").split("/");
-    const handle = parts[0].replace(/^@/, "") || val;
+    const handle = parts[0].replace(/^@/, "") || cleaned;
     return `@${handle}`;
   } catch {
     // Not a URL — treat as bare username
-    return `@${val.replace(/^@/, "")}`;
+    return `@${cleaned}`;
   }
 }
 
@@ -421,7 +424,7 @@ function ProfilePageInner() {
         {/* Social links */}
         {(() => {
           const SOCIALS = [
-            { key: "instagram", icon: "📸", prefix: "IG", buildUrl: (v: string) => `https://instagram.com/${extractHandle(v)}` },
+            { key: "instagram", icon: "📸", prefix: "IG", buildUrl: (v: string) => `https://instagram.com/${extractHandle(v).replace(/^@/, "")}` },
             { key: "tiktok", icon: "🎵", prefix: "TT", buildUrl: (v: string) => `https://tiktok.com/@${extractHandle(v).replace(/^@/, "")}` },
             { key: "discord", icon: "🎮", prefix: "Discord", buildUrl: (v: string) => v.startsWith("http") ? v : `https://${v}` },
             { key: "youtube", icon: "▶️", prefix: "YT", buildUrl: (v: string) => `https://youtube.com/@${extractHandle(v).replace(/^@/, "")}` },

@@ -73,12 +73,15 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     e.preventDefault();
     if (!text.trim() || posting) return;
     setPosting(true);
-    // Always attach reply to the top-level comment so all replies stay flat under it
+    // Always attach reply to the top-level comment so all replies stay flat under
+    // it for display, but notify whoever's specific comment/reply was actually
+    // replied to — those can differ when replying to a nested reply.
     const parentId = replyTo?.topLevelId ?? null;
+    const replyToCommentId = replyTo?.id ?? null;
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId }),
+      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId, replyToCommentId }),
     });
     if (res.ok) {
       const comment = await res.json();

@@ -49,8 +49,12 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { tradeId, postId, content, parentId } = await req.json();
+  const { tradeId, postId, content, parentId, replyToCommentId } = await req.json();
   if (!content?.trim()) return new Response("Empty comment", { status: 400 });
+  // Which comment/reply to notify — may differ from parentId (the top-level
+  // comment used purely for flat-thread display grouping) when replying to
+  // a nested reply rather than the top-level comment itself.
+  const notifyTargetId = replyToCommentId ?? parentId;
 
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
   if (!existing) {
@@ -101,8 +105,8 @@ export async function POST(req: NextRequest) {
     const notifiedUserIds = new Set<string>([userId]);
     if (trade?.user_id !== userId) notifiedUserIds.add(trade?.user_id ?? "");
 
-    if (parentId) {
-      const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", parentId).single();
+    if (notifyTargetId) {
+      const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", notifyTargetId).single();
       if (parentComment && !notifiedUserIds.has(parentComment.user_id)) {
         notifiedUserIds.add(parentComment.user_id);
         await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId, comment_id: data.id });
@@ -145,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     const [{ data: actor }, { data: parentComment }] = await Promise.all([
       supabase.from("profiles").select("handle").eq("id", userId).single(),
-      parentId ? supabase.from("comments").select("user_id").eq("id", parentId).single() : Promise.resolve({ data: null }),
+      notifyTargetId ? supabase.from("comments").select("user_id").eq("id", notifyTargetId).single() : Promise.resolve({ data: null }),
     ]);
     const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
     const notifiedPostIds = new Set<string>([userId]);
