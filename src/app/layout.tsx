@@ -12,6 +12,7 @@ import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.ryzr.app"),
   title: "Ryzr — Social Trading Network",
   description: "Follow top traders, verify real P&L, copy winning strategies.",
   manifest: "/manifest.json",
@@ -23,6 +24,19 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: "/apple-touch-icon-180.png",
+  },
+  openGraph: {
+    title: "Ryzr — Social Trading Network",
+    description: "Follow top traders, verify real P&L, copy winning strategies.",
+    url: "https://www.ryzr.app",
+    siteName: "Ryzr",
+    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Ryzr — Social Trading Network",
+    description: "Follow top traders, verify real P&L, copy winning strategies.",
+    images: ["/icon-512.png"],
   },
 };
 
