@@ -49,12 +49,8 @@ export default function MobileNav() {
   useEffect(() => {
     let lastY = window.scrollY;
     let ticking = false;
-    let stopTimer: ReturnType<typeof setTimeout> | null = null;
 
     function onScroll() {
-      if (stopTimer) clearTimeout(stopTimer);
-      stopTimer = setTimeout(() => setCollapsed(false), 400);
-
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
@@ -71,10 +67,7 @@ export default function MobileNav() {
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (stopTimer) clearTimeout(stopTimer);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const hiddenForExplore = isExploreActive && !exploreRevealed;
