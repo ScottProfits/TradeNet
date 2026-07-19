@@ -37,6 +37,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -151,15 +152,24 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
       {post.image_url && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {isVideoUrl(post.image_url) ? (
-            <video
-              src={post.image_url}
-              poster={VIDEO_POSTER_DATA_URI}
-              className="w-full max-h-80 object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+            <div className="relative">
+              <video
+                src={post.image_url}
+                poster={VIDEO_POSTER_DATA_URI}
+                className="w-full max-h-80 object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                onPlaying={() => setVideoPlaying(true)}
+              />
+              <img
+                src={VIDEO_POSTER_DATA_URI}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-150 pointer-events-none"
+                style={{ opacity: videoPlaying ? 0 : 1 }}
+              />
+            </div>
           ) : (
             <ExpandableImage src={post.image_url} alt="Post media" />
           )}

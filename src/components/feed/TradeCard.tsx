@@ -52,6 +52,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [verifying, setVerifying] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [localTicker, setLocalTicker] = useState(trade.ticker);
   const [localDirection, setLocalDirection] = useState(trade.direction);
   const [localPnl, setLocalPnl] = useState(trade.pnl);
@@ -206,15 +207,24 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {isVideoUrl(localImageUrl) ? (
-            <video
-              src={localImageUrl}
-              poster={VIDEO_POSTER_DATA_URI}
-              className="w-full max-h-80 object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+            <div className="relative">
+              <video
+                src={localImageUrl}
+                poster={VIDEO_POSTER_DATA_URI}
+                className="w-full max-h-80 object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                onPlaying={() => setVideoPlaying(true)}
+              />
+              <img
+                src={VIDEO_POSTER_DATA_URI}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-150 pointer-events-none"
+                style={{ opacity: videoPlaying ? 0 : 1 }}
+              />
+            </div>
           ) : (
             <ExpandableImage src={localImageUrl} alt="Trade screenshot" />
           )}
