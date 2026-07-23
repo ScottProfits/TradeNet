@@ -7,40 +7,101 @@ interface Props {
   onSuccess?: (imported: number) => void;
 }
 
+interface PendingAgreement {
+  agreementId: string;
+  title: string;
+  html: string;
+  isHtml: boolean;
+}
+
 export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [accountId, setAccountId] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "agreements" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [sessionInfo, setSessionInfo] = useState<{ uniqueUserId: string; loginAt: string; loginTimezone: string } | null>(null);
+  const [pendingAgreements, setPendingAgreements] = useState<PendingAgreement[]>([]);
+  const [agreedChecked, setAgreedChecked] = useState(false);
+  const [capacity, setCapacity] = useState<"Non-Professional" | "Professional" | null>(null);
+
+  async function runConnect() {
+    const res = await fetch("/api/brokers/rithmic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rithmicUser: user, rithmicPassword: password, accountId: accountId || undefined }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setStatus("error");
+      setMessage(data.error ?? "Connection failed");
+      return;
+    }
+    setStatus("success");
+    setMessage(
+      data.imported > 0
+        ? `Connected! Imported ${data.imported} trade${data.imported !== 1 ? "s" : ""} from today.`
+        : `Connected! No trades from today yet. Check back after you trade.`
+    );
+    if (data.uniqueUserId) {
+      setSessionInfo({ uniqueUserId: data.uniqueUserId, loginAt: data.loginAt, loginTimezone: data.loginTimezone });
+    }
+    onSuccess?.(data.imported);
+  }
 
   async function handleConnect() {
     if (!user || !password) return;
     setStatus("loading");
     setMessage("");
     try {
-      const res = await fetch("/api/brokers/rithmic", {
+      // Check for unaccepted Rithmic agreements first — never accept anything
+      // on the user's behalf without them reading it and choosing their own
+      // market-data usage capacity.
+      const agreementsRes = await fetch("/api/brokers/rithmic/agreements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rithmicUser: user, rithmicPassword: password, accountId: accountId || undefined }),
+        body: JSON.stringify({ rithmicUser: user, rithmicPassword: password }),
+      });
+      const agreementsData = await agreementsRes.json();
+      if (!agreementsRes.ok) {
+        setStatus("error");
+        setMessage(agreementsData.error ?? "Could not check Rithmic agreements");
+        return;
+      }
+      if (agreementsData.agreements?.length > 0) {
+        setPendingAgreements(agreementsData.agreements);
+        setStatus("agreements");
+        return;
+      }
+      await runConnect();
+    } catch {
+      setStatus("error");
+      setMessage("Network error — please try again.");
+    }
+  }
+
+  async function handleAcceptAgreements() {
+    if (!agreedChecked || !capacity) return;
+    setStatus("loading");
+    setMessage("");
+    try {
+      const res = await fetch("/api/brokers/rithmic/accept-agreement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rithmicUser: user,
+          rithmicPassword: password,
+          agreementIds: pendingAgreements.map((a) => a.agreementId),
+          marketDataUsageCapacity: capacity,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         setStatus("error");
-        setMessage(data.error ?? "Connection failed");
-      } else {
-        setStatus("success");
-        setMessage(
-          data.imported > 0
-            ? `Connected! Imported ${data.imported} trade${data.imported !== 1 ? "s" : ""} from today.`
-            : `Connected! No trades from today yet. Check back after you trade.`
-        );
-        if (data.uniqueUserId) {
-          setSessionInfo({ uniqueUserId: data.uniqueUserId, loginAt: data.loginAt, loginTimezone: data.loginTimezone });
-        }
-        onSuccess?.(data.imported);
+        setMessage(data.error ?? "Failed to accept agreement");
+        return;
       }
+      await runConnect();
     } catch {
       setStatus("error");
       setMessage("Network error — please try again.");
@@ -50,7 +111,7 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div
-        className="w-full max-w-sm rounded-2xl p-6 relative"
+        className="w-full max-w-sm rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto"
         style={{
           background: "rgba(10,10,10,0.96)",
           border: "1px solid rgba(255,255,255,0.1)",
@@ -120,6 +181,86 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
               <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-4 opacity-40" />
               <span className="text-[10px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
             </div>
+          </div>
+        ) : status === "agreements" ? (
+          <div className="space-y-3">
+            <p className="text-xs text-gray-400">
+              Rithmic requires these agreements to be accepted before your account can connect. Read them, then confirm below — Ryzr never accepts anything on your behalf without your say-so.
+            </p>
+
+            {pendingAgreements.map((a) => (
+              <div key={a.agreementId} className="rounded-xl border border-white/10 overflow-hidden">
+                <div className="px-3 py-2 bg-white/5 text-xs font-semibold text-white">{a.title}</div>
+                <div className="max-h-40 overflow-y-auto px-3 py-2 text-[11px] text-gray-400 leading-relaxed">
+                  {a.isHtml ? (
+                    // eslint-disable-next-line react/no-danger
+                    <div dangerouslySetInnerHTML={{ __html: a.html }} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{a.html}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1 block">
+                Market data usage
+              </label>
+              <div className="space-y-1.5">
+                {(["Non-Professional", "Professional"] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setCapacity(opt)}
+                    className={`w-full text-left rounded-xl px-3 py-2 text-xs border transition-colors ${
+                      capacity === opt ? "border-[#00C896]/50 bg-[#00C896]/10 text-white" : "border-white/10 bg-white/5 text-gray-400"
+                    }`}
+                  >
+                    <span className="font-semibold">{opt}</span>
+                    {opt === "Non-Professional" ? (
+                      <span className="block text-[10px] text-gray-500 mt-0.5">You trade for your own account and aren&apos;t registered with a securities/futures regulator or trading professionally for a business.</span>
+                    ) : (
+                      <span className="block text-[10px] text-gray-500 mt-0.5">You&apos;re registered with a regulator, or use this data in a professional/business trading capacity.</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-600 mt-1.5">
+                This is a market-data licensing classification set by the exchanges — Ryzr can&apos;t determine this for you. If you&apos;re unsure, check with Rithmic or your prop firm.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-2 text-[11px] text-gray-400 pt-1">
+              <input
+                type="checkbox"
+                checked={agreedChecked}
+                onChange={(e) => setAgreedChecked(e.target.checked)}
+                className="mt-0.5"
+              />
+              I have read the agreement(s) above and agree to them.
+            </label>
+
+            {message && (
+              <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span className="select-text flex-1 break-words">{message}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleAcceptAgreements}
+              disabled={!agreedChecked || !capacity || (status as string) === "loading"}
+              className="w-full py-3 rounded-xl transition-all duration-300 disabled:opacity-40 mt-1"
+              style={{
+                background: "linear-gradient(135deg, rgba(0,200,150,0.25) 0%, rgba(0,168,126,0.15) 100%)",
+                boxShadow: "0 0 24px rgba(0,200,150,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+                border: "1px solid rgba(0,200,150,0.35)",
+              }}
+            >
+              <span className="text-[11px] tracking-[0.18em] font-semibold uppercase" style={{ color: "#00C896", textShadow: "0 0 12px rgba(0,200,150,0.6)" }}>
+                Accept & Continue
+              </span>
+            </button>
           </div>
         ) : (
           <div className="space-y-3">

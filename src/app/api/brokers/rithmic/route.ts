@@ -1,9 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { RITHMIC_URI, RITHMIC_SYSTEM } from "@/lib/rithmic/client";
 import { NextRequest, NextResponse } from "next/server";
-
-const RITHMIC_URI = "wss://rituz00100.rithmic.com:443";
-const RITHMIC_SYSTEM = "Rithmic Test";
 
 // The Rithmic handshake is several sequential round trips (system info,
 // login, account list, fill history) — give it more room than the default

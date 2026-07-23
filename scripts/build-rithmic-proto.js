@@ -16,6 +16,9 @@ const files = [
   "request_account_list", "response_account_list",
   "request_login_info", "response_login_info",
   "request_show_fill_history", "response_show_fill_history",
+  "request_list_unaccepted_agreements", "response_list_unaccepted_agreements",
+  "request_show_agreement", "response_show_agreement",
+  "request_accept_agreement", "response_accept_agreement",
 ];
 
 const root = new protobuf.Root();
