@@ -13,7 +13,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="block w-full cursor-zoom-in">
+      <div className="relative w-full cursor-zoom-in">
         <video
           src={src}
           poster={poster}
@@ -22,8 +22,18 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
           muted
           loop
           playsInline
+          disablePictureInPicture
+          controlsList="nofullscreen nodownload noremoteplayback"
         />
-      </button>
+        {/* Transparent tap-catcher: without this, tapping the video directly triggers
+            the browser/WebView's own native play/pause overlay before our handler runs. */}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="absolute inset-0 w-full h-full"
+          aria-label="Expand video"
+        />
+      </div>
 
       {open && (
         <div
