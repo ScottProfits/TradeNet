@@ -12,6 +12,7 @@ import DotsMenu from "@/components/ui/DotsMenu";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import { clsx } from "clsx";
 import { timeAgo } from "@/lib/timeAgo";
+import { getLikeOverride, setLikeOverride, clearLikeOverride } from "@/lib/likeCache";
 
 interface RealPost {
   id: string;
@@ -32,7 +33,7 @@ interface RealPost {
 
 export default function PostCard({ post, onDelete, autoPlayVideo = false }: { post: RealPost; onDelete?: (id: string) => void; autoPlayVideo?: boolean }) {
   const { isSignedIn, userId } = useAuth();
-  const [liked, setLiked] = useState(post.liked_by_me ?? false);
+  const [liked, setLiked] = useState(getLikeOverride(post.id) ?? post.liked_by_me ?? false);
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
@@ -53,11 +54,17 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
     const next = !liked;
     setLiked(next);
     setLikeCount((c) => c + (next ? 1 : -1));
-    await fetch("/api/like-post", {
+    setLikeOverride(post.id, next);
+    const res = await fetch("/api/like-post", {
       method: next ? "POST" : "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId: post.id }),
     });
+    if (!res.ok) {
+      setLiked(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+      clearLikeOverride(post.id);
+    }
   }
 
   async function handleShare() {
