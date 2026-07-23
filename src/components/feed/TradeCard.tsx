@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import ExpandableImage from "@/components/feed/ExpandableImage";
+import ExpandableVideo from "@/components/feed/ExpandableVideo";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
@@ -210,14 +211,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {isVideoUrl(localImageUrl) ? (
-            <video
-              src={localImageUrl}
-              className="w-full max-h-80 object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+            <ExpandableVideo src={localImageUrl} />
           ) : (
             <ExpandableImage src={localImageUrl} alt="Trade screenshot" />
           )}

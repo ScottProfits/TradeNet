@@ -8,6 +8,7 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import ExpandableImage from "@/components/feed/ExpandableImage";
+import ExpandableVideo from "@/components/feed/ExpandableVideo";
 import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
@@ -262,14 +263,10 @@ function ChatPageInner() {
                 {m.image_url && (
                   <div className="mb-1.5 -mx-1 rounded-lg overflow-hidden max-w-[220px]">
                     {isVideoUrl(m.image_url) ? (
-                      <video
+                      <ExpandableVideo
                         src={m.image_url}
                         poster={m.poster_url ?? VIDEO_POSTER_DATA_URI}
                         className="w-full max-h-56 object-cover rounded-lg"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
                       />
                     ) : (
                       <ExpandableImage src={m.image_url} alt="Attachment" />

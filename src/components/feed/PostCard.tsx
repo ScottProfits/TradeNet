@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
+import ExpandableVideo from "@/components/feed/ExpandableVideo";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
@@ -157,14 +158,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
       {post.image_url && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {isVideoUrl(post.image_url) ? (
-            <video
-              src={post.image_url}
-              className="w-full max-h-80 object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+            <ExpandableVideo src={post.image_url} />
           ) : (
             <ExpandableImage src={post.image_url} alt="Post media" />
           )}
