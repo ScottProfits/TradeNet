@@ -67,6 +67,7 @@ export default function NotificationBell() {
   }
 
   function message(n: Notification) {
+    if (n.type === "like" && !n.trade_id && n.post_id) return "liked your post";
     if (n.type === "like") return "liked your trade";
     if (n.type === "follow") return "started following you";
     if (n.type === "explore") return "You're featured on Explore right now";

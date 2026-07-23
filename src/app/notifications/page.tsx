@@ -35,6 +35,7 @@ function icon(type: string) {
 }
 
 function message(n: Notification) {
+  if (n.type === "like" && !n.trade_id && n.post_id) return "liked your post";
   if (n.type === "like") return "liked your trade";
   if (n.type === "message_like") return "liked your message";
   if (n.type === "follow") return "started following you";
