@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 interface ExpandableVideoProps {
@@ -10,23 +10,32 @@ interface ExpandableVideoProps {
 
 export default function ExpandableVideo({ src, poster, className }: ExpandableVideoProps) {
   const [open, setOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // iOS WebKit sometimes ignores the declarative autoplay attribute (e.g. after
+    // the element is re-covered by an overlay) — force it via the play() API,
+    // which is always permitted for muted video regardless of gesture state.
+    videoRef.current?.play().catch(() => {});
+  }, [src]);
 
   return (
     <>
       <div className="relative w-full cursor-zoom-in">
         <video
+          ref={videoRef}
           src={src}
           poster={poster}
           className={className ?? "w-full max-h-80 object-cover"}
+          style={{ pointerEvents: "none" }}
           autoPlay
           muted
           loop
           playsInline
-          disablePictureInPicture
-          controlsList="nofullscreen nodownload noremoteplayback"
         />
-        {/* Transparent tap-catcher: without this, tapping the video directly triggers
-            the browser/WebView's own native play/pause overlay before our handler runs. */}
+        {/* Transparent tap-catcher: iOS WebKit toggles play/pause on a tapped
+            <video> at a level below normal DOM z-stacking, so pointer-events:none
+            above alone isn't reliably enough — this sibling is the actual tap target. */}
         <button
           type="button"
           onClick={() => setOpen(true)}
