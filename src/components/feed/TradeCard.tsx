@@ -15,6 +15,7 @@ import TradingViewChart from "@/components/ui/TradingViewChart";
 import EditTradeModal from "@/components/feed/EditTradeModal";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { isToday } from "@/lib/timeAgo";
+import { getLikeOverride, setLikeOverride, clearLikeOverride } from "@/lib/likeCache";
 
 interface TradeCardProps {
   trade: Trade;
@@ -35,7 +36,8 @@ interface TradeCardProps {
 export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const [liked, setLiked] = useState(likedByMe ?? false);
+  const likeCacheKey = `trade:${trade.id}`;
+  const [liked, setLiked] = useState(getLikeOverride(likeCacheKey) ?? likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(trade.likes);
   const [commentCount, setCommentCount] = useState(trade.comments);
   const [liking, setLiking] = useState(false);
@@ -67,15 +69,18 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
     const next = !liked;
     setLiked(next);
     setLikeCount((c) => c + (next ? 1 : -1));
+    setLikeOverride(likeCacheKey, next);
     try {
-      await fetch("/api/like", {
+      const res = await fetch("/api/like", {
         method: next ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tradeId: trade.id }),
       });
+      if (!res.ok) throw new Error("like request failed");
     } catch {
       setLiked(!next);
       setLikeCount((c) => c + (next ? -1 : 1));
+      clearLikeOverride(likeCacheKey);
     }
     setLiking(false);
   }

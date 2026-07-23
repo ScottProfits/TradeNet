@@ -23,7 +23,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
 
   if (!isOwner) tradesQuery.eq("is_public", true);
 
-  const { data: trades } = await tradesQuery;
+  const { data: tradesRaw } = await tradesQuery;
+
+  let trades: Array<Record<string, unknown>> = tradesRaw ?? [];
+  if (trades.length > 0) {
+    const tradeIds = trades.map((t) => t.id as string);
+    const { data: myTradeLikes } = userId
+      ? await supabase.from("likes").select("trade_id").eq("user_id", userId).in("trade_id", tradeIds)
+      : { data: [] };
+    const tradeLikedSet = new Set((myTradeLikes ?? []).map((l: { trade_id: string }) => l.trade_id));
+    trades = trades.map((t) => ({ ...t, liked_by_me: tradeLikedSet.has(t.id as string) }));
+  }
 
   const { data: postsRaw } = await supabase
     .from("posts")

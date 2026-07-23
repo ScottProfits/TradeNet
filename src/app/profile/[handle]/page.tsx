@@ -587,6 +587,7 @@ function ProfilePageInner() {
                   imageUrl={t.image_url ?? undefined}
                   avatarUrl={profile.avatar_url ?? undefined}
                   strategy={(t as { strategy?: string }).strategy ?? undefined}
+                  likedByMe={(t as { liked_by_me?: boolean }).liked_by_me}
                 />
                 {isOwnProfile && (
                   <button
