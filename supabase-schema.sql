@@ -96,3 +96,23 @@ alter table public.comment_likes enable row level security;
 create policy "Comment likes viewable by everyone" on public.comment_likes for select using (true);
 create policy "Users can like comments" on public.comment_likes for insert with check (true);
 create policy "Users can unlike comments" on public.comment_likes for delete using (true);
+
+-- Notifications table
+-- NOTE: no comment_id column exists here. Code once assumed one did and
+-- silently failed every comment/reply/mention notification insert as a
+-- result — don't reintroduce that field without adding the column first.
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references public.profiles(id) on delete cascade,
+  actor_id text references public.profiles(id) on delete cascade,
+  type text not null,
+  trade_id uuid references public.trades(id) on delete cascade,
+  post_id uuid,
+  read boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+alter table public.notifications enable row level security;
+create policy "Users can view their own notifications" on public.notifications for select using (true);
+create policy "Notifications can be inserted" on public.notifications for insert with check (true);
+create policy "Users can update their own notifications" on public.notifications for update using (true);
