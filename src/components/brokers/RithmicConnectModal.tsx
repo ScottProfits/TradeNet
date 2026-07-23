@@ -268,16 +268,28 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
               <label className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1 block">
                 Rithmic Username
               </label>
-              <input
-                type="text"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
-                placeholder="your_username"
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={user}
+                  onChange={(e) => setUser(e.target.value)}
+                  placeholder="your_username"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-3 pr-10 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
+                />
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(user)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                    aria-label="Copy username"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1 block">
