@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       const needsRenewal = expiresAt < Date.now() + 60 * 60 * 1000;
 
       if (needsRenewal) {
-        const renewed = await renewTradovateToken(token, "demo");
+        const renewed = await renewTradovateToken(token, "live");
         token = renewed.accessToken;
         await supabaseAdmin
           .from("broker_connections")
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
           .eq("broker", "tradovate");
       }
 
-      const fills = await fetchTradovateFillsWithSession(token, conn.account_id, "demo");
+      const fills = await fetchTradovateFillsWithSession(token, conn.account_id, "live");
       const { imported } = await importTodaysFills(conn.user_id, fills);
       results.push({ userId: conn.user_id, status: "ok", imported });
     } catch (err) {

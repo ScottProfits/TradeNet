@@ -22,13 +22,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const { fetchTradovateFills } = await import("@/lib/tradovate/client");
-    // No sandbox is offered for Tradovate — Tradovate's own guidance is to
-    // develop/test against the Demo environment (simulated trading, real
-    // market data) until this integration is validated for live accounts.
+    // Real users (including prop-firm accounts) only exist in Tradovate's
+    // live environment — the demo/sandbox environment is a separate simulated
+    // account space that a real Tradovate login won't match.
     const { fills, loginAt, session } = await fetchTradovateFills(
       tradovateUser,
       tradovatePassword,
-      "demo",
+      "live",
       accountId
     );
 
