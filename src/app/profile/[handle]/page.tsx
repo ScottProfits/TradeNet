@@ -314,7 +314,12 @@ function ProfilePageInner() {
                   Manage account
                 </button>
                 <button
-                  onClick={() => { setAccountMenuOpen(false); signOut(() => router.push("/")); }}
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    localStorage.removeItem("ryzr_profile_avatar");
+                    localStorage.removeItem("ryzr_profile_handle");
+                    signOut(() => router.push("/"));
+                  }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors text-left"
                 >
                   <LogOut className="w-4 h-4" />

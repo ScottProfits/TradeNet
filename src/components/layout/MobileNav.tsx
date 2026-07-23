@@ -18,8 +18,12 @@ export default function MobileNav() {
   const router = useRouter();
   const { user } = useUser();
   const [showModal, setShowModal] = useState(false);
-  const [profileHandle, setProfileHandle] = useState<string | null>(null);
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [profileHandle, setProfileHandle] = useState<string | null>(
+    () => (typeof window !== "undefined" ? localStorage.getItem("ryzr_profile_handle") : null)
+  );
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(
+    () => (typeof window !== "undefined" ? localStorage.getItem("ryzr_profile_avatar") : null)
+  );
   const [collapsed, setCollapsed] = useState(false);
   const { isExploreActive } = useNavVisibility();
   const [exploreRevealed, setExploreRevealed] = useState(false);
@@ -82,9 +86,13 @@ export default function MobileNav() {
   useEffect(() => {
     if (!user?.id) return;
     fetch(`/api/profile/me`).then((r) => r.ok ? r.json() : null).then((d) => {
-      if (d?.handle) setProfileHandle(d.handle);
-      else setProfileHandle(user.username ?? null);
-      if (d?.avatar_url) setProfileAvatar(d.avatar_url);
+      const handle = d?.handle || user.username || null;
+      setProfileHandle(handle);
+      if (handle) localStorage.setItem("ryzr_profile_handle", handle);
+      if (d?.avatar_url) {
+        setProfileAvatar(d.avatar_url);
+        localStorage.setItem("ryzr_profile_avatar", d.avatar_url);
+      }
     });
   }, [user?.id, user?.username]);
 

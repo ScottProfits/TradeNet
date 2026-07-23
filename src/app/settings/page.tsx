@@ -55,6 +55,8 @@ export default function SettingsPage() {
     setDeleting(true);
     const res = await fetch("/api/account", { method: "DELETE" });
     if (res.ok) {
+      localStorage.removeItem("ryzr_profile_avatar");
+      localStorage.removeItem("ryzr_profile_handle");
       await signOut(() => router.push("/"));
     } else {
       setDeleting(false);
