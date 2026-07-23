@@ -7,7 +7,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "explore";
+  type: "follow" | "like" | "comment" | "comment_like" | "explore";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -60,13 +60,14 @@ export default function NotificationBell() {
   }
 
   function icon(type: string) {
-    if (type === "like") return <Heart className="w-3.5 h-3.5 text-pink-400 fill-current" />;
+    if (type === "like" || type === "comment_like") return <Heart className="w-3.5 h-3.5 text-pink-400 fill-current" />;
     if (type === "follow") return <UserPlus className="w-3.5 h-3.5 text-[var(--green)]" />;
     if (type === "explore") return <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />;
     return <MessageCircle className="w-3.5 h-3.5 text-blue-400" />;
   }
 
   function message(n: Notification) {
+    if (n.type === "comment_like") return "liked your comment";
     if (n.type === "like" && !n.trade_id && n.post_id) return "liked your post";
     if (n.type === "like") return "liked your trade";
     if (n.type === "follow") return "started following you";

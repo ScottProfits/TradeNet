@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest, NextResponse } from "next/server";
 
 const supabase = createClient(
@@ -54,6 +55,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ liked: false });
   } else {
     await supabase.from("comment_likes").insert({ user_id: userId, comment_id: commentId });
+
+    const { data: comment } = await supabase.from("comments").select("user_id, trade_id, post_id").eq("id", commentId).single();
+    if (comment && comment.user_id !== userId) {
+      const { data: actor } = await supabase.from("profiles").select("handle").eq("id", userId).single();
+      await supabase.from("notifications").insert({
+        user_id: comment.user_id,
+        type: "comment_like",
+        actor_id: userId,
+        trade_id: comment.trade_id,
+        post_id: comment.post_id,
+      });
+      if (actor) {
+        void sendPushToUser(comment.user_id, {
+          title: "❤️ New like",
+          body: `@${actor.handle} liked your comment`,
+          url: comment.trade_id ? `/trade/${comment.trade_id}` : "/feed",
+        });
+      }
+    }
+
     return NextResponse.json({ liked: true });
   }
 }

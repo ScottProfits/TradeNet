@@ -9,7 +9,7 @@ import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "message_like" | "explore" | "announcement";
+  type: "follow" | "like" | "comment" | "comment_like" | "message_like" | "explore" | "announcement";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -27,7 +27,7 @@ function timeAgo(date: string) {
 }
 
 function icon(type: string) {
-  if (type === "like" || type === "message_like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
+  if (type === "like" || type === "message_like" || type === "comment_like") return <Heart className="w-4 h-4 text-pink-400 fill-current" />;
   if (type === "follow") return <UserPlus className="w-4 h-4 text-green-400" />;
   if (type === "explore") return <Star className="w-4 h-4 text-yellow-400 fill-current" />;
   if (type === "announcement") return <Megaphone className="w-4 h-4 text-[var(--green)]" />;
@@ -35,6 +35,7 @@ function icon(type: string) {
 }
 
 function message(n: Notification) {
+  if (n.type === "comment_like") return "liked your comment";
   if (n.type === "like" && !n.trade_id && n.post_id) return "liked your post";
   if (n.type === "like") return "liked your trade";
   if (n.type === "message_like") return "liked your message";
