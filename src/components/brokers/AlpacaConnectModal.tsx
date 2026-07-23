@@ -95,6 +95,9 @@ export default function AlpacaConnectModal({ onClose, onSuccess }: Props) {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="PK..."
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
               />
             </div>
@@ -107,6 +110,9 @@ export default function AlpacaConnectModal({ onClose, onSuccess }: Props) {
                 value={apiSecret}
                 onChange={(e) => setApiSecret(e.target.value)}
                 placeholder="••••••••"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
               />
             </div>

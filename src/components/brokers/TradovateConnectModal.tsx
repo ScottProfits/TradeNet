@@ -103,6 +103,9 @@ export default function TradovateConnectModal({ onClose, onSuccess }: Props) {
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 placeholder="your_username"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
               />
             </div>
@@ -115,6 +118,9 @@ export default function TradovateConnectModal({ onClose, onSuccess }: Props) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
               />
             </div>
@@ -127,6 +133,9 @@ export default function TradovateConnectModal({ onClose, onSuccess }: Props) {
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
                 placeholder="e.g. 12345"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00C896]/40 transition-colors"
               />
             </div>
