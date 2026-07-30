@@ -229,7 +229,8 @@ export default function TradePage() {
 
       {/* Comments — blurred for logged-out */}
       <div className="glass-card rounded-2xl p-4">
-        <h2 className="text-sm font-semibold text-white mb-4">Comments ({commentCount})</h2>
+        <h2 className="text-sm font-semibold text-white mb-1">Trade Talk</h2>
+        <p className="text-xs text-gray-500 mb-4">{commentCount} comment{commentCount === 1 ? "" : "s"}</p>
         {isSignedIn ? (
           <CommentSection
             tradeId={trade.id}

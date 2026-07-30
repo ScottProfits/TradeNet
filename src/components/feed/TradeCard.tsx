@@ -310,12 +310,15 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       )}
 
       {showComments && (
-        <CommentSection
-          tradeId={trade.id}
-          onCommentAdded={() => setCommentCount((c) => c + 1)}
-          onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
-          onCountLoaded={(n) => setCommentCount(n)}
-        />
+        <div className="pt-2">
+          <p className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider mb-2">Trade Talk</p>
+          <CommentSection
+            tradeId={trade.id}
+            onCommentAdded={() => setCommentCount((c) => c + 1)}
+            onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
+            onCountLoaded={(n) => setCommentCount(n)}
+          />
+        </div>
       )}
       {showDeleteSheet && (
         <DeleteSheet
