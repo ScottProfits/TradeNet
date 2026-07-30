@@ -11,6 +11,7 @@ interface ExpandableVideoProps {
 
 export default function ExpandableVideo({ src, poster, className }: ExpandableVideoProps) {
   const [open, setOpen] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -24,7 +25,10 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   useEffect(() => {
     // Same as above, for the expanded (unmuted) lightbox video - this is
     // still tied to the user's tap that set `open`, so browsers allow it.
-    if (open) expandedVideoRef.current?.play().catch(() => {});
+    if (open) {
+      setShowControls(false);
+      expandedVideoRef.current?.play().catch(() => {});
+    }
   }, [open]);
 
   return (
@@ -75,12 +79,11 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             src={src}
             autoPlay
             playsInline
+            controls={showControls}
             className="w-[92vw] h-[85vh] object-contain rounded-lg shadow-2xl"
             onClick={(e) => {
               e.stopPropagation();
-              const v = expandedVideoRef.current;
-              if (!v) return;
-              if (v.paused) v.play().catch(() => {}); else v.pause();
+              setShowControls((s) => !s);
             }}
           />
         </div>,
