@@ -767,7 +767,7 @@ function ProfilePageInner() {
               {!modalLoading && modalUsers.length === 0 && (
                 <p className="text-center text-gray-500 text-sm py-6">No {modal} yet.</p>
               )}
-              {modalUsers.map((u) => {
+              {!modalLoading && modalUsers.map((u) => {
                 const isFollowingUser = modalFollowStatus[u.id] ?? false;
                 const isSelf = u.id === userId;
                 return (
