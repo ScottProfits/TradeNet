@@ -73,11 +73,15 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
           <video
             ref={expandedVideoRef}
             src={src}
-            controls
             autoPlay
             playsInline
             className="w-[92vw] h-[85vh] object-contain rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              const v = expandedVideoRef.current;
+              if (!v) return;
+              if (v.paused) v.play().catch(() => {}); else v.pause();
+            }}
           />
         </div>,
         document.body
