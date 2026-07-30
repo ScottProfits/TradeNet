@@ -146,6 +146,8 @@ function ProfilePageInner() {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [modalUsers, setModalUsers] = useState<FollowUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [modalFollowStatus, setModalFollowStatus] = useState<Record<string, boolean>>({});
+  const [modalFollowLoading, setModalFollowLoading] = useState<Record<string, boolean>>({});
   const [likedItems, setLikedItems] = useState<LikedItem[]>(isDemo ? (demoLikedItems as unknown as LikedItem[]) : []);
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
@@ -238,6 +240,7 @@ function ProfilePageInner() {
   async function openModal(type: "followers" | "following") {
     setModal(type);
     setModalUsers([]);
+    setModalFollowStatus({});
     if (isDemo) {
       setModalUsers([
         { id: "demo-twolfgang", handle: "twolfgang", avatar_url: "", verified: true },
@@ -251,9 +254,32 @@ function ProfilePageInner() {
     const res = await fetch(`/api/profile/${handle}/followers`);
     if (res.ok) {
       const d = await res.json();
-      setModalUsers(type === "followers" ? d.followers : d.following);
+      const users: FollowUser[] = type === "followers" ? d.followers : d.following;
+      setModalUsers(users);
+      if (type === "followers" && users.length) {
+        const ids = users.map((u) => u.id).join(",");
+        const statusRes = await fetch(`/api/follow/status?ids=${ids}`);
+        if (statusRes.ok) setModalFollowStatus(await statusRes.json());
+      }
     }
     setModalLoading(false);
+  }
+
+  async function handleModalFollow(targetId: string, targetHandle: string) {
+    if (isDemo || modalFollowLoading[targetId]) return;
+    const next = !modalFollowStatus[targetId];
+    setModalFollowLoading((s) => ({ ...s, [targetId]: true }));
+    setModalFollowStatus((s) => ({ ...s, [targetId]: next }));
+    try {
+      await fetch("/api/follow", {
+        method: next ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetHandle }),
+      });
+    } catch {
+      setModalFollowStatus((s) => ({ ...s, [targetId]: !next }));
+    }
+    setModalFollowLoading((s) => ({ ...s, [targetId]: false }));
   }
 
   if (notFound) {
@@ -741,20 +767,39 @@ function ProfilePageInner() {
               {!modalLoading && modalUsers.length === 0 && (
                 <p className="text-center text-gray-500 text-sm py-6">No {modal} yet.</p>
               )}
-              {modalUsers.map((u) => (
-                <Link
-                  key={u.id}
-                  href={`/profile/${u.handle}`}
-                  onClick={() => setModal(null)}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg)] transition-colors"
-                >
-                  <SafeAvatar src={u.avatar_url} alt={u.handle} initials={u.handle} className="w-10 h-10 text-sm" />
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-semibold text-white truncate">@{u.handle}</span>
-                    {u.verified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+              {modalUsers.map((u) => {
+                const isFollowingUser = modalFollowStatus[u.id] ?? false;
+                const isSelf = u.id === userId;
+                return (
+                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg)] transition-colors">
+                    <Link
+                      href={`/profile/${u.handle}`}
+                      onClick={() => setModal(null)}
+                      className="flex items-center gap-3 min-w-0 flex-1"
+                    >
+                      <SafeAvatar src={u.avatar_url} alt={u.handle} initials={u.handle} className="w-10 h-10 text-sm" />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-semibold text-white truncate">@{u.handle}</span>
+                        {u.verified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+                      </div>
+                    </Link>
+                    {!isSelf && modal === "followers" && (
+                      <button
+                        onClick={() => handleModalFollow(u.id, u.handle)}
+                        disabled={modalFollowLoading[u.id]}
+                        className={clsx(
+                          "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0",
+                          isFollowingUser
+                            ? "bg-[var(--green)]/20 text-[var(--green)] border border-[var(--green)]/40"
+                            : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
+                        )}
+                      >
+                        {isFollowingUser ? "Following ✓" : "Follow Back"}
+                      </button>
+                    )}
                   </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
