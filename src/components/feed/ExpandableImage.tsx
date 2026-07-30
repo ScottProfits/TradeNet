@@ -23,8 +23,11 @@ export default function ExpandableImage({ src, alt, thumbnailClassName }: Expand
 
       {open && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-4"
-          style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{
+            paddingTop: "max(1rem, env(safe-area-inset-top))",
+            background: "radial-gradient(circle at 50% 40%, rgba(18,30,26,1) 0%, rgba(0,0,0,1) 70%)",
+          }}
           onClick={() => setOpen(false)}
         >
           <button
