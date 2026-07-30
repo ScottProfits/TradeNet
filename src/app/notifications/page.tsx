@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Bell, Heart, UserPlus, MessageCircle, Star, Megaphone } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -9,7 +9,7 @@ import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "comment_like" | "message_like" | "explore" | "announcement";
+  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "message_like" | "explore" | "announcement";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -31,6 +31,7 @@ function icon(type: string) {
   if (type === "follow") return <UserPlus className="w-4 h-4 text-green-400" />;
   if (type === "explore") return <Star className="w-4 h-4 text-yellow-400 fill-current" />;
   if (type === "announcement") return <Megaphone className="w-4 h-4 text-[var(--green)]" />;
+  if (type === "reply") return <CornerDownRight className="w-4 h-4 text-blue-400" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
@@ -42,6 +43,7 @@ function message(n: Notification) {
   if (n.type === "follow") return "started following you";
   if (n.type === "explore") return "You're featured on Explore right now";
   if (n.type === "announcement") return "🎉 Tradovate is now live! Connect it in Settings for a Verified P&L badge — read/fill-only, no order placement.";
+  if (n.type === "reply") return "replied to you";
   if (n.type === "comment" && !n.trade_id && n.post_id) return "commented on your post";
   return "commented on your trade";
 }

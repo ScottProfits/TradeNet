@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       const { data: parentComment } = await supabase.from("comments").select("user_id").eq("id", notifyTargetId).single();
       if (parentComment && !notifiedUserIds.has(parentComment.user_id)) {
         notifiedUserIds.add(parentComment.user_id);
-        await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, trade_id: tradeId });
+        await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "reply", actor_id: userId, trade_id: tradeId });
         if (actor) {
           void sendPushToUser(parentComment.user_id, {
             title: `↩️ @${actor.handle} replied to you`,
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     // Notify parent comment author on reply
     if (parentComment && !notifiedPostIds.has(parentComment.user_id)) {
       notifiedPostIds.add(parentComment.user_id);
-      await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "comment", actor_id: userId, post_id: postId });
+      await supabaseAdmin.from("notifications").insert({ user_id: parentComment.user_id, type: "reply", actor_id: userId, post_id: postId });
       if (actor) void sendPushToUser(parentComment.user_id, { title: `↩️ @${actor.handle} replied to you`, body: `"${snippet}"`, url: `/feed` });
     }
 

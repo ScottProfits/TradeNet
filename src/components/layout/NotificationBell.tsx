@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Bell, Heart, UserPlus, MessageCircle, Star } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "comment_like" | "explore";
+  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "explore";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -63,6 +63,7 @@ export default function NotificationBell() {
     if (type === "like" || type === "comment_like") return <Heart className="w-3.5 h-3.5 text-pink-400 fill-current" />;
     if (type === "follow") return <UserPlus className="w-3.5 h-3.5 text-[var(--green)]" />;
     if (type === "explore") return <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />;
+    if (type === "reply") return <CornerDownRight className="w-3.5 h-3.5 text-blue-400" />;
     return <MessageCircle className="w-3.5 h-3.5 text-blue-400" />;
   }
 
@@ -72,6 +73,7 @@ export default function NotificationBell() {
     if (n.type === "like") return "liked your trade";
     if (n.type === "follow") return "started following you";
     if (n.type === "explore") return "You're featured on Explore right now";
+    if (n.type === "reply") return "replied to you";
     if (n.type === "comment" && !n.trade_id && n.post_id) return "commented on your post";
     return "commented on your trade";
   }
