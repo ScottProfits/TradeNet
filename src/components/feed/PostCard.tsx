@@ -20,6 +20,7 @@ interface RealPost {
   user_id: string;
   content: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   likes_count: number;
   comments_count?: number;
   liked_by_me?: boolean;
@@ -154,16 +155,28 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
         <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
       )}
 
-      {/* Image/Video */}
-      {post.image_url && (
-        <div className="rounded-lg overflow-hidden border border-[var(--border)]">
-          {isVideoUrl(post.image_url) ? (
-            <ExpandableVideo src={post.image_url} />
-          ) : (
-            <ExpandableImage src={post.image_url} alt="Post media" />
-          )}
-        </div>
-      )}
+      {/* Image/Video gallery — up to 3 */}
+      {(() => {
+        const media = post.image_urls?.length ? post.image_urls : post.image_url ? [post.image_url] : [];
+        if (!media.length) return null;
+        if (media.length === 1) {
+          const src = media[0];
+          return (
+            <div className="rounded-lg overflow-hidden border border-[var(--border)]">
+              {isVideoUrl(src) ? <ExpandableVideo src={src} /> : <ExpandableImage src={src} alt="Post media" />}
+            </div>
+          );
+        }
+        return (
+          <div className={clsx("grid gap-1 rounded-lg overflow-hidden border border-[var(--border)]", media.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
+            {media.map((src, i) => (
+              <div key={i} className="aspect-square">
+                {isVideoUrl(src) ? <ExpandableVideo src={src} /> : <ExpandableImage src={src} alt={`Post media ${i + 1}`} thumbnailClassName="h-full" />}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Actions */}
       <div className="flex items-center gap-4 pt-1">

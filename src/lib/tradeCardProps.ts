@@ -29,6 +29,7 @@ export interface RealPost {
   user_id: string;
   content: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   likes_count: number;
   comments_count?: number;
   liked_by_me?: boolean;

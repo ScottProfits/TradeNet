@@ -39,8 +39,9 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { content, image_url } = await req.json();
+  const { content, image_url, image_urls } = await req.json();
   if (!content?.trim()) return new Response("Content required", { status: 400 });
+  const urls: string[] = Array.isArray(image_urls) ? image_urls.filter(Boolean).slice(0, 3) : image_url ? [image_url] : [];
 
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
   if (!existing) {
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("posts")
-    .insert({ user_id: userId, content: content.trim(), image_url: image_url ?? null })
+    .insert({ user_id: userId, content: content.trim(), image_url: urls[0] ?? null, image_urls: urls.length ? urls : null })
     .select()
     .single();
 

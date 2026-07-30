@@ -45,6 +45,28 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Regular ("Post" tab) media - up to 3 images, or a single video (mutually
+  // exclusive with multiple images, since a video is one attachment on its own).
+  const [postMedia, setPostMedia] = useState<{ file: File; preview: string; type: "image" | "video" }[]>([]);
+  const postFileRef = useRef<HTMLInputElement>(null);
+
+  function handlePostMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const type: "image" | "video" = file.type.startsWith("video/") ? "video" : "image";
+    const preview = URL.createObjectURL(file);
+    setPostMedia((prev) => {
+      if (type === "video") return [{ file, preview, type }];
+      const withoutVideo = prev.filter((m) => m.type !== "video");
+      return [...withoutVideo, { file, preview, type }].slice(0, 3);
+    });
+    if (postFileRef.current) postFileRef.current.value = "";
+  }
+
+  function removePostMedia(index: number) {
+    setPostMedia((prev) => prev.filter((_, i) => i !== index));
+  }
+
   useEffect(() => {
     if (!ticker || ticker.length < 1) { setTickerResults([]); return; }
     const timer = setTimeout(async () => {
@@ -104,19 +126,21 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     setError("");
     setSubmitting(true);
     try {
-      let image_url: string | null = null;
-      if (media && userId) {
-        const ext = media.name.split(".").pop();
-        const path = `${userId}/${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, media, { contentType: media.type });
-        if (uploadError) { setError("Upload failed: " + uploadError.message); setSubmitting(false); return; }
-        const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
-        image_url = data.publicUrl;
+      const image_urls: string[] = [];
+      if (userId) {
+        for (const m of postMedia) {
+          const ext = m.file.name.split(".").pop();
+          const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, m.file, { contentType: m.file.type });
+          if (uploadError) { setError("Upload failed: " + uploadError.message); setSubmitting(false); return; }
+          const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
+          image_urls.push(data.publicUrl);
+        }
       }
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postContent, image_url }),
+        body: JSON.stringify({ content: postContent, image_urls }),
       });
       if (!res.ok) { setError(await res.text()); } else { onPosted(); onClose(); }
     } catch { setError("Something went wrong."); }
@@ -228,15 +252,31 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               maxLength={500}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
             />
-            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaPick} />
-            {mediaPreview ? (
-              <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
-                {mediaType === "video" ? <video src={mediaPreview} controls className="w-full max-h-48" /> : <Image src={mediaPreview} alt="preview" width={400} height={200} className="w-full object-cover max-h-48" unoptimized />}
-                <button type="button" onClick={clearMedia} className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white"><X className="w-3.5 h-3.5" /></button>
+            <input ref={postFileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handlePostMediaPick} />
+            {postMedia.length > 0 && (
+              <div className={clsx("grid gap-2", postMedia.length > 1 ? "grid-cols-3" : "grid-cols-1")}>
+                {postMedia.map((m, i) => (
+                  <div key={i} className="relative rounded-lg overflow-hidden border border-[var(--border)] aspect-square">
+                    {m.type === "video" ? (
+                      <video src={m.preview} controls className="w-full h-full object-cover" />
+                    ) : (
+                      <Image src={m.preview} alt="preview" width={300} height={300} className="w-full h-full object-cover" unoptimized />
+                    )}
+                    <button type="button" onClick={() => removePostMedia(i)} className="absolute top-1.5 right-1.5 bg-black/60 rounded-full p-1 text-white">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <button type="button" onClick={() => fileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
-                <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add photo or video
+            )}
+            {postMedia.length === 0 && (
+              <button type="button" onClick={() => postFileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
+                <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add up to 3 photos, or a video
+              </button>
+            )}
+            {postMedia.length > 0 && postMedia.length < 3 && postMedia[0].type !== "video" && (
+              <button type="button" onClick={() => postFileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-2 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
+                <ImagePlus className="w-3.5 h-3.5" /> Add another photo ({postMedia.length}/3)
               </button>
             )}
             {error && <p className="text-[var(--red)] text-sm">{error}</p>}

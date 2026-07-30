@@ -2,19 +2,22 @@
 import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { clsx } from "clsx";
 
 interface ExpandableImageProps {
   src: string;
   alt: string;
+  /** Pass "h-full" when used inside a fixed-aspect grid cell (e.g. a multi-image gallery) so the thumbnail fills it instead of the default capped height. */
+  thumbnailClassName?: string;
 }
 
-export default function ExpandableImage({ src, alt }: ExpandableImageProps) {
+export default function ExpandableImage({ src, alt, thumbnailClassName }: ExpandableImageProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="block w-full cursor-zoom-in">
-        <Image src={src} alt={alt} width={600} height={300} className="w-full max-h-80 object-cover" unoptimized />
+      <button type="button" onClick={() => setOpen(true)} className={clsx("block w-full cursor-zoom-in", thumbnailClassName ? "h-full" : undefined)}>
+        <Image src={src} alt={alt} width={600} height={300} className={clsx("w-full object-cover", thumbnailClassName ?? "max-h-80")} unoptimized />
       </button>
 
       {open && (
@@ -34,7 +37,7 @@ export default function ExpandableImage({ src, alt }: ExpandableImageProps) {
           <img
             src={src}
             alt={alt}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="w-[92vw] h-[88vh] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
