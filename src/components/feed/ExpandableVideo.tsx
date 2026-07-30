@@ -12,6 +12,7 @@ interface ExpandableVideoProps {
 export default function ExpandableVideo({ src, poster, className }: ExpandableVideoProps) {
   const [open, setOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const expandedVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     // iOS WebKit sometimes ignores the declarative autoplay attribute (e.g. after
@@ -19,6 +20,12 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
     // which is always permitted for muted video regardless of gesture state.
     videoRef.current?.play().catch(() => {});
   }, [src]);
+
+  useEffect(() => {
+    // Same as above, for the expanded (unmuted) lightbox video - this is
+    // still tied to the user's tap that set `open`, so browsers allow it.
+    if (open) expandedVideoRef.current?.play().catch(() => {});
+  }, [open]);
 
   return (
     <>
@@ -64,6 +71,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             <X className="w-5 h-5" />
           </button>
           <video
+            ref={expandedVideoRef}
             src={src}
             controls
             autoPlay
