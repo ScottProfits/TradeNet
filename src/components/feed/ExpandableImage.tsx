@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { clsx } from "clsx";
@@ -20,7 +21,7 @@ export default function ExpandableImage({ src, alt, thumbnailClassName }: Expand
         <Image src={src} alt={alt} width={600} height={300} className={clsx("w-full object-cover", thumbnailClassName ?? "max-h-80")} unoptimized />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-4"
           style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
@@ -42,7 +43,8 @@ export default function ExpandableImage({ src, alt, thumbnailClassName }: Expand
             className="w-[92vw] h-[85vh] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

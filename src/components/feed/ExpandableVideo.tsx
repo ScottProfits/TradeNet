@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 interface ExpandableVideoProps {
@@ -44,15 +45,17 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
         />
       </div>
 
-      {open && (
+      {open && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black p-4"
+          style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
           onClick={() => setOpen(false)}
         >
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="absolute flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            style={{ top: "max(1rem, env(safe-area-inset-top))", right: "1rem" }}
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -62,10 +65,11 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             controls
             autoPlay
             playsInline
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="w-[92vw] h-[85vh] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
