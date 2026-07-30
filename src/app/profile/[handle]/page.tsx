@@ -256,7 +256,7 @@ function ProfilePageInner() {
       const d = await res.json();
       const users: FollowUser[] = type === "followers" ? d.followers : d.following;
       setModalUsers(users);
-      if (type === "followers" && users.length) {
+      if (users.length) {
         const ids = users.map((u) => u.id).join(",");
         const statusRes = await fetch(`/api/follow/status?ids=${ids}`);
         if (statusRes.ok) setModalFollowStatus(await statusRes.json());
@@ -783,7 +783,7 @@ function ProfilePageInner() {
                         {u.verified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
                       </div>
                     </Link>
-                    {!isSelf && modal === "followers" && (
+                    {!isSelf && (
                       <button
                         onClick={() => handleModalFollow(u.id, u.handle)}
                         disabled={modalFollowLoading[u.id]}
@@ -794,7 +794,7 @@ function ProfilePageInner() {
                             : "bg-[var(--green)] text-black hover:bg-[var(--green)]/90"
                         )}
                       >
-                        {isFollowingUser ? "Following ✓" : "Follow Back"}
+                        {isFollowingUser ? "Following ✓" : modal === "followers" ? "Follow Back" : "Follow"}
                       </button>
                     )}
                   </div>
