@@ -50,7 +50,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           style={{
             paddingTop: "max(1rem, env(safe-area-inset-top))",
-            background: "radial-gradient(circle at 50% 40%, rgba(18,30,26,1) 0%, rgba(0,0,0,1) 70%)",
+            background: "radial-gradient(ellipse 90% 70% at 50% 42%, rgba(20,32,28,1) 0%, rgba(6,10,9,1) 60%, rgba(0,0,0,1) 100%)",
           }}
           onClick={() => setOpen(false)}
         >
