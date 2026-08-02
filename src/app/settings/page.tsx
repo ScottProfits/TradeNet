@@ -440,13 +440,15 @@ export default function SettingsPage() {
               Connect
             </button>
             <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-3 opacity-25" />
-            <span className="text-[9px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
+            <img src="/brokers/omne-logo-white.png" alt="Powered by OMNE" className="h-3 opacity-25" />
           </div>
         </div>
 
-        {/* Required Rithmic/OMNE trademark & copyright notices — exact text provided by Rithmic support */}
+        {/* Required Rithmic/OMNE trademark & copyright notices — exact text provided by Rithmic support.
+            Only the R | Protocol API notice is included (not R | API+) since that's the actual API
+            this app talks to (raw websocket + templates, per src/lib/rithmic/client.ts) - four notices
+            total, matching Rithmic's guidance for an app using only one of their APIs. */}
         <div className="text-[10px] text-gray-600 leading-relaxed pt-1 border-t border-[var(--border)] mt-2">
-          <p>The R | API+™ software is Copyright © 2026 by Rithmic, LLC. All rights reserved.</p>
           <p>The R | Protocol API™ software is Copyright © 2026 by Rithmic, LLC. All rights reserved.</p>
           <p>Trading Platform by Rithmic™ is a trademark of Rithmic, LLC. All rights reserved.</p>
           <p>The OMNE™ software is Copyright © 2026 by Omnesys, LLC and Omnesys Technologies, Inc. All rights reserved.</p>

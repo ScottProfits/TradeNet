@@ -179,7 +179,7 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
             </button>
             <div className="flex flex-col items-center gap-1.5 pt-5">
               <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-4 opacity-40" />
-              <span className="text-[10px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
+              <img src="/brokers/omne-logo-white.png" alt="Powered by OMNE" className="h-4 opacity-40" />
             </div>
           </div>
         ) : status === "agreements" ? (
@@ -359,7 +359,11 @@ export default function RithmicConnectModal({ onClose, onSuccess }: Props) {
                 alt="Trading Platform by Rithmic"
                 className="h-4 opacity-30"
               />
-              <span className="text-[10px] text-gray-600 font-medium tracking-wide">Powered by OMNE</span>
+              <img
+                src="/brokers/omne-logo-white.png"
+                alt="Powered by OMNE"
+                className="h-4 opacity-30"
+              />
             </div>
           </div>
         )}

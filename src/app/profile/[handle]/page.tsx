@@ -744,7 +744,8 @@ function ProfilePageInner() {
               </span>
             )}
             {/* Rithmic attribution requirement */}
-            <img src="/brokers/rithmic-logo-white.png" alt="Market Data by Rithmic" className="h-3 opacity-25" />
+            <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-3 opacity-25" />
+            <img src="/brokers/omne-logo-white.png" alt="Powered by OMNE" className="h-3 opacity-25" />
           </div>
         </div>
       </div>
