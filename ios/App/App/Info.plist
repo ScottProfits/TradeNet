@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Ryzr needs camera access so you can take a photo or video to attach to a trade or your profile picture.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ryzr needs microphone access to record audio when you take a video to attach to a trade or post.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ryzr needs photo library access so you can attach a photo or video to a trade or set your profile picture.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

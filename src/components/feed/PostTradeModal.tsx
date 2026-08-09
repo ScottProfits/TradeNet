@@ -258,7 +258,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 {postMedia.map((m, i) => (
                   <div key={i} className="relative rounded-lg overflow-hidden border border-[var(--border)] aspect-square">
                     {m.type === "video" ? (
-                      <video src={m.preview} controls className="w-full h-full object-cover" />
+                      <video src={`${m.preview}#t=0.1`} controls preload="metadata" muted playsInline className="w-full h-full object-cover" />
                     ) : (
                       <Image src={m.preview} alt="preview" width={300} height={300} className="w-full h-full object-cover" unoptimized />
                     )}
@@ -523,8 +523,11 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
                 {mediaType === "video" ? (
                   <video
-                    src={mediaPreview}
+                    src={`${mediaPreview}#t=0.1`}
                     controls
+                    preload="metadata"
+                    muted
+                    playsInline
                     className="w-full max-h-48 object-cover"
                   />
                 ) : (

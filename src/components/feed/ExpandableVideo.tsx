@@ -21,6 +21,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [objectFit, setObjectFit] = useState<"cover" | "contain">("contain");
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -81,7 +82,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             src={src}
             autoPlay
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-${objectFit}`}
             onClick={() => {
               const v = expandedVideoRef.current;
               if (!v) return;
@@ -91,7 +92,17 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              setDuration(v.duration);
+              // Fill the screen edge-to-edge when the video's aspect ratio is
+              // close to the viewport's (crop is barely noticeable); otherwise
+              // letterbox so wide/tall videos aren't zoomed in and cropped.
+              const videoAspect = v.videoWidth / v.videoHeight;
+              const viewportAspect = window.innerWidth / window.innerHeight;
+              const ratio = videoAspect / viewportAspect;
+              setObjectFit(ratio > 0.75 && ratio < 1.33 ? "cover" : "contain");
+            }}
           />
 
           {/* Bottom playback bar */}
