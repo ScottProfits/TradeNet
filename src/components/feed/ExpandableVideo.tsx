@@ -22,8 +22,21 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [objectFit, setObjectFit] = useState<"cover" | "contain">("contain");
+  const [dragging, setDragging] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  function seekFromClientX(clientX: number) {
+    const track = trackRef.current;
+    const v = expandedVideoRef.current;
+    if (!track || !v || !duration) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const time = ratio * duration;
+    v.currentTime = time;
+    setCurrentTime(time);
+  }
 
   useEffect(() => {
     // iOS WebKit sometimes ignores the declarative autoplay attribute (e.g. after
@@ -138,22 +151,39 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
               {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white" />}
             </button>
             <span className="text-xs text-white/80 tabular-nums shrink-0 w-9">{formatTime(currentTime)}</span>
-            <input
-              type="range"
-              min={0}
-              max={duration || 0}
-              step={0.01}
-              value={currentTime}
-              onChange={(e) => {
-                const v = expandedVideoRef.current;
-                if (!v) return;
-                v.currentTime = Number(e.target.value);
-                setCurrentTime(Number(e.target.value));
-              }}
-              className="flex-1 accent-white h-1"
-              style={{ touchAction: "none" }}
+            <div
+              ref={trackRef}
+              className="relative flex-1 h-5 flex items-center touch-none"
+              role="slider"
               aria-label="Seek"
-            />
+              aria-valuemin={0}
+              aria-valuemax={duration || 0}
+              aria-valuenow={currentTime}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setDragging(true);
+                seekFromClientX(e.clientX);
+              }}
+              onPointerMove={(e) => {
+                if (!dragging) return;
+                e.preventDefault();
+                seekFromClientX(e.clientX);
+              }}
+              onPointerUp={() => setDragging(false)}
+              onPointerCancel={() => setDragging(false)}
+            >
+              <div className="w-full h-1 rounded-full bg-white/25 overflow-hidden">
+                <div
+                  className="h-full bg-white"
+                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                />
+              </div>
+              <div
+                className="absolute w-3 h-3 rounded-full bg-white -translate-x-1/2 shadow"
+                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
             <span className="text-xs text-white/80 tabular-nums shrink-0 w-9">{formatTime(duration)}</span>
           </div>
         </div>,
