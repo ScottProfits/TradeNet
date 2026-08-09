@@ -58,17 +58,13 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
 
       {open && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          style={{
-            paddingTop: "max(1rem, env(safe-area-inset-top))",
-            background: "radial-gradient(ellipse 90% 70% at 50% 42%, rgba(20,32,28,1) 0%, rgba(6,10,9,1) 60%, rgba(0,0,0,1) 100%)",
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black"
           onClick={() => setOpen(false)}
         >
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="absolute z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
             style={{ top: "max(1rem, env(safe-area-inset-top))", right: "1rem" }}
             aria-label="Close"
           >
@@ -80,7 +76,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             autoPlay
             playsInline
             controls={showControls}
-            className="w-[92vw] h-[85vh] object-contain rounded-lg shadow-2xl"
+            className="w-screen h-screen object-contain"
             onClick={(e) => {
               e.stopPropagation();
               setShowControls((s) => !s);
