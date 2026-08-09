@@ -88,22 +88,32 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   }, [open]);
 
   useEffect(() => {
-    // Without this, iOS WebKit treats a drag starting on the scrub bar as a
-    // page rubber-band scroll before it recognizes the range input's own
-    // touch handling, dragging the whole screen instead of the thumb.
+    // overflow:hidden alone doesn't stop it — the body is still part of the
+    // scrollable document, so iOS WKWebView can still rubber-band it (and a
+    // fixed-position overlay visibly lags/shifts along with that native
+    // scroll). Actually pinning the body out of the document flow via
+    // position:fixed removes it from scroll contention entirely, which is
+    // the only fix that has reliably stopped this class of iOS bug.
     if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const body = document.body.style;
+    const prev = { position: body.position, top: body.top, left: body.left, right: body.right, width: body.width };
+    body.position = "fixed";
+    body.top = `-${scrollY}px`;
+    body.left = "0";
+    body.right = "0";
+    body.width = "100%";
 
-    // document.body.style.overflow alone doesn't stop it — Capacitor's
-    // WKWebView bounces the whole native scroll view underneath the DOM, so
-    // the only reliable block is intercepting the touch gesture itself
-    // before that scroll view claims it.
     const preventScroll = (e: TouchEvent) => e.preventDefault();
     document.addEventListener("touchmove", preventScroll, { passive: false });
 
     return () => {
-      document.body.style.overflow = prevOverflow;
+      body.position = prev.position;
+      body.top = prev.top;
+      body.left = prev.left;
+      body.right = prev.right;
+      body.width = prev.width;
+      window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", preventScroll);
     };
   }, [open]);
