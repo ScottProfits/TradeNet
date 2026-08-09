@@ -61,7 +61,18 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prevOverflow; };
+
+    // document.body.style.overflow alone doesn't stop it — Capacitor's
+    // WKWebView bounces the whole native scroll view underneath the DOM, so
+    // the only reliable block is intercepting the touch gesture itself
+    // before that scroll view claims it.
+    const preventScroll = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", preventScroll, { passive: false });
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("touchmove", preventScroll);
+    };
   }, [open]);
 
   return (
