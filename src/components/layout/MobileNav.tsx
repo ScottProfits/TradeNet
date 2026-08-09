@@ -119,8 +119,9 @@ export default function MobileNav() {
   return (
     <>
       <div
-        className="fixed left-1/2 bottom-2 z-50 lg:hidden flex flex-row items-center px-2 gap-1"
+        className="fixed left-1/2 z-50 lg:hidden flex flex-row items-center px-2 gap-1"
         style={{
+          bottom: "max(0.5rem, env(safe-area-inset-bottom))",
           height: PILL_HEIGHT,
           background: "rgba(15, 17, 23, 0.38)",
           backdropFilter: "blur(10px)",

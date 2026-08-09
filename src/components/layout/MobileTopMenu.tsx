@@ -33,7 +33,7 @@ export default function MobileTopMenu() {
   const unreadTotal = unreadDms + unreadNotifs;
 
   return (
-    <div ref={ref} className="fixed top-2 right-1 z-50 lg:hidden">
+    <div ref={ref} className="fixed right-1 z-50 lg:hidden" style={{ top: "max(0.5rem, env(safe-area-inset-top))" }}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative w-9 h-9 flex items-center justify-center rounded-full solid-menu"

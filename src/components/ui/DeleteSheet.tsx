@@ -25,6 +25,7 @@ export default function DeleteSheet({
     >
       <div
         className="solid-menu rounded-t-2xl w-full max-w-lg p-5"
+        style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">

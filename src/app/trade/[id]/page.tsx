@@ -250,7 +250,7 @@ export default function TradePage() {
 
       {/* Sticky CTA for logged-out visitors */}
       {!isSignedIn && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/10 px-4 py-4">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/10 px-4 pt-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
           <div className="max-w-2xl mx-auto flex items-center gap-4">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white">Track trades like this one.</p>

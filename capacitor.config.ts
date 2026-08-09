@@ -14,8 +14,8 @@ const config: CapacitorConfig = {
     allowNavigation: ['clerk.ryzr.app'],
   },
   ios: {
-    contentInset: 'automatic',
-    backgroundColor: '#0F1117',
+    contentInset: 'never',
+    backgroundColor: '#000000',
   },
   plugins: {
     PushNotifications: {
