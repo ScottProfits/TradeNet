@@ -188,5 +188,33 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* ignore */ }
 
+  // ── Forex news (FXStreet RSS) ─────────────────────────────────────────────
+  // Forex Factory has no public API/RSS (Cloudflare-blocked); FXStreet is the
+  // closest open forex-news source with a stable feed.
+  try {
+    const fxRes = await fetch("https://www.fxstreet.com/rss/news", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      next: { revalidate: 300 },
+    });
+    if (fxRes.ok) {
+      const xml = await fxRes.text();
+      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 6);
+      const fxNews = items.map((m) => {
+        const block = m[1];
+        const title = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
+          ?? block.match(/<title>(.*?)<\/title>/)?.[1] ?? "";
+        const link = block.match(/<link>(.*?)<\/link>/)?.[1] ?? "";
+        const pubDate = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1];
+        return {
+          title,
+          source: "FXStreet",
+          url: link,
+          published: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+        };
+      }).filter((n) => n.title && n.url);
+      news = [...news, ...fxNews].sort((a, b) => b.published.localeCompare(a.published));
+    }
+  } catch { /* ignore */ }
+
   return Response.json({ marketStatus, upcomingEvents, todayEvents, trending, news });
 }
