@@ -186,7 +186,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
           <div
             className="absolute inset-x-0 bottom-0 z-10 flex items-center gap-3 px-4 py-3"
             style={{
-              paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+              paddingBottom: "0.75rem",
               background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))",
             }}
             onClick={(e) => e.stopPropagation()}
