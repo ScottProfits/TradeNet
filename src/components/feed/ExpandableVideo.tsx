@@ -101,7 +101,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
       </div>
 
       {open && createPortal(
-        <div className="fixed inset-0 z-[100] bg-black">
+        <div className="fixed inset-0 z-[100] bg-black touch-none">
           <button
             type="button"
             onClick={() => setOpen(false)}
