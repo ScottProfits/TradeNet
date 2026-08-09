@@ -7,6 +7,37 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 
+// Blob URLs don't support the "#t=" media-fragment seek that works on real
+// network URLs, and iOS WebKit won't render a first frame on its own — so we
+// capture one ourselves onto a canvas to use as the poster image.
+function captureVideoPoster(url: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    const cleanup = () => video.remove();
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = Math.min(0.1, (video.duration || 0) / 2);
+    });
+    video.addEventListener("seeked", () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      } catch {
+        resolve(undefined);
+      } finally {
+        cleanup();
+      }
+    });
+    video.addEventListener("error", () => { resolve(undefined); cleanup(); });
+  });
+}
+
 interface Props {
   onClose: () => void;
   onPosted: () => void;
@@ -40,6 +71,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   const [strategy, setStrategy] = useState("");
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaPoster, setMediaPoster] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -47,20 +79,21 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
 
   // Regular ("Post" tab) media - up to 3 images, or a single video (mutually
   // exclusive with multiple images, since a video is one attachment on its own).
-  const [postMedia, setPostMedia] = useState<{ file: File; preview: string; type: "image" | "video" }[]>([]);
+  const [postMedia, setPostMedia] = useState<{ file: File; preview: string; type: "image" | "video"; poster?: string }[]>([]);
   const postFileRef = useRef<HTMLInputElement>(null);
 
-  function handlePostMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePostMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const type: "image" | "video" = file.type.startsWith("video/") ? "video" : "image";
     const preview = URL.createObjectURL(file);
-    setPostMedia((prev) => {
-      if (type === "video") return [{ file, preview, type }];
-      const withoutVideo = prev.filter((m) => m.type !== "video");
-      return [...withoutVideo, { file, preview, type }].slice(0, 3);
-    });
     if (postFileRef.current) postFileRef.current.value = "";
+    const poster = type === "video" ? await captureVideoPoster(preview) : undefined;
+    setPostMedia((prev) => {
+      if (type === "video") return [{ file, preview, type, poster }];
+      const withoutVideo = prev.filter((m) => m.type !== "video");
+      return [...withoutVideo, { file, preview, type, poster }].slice(0, 3);
+    });
   }
 
   function removePostMedia(index: number) {
@@ -105,17 +138,21 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     previewPct = Math.abs(previewPct) * sign;
   }
 
-  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isVideo = file.type.startsWith("video/");
+    const preview = URL.createObjectURL(file);
     setMedia(file);
-    setMediaPreview(URL.createObjectURL(file));
-    setMediaType(file.type.startsWith("video/") ? "video" : "image");
+    setMediaPreview(preview);
+    setMediaType(isVideo ? "video" : "image");
+    setMediaPoster(isVideo ? await captureVideoPoster(preview) : undefined);
   }
 
   function clearMedia() {
     setMedia(null);
     setMediaPreview(null);
+    setMediaPoster(undefined);
     setMediaType(null);
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -258,7 +295,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 {postMedia.map((m, i) => (
                   <div key={i} className="relative rounded-lg overflow-hidden border border-[var(--border)] aspect-square">
                     {m.type === "video" ? (
-                      <video src={`${m.preview}#t=0.1`} controls preload="metadata" muted playsInline className="w-full h-full object-cover" />
+                      <video src={m.preview} poster={m.poster} controls preload="metadata" muted playsInline className="w-full h-full object-cover" />
                     ) : (
                       <Image src={m.preview} alt="preview" width={300} height={300} className="w-full h-full object-cover" unoptimized />
                     )}
@@ -523,7 +560,8 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
                 {mediaType === "video" ? (
                   <video
-                    src={`${mediaPreview}#t=0.1`}
+                    src={mediaPreview}
+                    poster={mediaPoster}
                     controls
                     preload="metadata"
                     muted

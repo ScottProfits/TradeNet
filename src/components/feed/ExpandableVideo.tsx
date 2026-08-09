@@ -41,6 +41,16 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
     }
   }, [open]);
 
+  useEffect(() => {
+    // Without this, iOS WebKit treats a drag starting on the scrub bar as a
+    // page rubber-band scroll before it recognizes the range input's own
+    // touch handling, dragging the whole screen instead of the thumb.
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [open]);
+
   return (
     <>
       <div className="relative w-full cursor-zoom-in">
@@ -141,6 +151,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
                 setCurrentTime(Number(e.target.value));
               }}
               className="flex-1 accent-white h-1"
+              style={{ touchAction: "none" }}
               aria-label="Seek"
             />
             <span className="text-xs text-white/80 tabular-nums shrink-0 w-9">{formatTime(duration)}</span>
