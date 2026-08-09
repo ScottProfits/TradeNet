@@ -22,7 +22,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [objectFit, setObjectFit] = useState<"cover" | "contain">("contain");
-  const [dragging, setDragging] = useState(false);
+  const draggingRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -37,6 +37,39 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
     v.currentTime = time;
     setCurrentTime(time);
   }
+
+  useEffect(() => {
+    // Backup for the onPointer* handlers below: Pointer Events aren't
+    // reliably cancelable in every WKWebView build Capacitor ships on, so a
+    // manual non-passive touch listener (React's synthetic touch handlers
+    // are passive by default and can't call preventDefault) gives a second,
+    // more direct path to stop the native drag from reaching the scroll view.
+    const track = trackRef.current;
+    if (!open || !track) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      draggingRef.current = true;
+      seekFromClientX(e.touches[0].clientX);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      seekFromClientX(e.touches[0].clientX);
+    };
+    const onTouchEnd = () => { draggingRef.current = false; };
+
+    track.addEventListener("touchstart", onTouchStart, { passive: false });
+    track.addEventListener("touchmove", onTouchMove, { passive: false });
+    track.addEventListener("touchend", onTouchEnd);
+    track.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      track.removeEventListener("touchstart", onTouchStart);
+      track.removeEventListener("touchmove", onTouchMove);
+      track.removeEventListener("touchend", onTouchEnd);
+      track.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [open, duration]);
 
   useEffect(() => {
     // iOS WebKit sometimes ignores the declarative autoplay attribute (e.g. after
@@ -173,16 +206,16 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
               onPointerDown={(e) => {
                 e.preventDefault();
                 e.currentTarget.setPointerCapture(e.pointerId);
-                setDragging(true);
+                draggingRef.current = true;
                 seekFromClientX(e.clientX);
               }}
               onPointerMove={(e) => {
-                if (!dragging) return;
+                if (!draggingRef.current) return;
                 e.preventDefault();
                 seekFromClientX(e.clientX);
               }}
-              onPointerUp={() => setDragging(false)}
-              onPointerCancel={() => setDragging(false)}
+              onPointerUp={() => { draggingRef.current = false; }}
+              onPointerCancel={() => { draggingRef.current = false; }}
             >
               <div className="w-full h-1 rounded-full bg-white/25 overflow-hidden">
                 <div
