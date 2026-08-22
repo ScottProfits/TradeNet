@@ -18,7 +18,7 @@ export default function ExpandableImage({ src, alt, thumbnailClassName }: Expand
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={clsx("block w-full cursor-zoom-in", thumbnailClassName ? "h-full" : undefined)}>
-        <Image src={src} alt={alt} width={600} height={300} className={clsx("w-full object-cover", thumbnailClassName ?? "max-h-80")} unoptimized />
+        <Image src={src} alt={alt} width={600} height={300} className={clsx("w-full object-cover", thumbnailClassName ?? "max-h-80")} />
       </button>
 
       {open && createPortal(

@@ -73,7 +73,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
             onClick={() => setOpenIndex(i)}
             className="aspect-square cursor-zoom-in"
           >
-            <Image src={src} alt={`Post media ${i + 1}`} width={300} height={300} className="w-full h-full object-cover" unoptimized />
+            <Image src={src} alt={`Post media ${i + 1}`} width={300} height={300} className="w-full h-full object-cover" />
           </button>
         ))}
       </div>
