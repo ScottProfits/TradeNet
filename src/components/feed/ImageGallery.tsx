@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { clsx } from "clsx";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 interface ImageGalleryProps {
   images: string[];
@@ -16,33 +17,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   const deltaXRef = useRef(0);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Pinning body out of the document flow (not just overflow:hidden) is
-    // what actually stops iOS WKWebView from rubber-banding the whole page
-    // during the swipe gesture — see ExpandableVideo.tsx for the same fix.
-    if (openIndex === null) return;
-    const scrollY = window.scrollY;
-    const body = document.body.style;
-    const prev = { position: body.position, top: body.top, left: body.left, right: body.right, width: body.width };
-    body.position = "fixed";
-    body.top = `-${scrollY}px`;
-    body.left = "0";
-    body.right = "0";
-    body.width = "100%";
-
-    const preventScroll = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener("touchmove", preventScroll, { passive: false });
-
-    return () => {
-      body.position = prev.position;
-      body.top = prev.top;
-      body.left = prev.left;
-      body.right = prev.right;
-      body.width = prev.width;
-      window.scrollTo(0, scrollY);
-      document.removeEventListener("touchmove", preventScroll);
-    };
-  }, [openIndex !== null]);
+  useBodyScrollLock(openIndex !== null);
 
   function goTo(i: number) {
     setOpenIndex(Math.max(0, Math.min(images.length - 1, i)));
