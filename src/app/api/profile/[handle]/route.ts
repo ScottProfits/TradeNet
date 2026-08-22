@@ -1,9 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ handle: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   const { userId } = await auth();
+  // Cursor pagination for "load more" on the trade/post history — when
+  // present, skip the profile/followers/following work below and return
+  // just the next page (see loadMoreHistory in the profile page).
+  const before = new URL(req.url).searchParams.get("before");
 
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -14,14 +18,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
   if (error || !profile) return new Response("Not found", { status: 404 });
 
   const isOwner = userId === profile.id;
-  const tradesQuery = supabase
+  let tradesQuery = supabase
     .from("trades")
     .select("*")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (!isOwner) tradesQuery.eq("is_public", true);
+  if (!isOwner) tradesQuery = tradesQuery.eq("is_public", true);
+  if (before) tradesQuery = tradesQuery.lt("created_at", before);
 
   const { data: tradesRaw } = await tradesQuery;
 
@@ -35,12 +40,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
     trades = trades.map((t) => ({ ...t, liked_by_me: tradeLikedSet.has(t.id as string) }));
   }
 
-  const { data: postsRaw } = await supabase
+  let postsQuery = supabase
     .from("posts")
     .select("*")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(20);
+  if (before) postsQuery = postsQuery.lt("created_at", before);
+
+  const { data: postsRaw } = await postsQuery;
 
   let posts: Array<Record<string, unknown>> = postsRaw ?? [];
   if (posts.length > 0) {
@@ -55,6 +63,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ handle:
       liked_by_me: likedSet.has(p.id as string),
     }));
   }
+
+  if (before) return Response.json({ trades, posts });
 
   const { count: followersCount } = await supabase
     .from("follows")

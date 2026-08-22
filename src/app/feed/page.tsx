@@ -10,7 +10,7 @@ import VideoTab from "@/components/feed/VideoTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
 import PullToRefresh from "@/components/ui/PullToRefresh";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Users } from "lucide-react";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
@@ -36,7 +36,22 @@ function FeedPageInner() {
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  // Cursor pagination — each "page" is a real, small network fetch (max 15
+  // trades + 15 posts) instead of slicing an already-fully-fetched array,
+  // which is what let too many images load/paint at once and overwhelmed
+  // WebKit's tile compositor. Guards live in refs, not state, so the
+  // IntersectionObserver callback below always reads fresh values without
+  // needing to be recreated on every append.
+  const feedCursorRef = useRef<string | null>(null);
+  const feedHasMoreRef = useRef(true);
+  const feedLoadingMoreRef = useRef(false);
+  const followingCursorRef = useRef<string | null>(null);
+  const followingHasMoreRef = useRef(true);
+  const followingLoadingMoreRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const initialTab = searchParams.get("tab");
   const [tab, setTabState] = useState<"feed" | "video" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
   const [followingOnly, setFollowingOnly] = useState(false);
@@ -63,8 +78,17 @@ function FeedPageInner() {
     });
   }, [isDemo]);
 
+  // Page size mirrors the API's own .limit(15) — used only to infer whether
+  // a source might have more (a full page back means there could be more).
+  const PAGE_SIZE = 15;
+
+  function oldestCreatedAt(items: FeedItem[]): string | null {
+    if (!items.length) return null;
+    return items.reduce((oldest, i) => (i.created_at < oldest ? i.created_at : oldest), items[0].created_at);
+  }
+
   const loadFeed = useCallback(async () => {
-    if (isDemo) { setFeedItems(demoFeedItems); return; }
+    if (isDemo) { setFeedItems(demoFeedItems); feedHasMoreRef.current = false; setFeedLoading(false); return; }
     try {
       const [tradesRes, postsRes] = await Promise.all([
         fetch("/api/trades"),
@@ -79,7 +103,38 @@ function FeedPageInner() {
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFeedItems(merged);
+      feedCursorRef.current = oldestCreatedAt(merged);
+      feedHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
     } catch { /* silently fail */ }
+    setFeedLoading(false);
+  }, [isDemo]);
+
+  const loadMoreFeed = useCallback(async () => {
+    if (isDemo || feedLoadingMoreRef.current || !feedHasMoreRef.current || !feedCursorRef.current) return;
+    feedLoadingMoreRef.current = true;
+    try {
+      const before = encodeURIComponent(feedCursorRef.current);
+      const [tradesRes, postsRes] = await Promise.all([
+        fetch(`/api/trades?before=${before}`),
+        fetch(`/api/posts?before=${before}`),
+      ]);
+      const trades: RealTrade[] = tradesRes.ok ? await tradesRes.json() : [];
+      const posts: RealPost[] = postsRes.ok ? await postsRes.json() : [];
+      const newItems: FeedItem[] = [
+        ...trades.map((t) => ({ ...t, type: "trade" as const })),
+        ...posts.map((p) => ({ ...p, type: "post" as const })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      feedHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+      if (newItems.length) {
+        setFeedItems((prev) => {
+          const merged = [...prev, ...newItems];
+          feedCursorRef.current = oldestCreatedAt(merged);
+          return merged;
+        });
+      }
+    } catch { /* silently fail */ }
+    feedLoadingMoreRef.current = false;
   }, [isDemo]);
 
   const loadFollowing = useCallback(async () => {
@@ -92,12 +147,60 @@ function FeedPageInner() {
         ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setFollowingItems(merged);
+      followingCursorRef.current = oldestCreatedAt(merged);
+      followingHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
     } catch { /* silently fail */ }
+  }, []);
+
+  const loadMoreFollowing = useCallback(async () => {
+    if (followingLoadingMoreRef.current || !followingHasMoreRef.current || !followingCursorRef.current) return;
+    followingLoadingMoreRef.current = true;
+    try {
+      const before = encodeURIComponent(followingCursorRef.current);
+      const res = await fetch(`/api/following-feed?before=${before}`);
+      if (res.ok) {
+        const { trades, posts } = await res.json();
+        const newItems: FeedItem[] = [
+          ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
+          ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        followingHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+        if (newItems.length) {
+          setFollowingItems((prev) => {
+            const merged = [...prev, ...newItems];
+            followingCursorRef.current = oldestCreatedAt(merged);
+            return merged;
+          });
+        }
+      }
+    } catch { /* silently fail */ }
+    followingLoadingMoreRef.current = false;
   }, []);
 
   useEffect(() => { loadFeed(); loadFollowing(); }, [loadFeed, loadFollowing]);
 
+  // Single observer for the "load more" sentinel at the bottom of whichever
+  // list is currently rendered — the callback always dispatches to the
+  // right loader via the followingOnly ref-mirrored check below.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        if (followingOnly) loadMoreFollowing();
+        else loadMoreFeed();
+      },
+      { rootMargin: "600px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [tab, followingOnly, loadMoreFeed, loadMoreFollowing]);
+
   const handleRefresh = useCallback(async () => {
+    feedHasMoreRef.current = true;
+    followingHasMoreRef.current = true;
     await Promise.all([loadFeed(), loadFollowing()]);
   }, [loadFeed, loadFollowing]);
 
@@ -189,13 +292,22 @@ function FeedPageInner() {
             {followingOnly ? (
               followingItems.length === 0
                 ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
-                : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                    if (item.type === "trade") {
-                      const { trade, trader } = realTradeToCardProps(item);
-                      return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
-                    }
-                    return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-                  })
+                : <>
+                    {followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+                      if (item.type === "trade") {
+                        const { trade, trader } = realTradeToCardProps(item);
+                        return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
+                      }
+                      return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
+                    })}
+                    <div ref={sentinelRef} />
+                  </>
+            ) : feedLoading ? (
+              <>
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="glass-card rounded-2xl h-40 animate-pulse" />
+                ))}
+              </>
             ) : (
               <>
                 {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
@@ -221,6 +333,7 @@ function FeedPageInner() {
                   }
                   return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
                 })}
+                <div ref={sentinelRef} />
               </>
             )}
           </>

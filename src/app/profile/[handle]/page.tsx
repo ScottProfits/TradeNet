@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings } from "lucide-react";
@@ -152,6 +152,14 @@ function ProfilePageInner() {
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
   const [tradeHistoryTab, setTradeHistoryTab] = useState<"history" | "videos">("history");
+  // Cursor pagination for trade/post history — same reasoning as the feed
+  // (src/app/feed/page.tsx): keep each page small so the DOM/image count
+  // doesn't overwhelm WebKit's tile compositor.
+  const HISTORY_PAGE_SIZE = 20;
+  const historyCursorRef = useRef<string | null>(null);
+  const historyHasMoreRef = useRef(true);
+  const historyLoadingMoreRef = useRef(false);
+  const historySentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -179,8 +187,57 @@ function ProfilePageInner() {
         const vis: Record<string, boolean> = {};
         for (const t of d.trades) vis[t.id] = (t as any).is_public !== false;
         setTradeVisibility(vis);
+
+        const oldest = [...d.trades, ...d.posts].reduce(
+          (o: string | null, i: { created_at: string }) => (!o || i.created_at < o ? i.created_at : o),
+          null
+        );
+        historyCursorRef.current = oldest;
+        historyHasMoreRef.current = d.trades.length === HISTORY_PAGE_SIZE || d.posts.length === HISTORY_PAGE_SIZE;
       });
   }, [handle, isDemo]);
+
+  const loadMoreHistory = useCallback(async () => {
+    if (isDemo || historyLoadingMoreRef.current || !historyHasMoreRef.current || !historyCursorRef.current) return;
+    historyLoadingMoreRef.current = true;
+    try {
+      const before = encodeURIComponent(historyCursorRef.current);
+      const res = await fetch(`/api/profile/${handle}?before=${before}`);
+      if (res.ok) {
+        const { trades: newTrades, posts: newPosts } = await res.json();
+        historyHasMoreRef.current = newTrades.length === HISTORY_PAGE_SIZE || newPosts.length === HISTORY_PAGE_SIZE;
+        if (newTrades.length || newPosts.length) {
+          setData((prev) => {
+            if (!prev) return prev;
+            const merged = { ...prev, trades: [...prev.trades, ...newTrades], posts: [...prev.posts, ...newPosts] };
+            const oldest = [...newTrades, ...newPosts].reduce(
+              (o: string | null, i: { created_at: string }) => (!o || i.created_at < o ? i.created_at : o),
+              historyCursorRef.current
+            );
+            historyCursorRef.current = oldest;
+            return merged;
+          });
+          setTradeVisibility((prev) => {
+            const vis = { ...prev };
+            for (const t of newTrades) vis[t.id] = (t as { is_public?: boolean }).is_public !== false;
+            return vis;
+          });
+        }
+      }
+    } catch { /* silently fail */ }
+    historyLoadingMoreRef.current = false;
+  }, [handle, isDemo]);
+
+  useEffect(() => {
+    const el = historySentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreHistory(); },
+      { rootMargin: "600px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [tradeHistoryTab, loadMoreHistory]);
 
   useEffect(() => {
     if (isDemo) return;
@@ -636,6 +693,7 @@ function ProfilePageInner() {
               </div>
             );
               })}
+              <div ref={historySentinelRef} />
             </>
           );
         })()}

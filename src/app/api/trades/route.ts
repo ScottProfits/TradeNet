@@ -3,18 +3,21 @@ import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextRequest } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
+  // Cursor pagination: pass the created_at of the oldest item already shown
+  // to get the next page. Keeping each page small is what actually avoids
+  // overwhelming WebKit's tile compositor with too much DOM/images at once.
+  const before = req.nextUrl.searchParams.get("before");
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("trades")
     .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
     .order("created_at", { ascending: false })
-    // Rendering everything (each with up to 3 images) overwhelms WebKit's
-    // tile compositor and shows blank unpainted stretches while scrolling.
-    // No client-side pagination exists yet, so keep the initial payload
-    // itself small until that's built properly.
     .limit(15);
+  if (before) query = query.lt("created_at", before);
+
+  const { data, error } = await query;
 
   if (error) return new Response(error.message, { status: 500 });
 

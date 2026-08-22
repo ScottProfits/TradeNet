@@ -1,9 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { NextRequest } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  // Cursor pagination: pass the created_at of the oldest item already shown
+  // to get the next page.
+  const before = req.nextUrl.searchParams.get("before");
 
   // Get who the user follows
   const { data: follows } = await supabase
@@ -15,20 +20,23 @@ export async function GET() {
 
   const followingIds = follows.map((f) => f.following_id);
 
-  const [{ data: trades }, { data: posts }] = await Promise.all([
-    supabase
-      .from("trades")
-      .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
-      .in("user_id", followingIds)
-      .order("created_at", { ascending: false })
-      .limit(15),
-    supabase
-      .from("posts")
-      .select("*")
-      .in("user_id", followingIds)
-      .order("created_at", { ascending: false })
-      .limit(15),
-  ]);
+  let tradesQuery = supabase
+    .from("trades")
+    .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
+    .in("user_id", followingIds)
+    .order("created_at", { ascending: false })
+    .limit(15);
+  if (before) tradesQuery = tradesQuery.lt("created_at", before);
+
+  let postsQuery = supabase
+    .from("posts")
+    .select("*")
+    .in("user_id", followingIds)
+    .order("created_at", { ascending: false })
+    .limit(15);
+  if (before) postsQuery = postsQuery.lt("created_at", before);
+
+  const [{ data: trades }, { data: posts }] = await Promise.all([tradesQuery, postsQuery]);
 
   // liked trades
   const tradeIds = (trades ?? []).map((t) => t.id);
