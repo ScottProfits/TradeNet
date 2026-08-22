@@ -192,23 +192,11 @@ function FeedPageInner() {
               followingItems.length === 0
                 ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
                 : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                    // content-visibility defers layout/paint for off-screen cards until they
-                    // near the viewport, instead of the browser trying to paint the whole
-                    // (unpaginated) feed up front — without it, fast scrolling outruns paint
-                    // and shows blank space that "catches up" a moment later.
                     if (item.type === "trade") {
                       const { trade, trader } = realTradeToCardProps(item);
-                      return (
-                        <div key={item.id} style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
-                          <TradeCard trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />
-                        </div>
-                      );
+                      return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
                     }
-                    return (
-                      <div key={item.id} style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
-                        <PostCard post={item} onDelete={handleDelete} />
-                      </div>
-                    );
+                    return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
                   })
             ) : feedLoading ? (
               <>
@@ -219,36 +207,27 @@ function FeedPageInner() {
             ) : (
               <>
                 {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                  // content-visibility defers layout/paint for off-screen cards until they
-                  // near the viewport, instead of the browser trying to paint the whole
-                  // (unpaginated) feed up front — without it, fast scrolling outruns paint
-                  // and shows blank space that "catches up" a moment later.
                   if (item.type === "trade") {
                     const { trade, trader } = realTradeToCardProps(item);
                     return (
-                      <div key={item.id} style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
-                        <TradeCard
-                          trade={trade}
-                          trader={trader}
-                          imageUrl={item.image_url ?? undefined}
-                          avatarUrl={item.profiles?.avatar_url ?? undefined}
-                          strategy={item.strategy ?? undefined}
-                          likedByMe={item.liked_by_me}
-                          verifiedPnl={item.verified_pnl}
-                          journalNote={item.journal_note ?? undefined}
-                          entry={item.entry}
-                          exit={item.exit}
-                          rawShares={item.shares ?? 0}
-                          onDelete={handleDelete}
-                        />
-                      </div>
+                      <TradeCard
+                        key={item.id}
+                        trade={trade}
+                        trader={trader}
+                        imageUrl={item.image_url ?? undefined}
+                        avatarUrl={item.profiles?.avatar_url ?? undefined}
+                        strategy={item.strategy ?? undefined}
+                        likedByMe={item.liked_by_me}
+                        verifiedPnl={item.verified_pnl}
+                        journalNote={item.journal_note ?? undefined}
+                        entry={item.entry}
+                        exit={item.exit}
+                        rawShares={item.shares ?? 0}
+                        onDelete={handleDelete}
+                      />
                     );
                   }
-                  return (
-                    <div key={item.id} style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}>
-                      <PostCard post={item} onDelete={handleDelete} />
-                    </div>
-                  );
+                  return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
                 })}
               </>
             )}
