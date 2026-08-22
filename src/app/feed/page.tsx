@@ -45,11 +45,22 @@ function FeedPageInner() {
   // WebKit's tile compositor. Guards live in refs, not state, so the
   // IntersectionObserver callback below always reads fresh values without
   // needing to be recreated on every append.
-  const feedCursorRef = useRef<string | null>(null);
-  const feedHasMoreRef = useRef(true);
+  //
+  // Trades and posts get their OWN cursors, not one shared "oldest overall"
+  // cursor — trades and posts can have very different age distributions
+  // (e.g. trades skew newer than posts), so a single shared cursor can
+  // silently skip items that fall between the two tables' real boundaries:
+  // an item newer than the shared cursor but older than what's already
+  // shown of its own type would never get fetched at all.
+  const feedTradesCursorRef = useRef<string | null>(null);
+  const feedPostsCursorRef = useRef<string | null>(null);
+  const feedTradesHasMoreRef = useRef(true);
+  const feedPostsHasMoreRef = useRef(true);
   const feedLoadingMoreRef = useRef(false);
-  const followingCursorRef = useRef<string | null>(null);
-  const followingHasMoreRef = useRef(true);
+  const followingTradesCursorRef = useRef<string | null>(null);
+  const followingPostsCursorRef = useRef<string | null>(null);
+  const followingTradesHasMoreRef = useRef(true);
+  const followingPostsHasMoreRef = useRef(true);
   const followingLoadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const initialTab = searchParams.get("tab");
@@ -82,13 +93,19 @@ function FeedPageInner() {
   // a source might have more (a full page back means there could be more).
   const PAGE_SIZE = 15;
 
-  function oldestCreatedAt(items: FeedItem[]): string | null {
+  function oldestOf(items: { created_at: string }[]): string | null {
     if (!items.length) return null;
     return items.reduce((oldest, i) => (i.created_at < oldest ? i.created_at : oldest), items[0].created_at);
   }
 
   const loadFeed = useCallback(async () => {
-    if (isDemo) { setFeedItems(demoFeedItems); feedHasMoreRef.current = false; setFeedLoading(false); return; }
+    if (isDemo) {
+      setFeedItems(demoFeedItems);
+      feedTradesHasMoreRef.current = false;
+      feedPostsHasMoreRef.current = false;
+      setFeedLoading(false);
+      return;
+    }
     try {
       const [tradesRes, postsRes] = await Promise.all([
         fetch("/api/trades"),
@@ -103,35 +120,44 @@ function FeedPageInner() {
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFeedItems(merged);
-      feedCursorRef.current = oldestCreatedAt(merged);
-      feedHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+      feedTradesCursorRef.current = oldestOf(trades);
+      feedPostsCursorRef.current = oldestOf(posts);
+      feedTradesHasMoreRef.current = trades.length === PAGE_SIZE;
+      feedPostsHasMoreRef.current = posts.length === PAGE_SIZE;
     } catch { /* silently fail */ }
     setFeedLoading(false);
   }, [isDemo]);
 
   const loadMoreFeed = useCallback(async () => {
-    if (isDemo || feedLoadingMoreRef.current || !feedHasMoreRef.current || !feedCursorRef.current) return;
+    if (isDemo || feedLoadingMoreRef.current) return;
+    if (!feedTradesHasMoreRef.current && !feedPostsHasMoreRef.current) return;
     feedLoadingMoreRef.current = true;
     try {
-      const before = encodeURIComponent(feedCursorRef.current);
       const [tradesRes, postsRes] = await Promise.all([
-        fetch(`/api/trades?before=${before}`),
-        fetch(`/api/posts?before=${before}`),
+        feedTradesHasMoreRef.current && feedTradesCursorRef.current
+          ? fetch(`/api/trades?before=${encodeURIComponent(feedTradesCursorRef.current)}`)
+          : Promise.resolve(null),
+        feedPostsHasMoreRef.current && feedPostsCursorRef.current
+          ? fetch(`/api/posts?before=${encodeURIComponent(feedPostsCursorRef.current)}`)
+          : Promise.resolve(null),
       ]);
-      const trades: RealTrade[] = tradesRes.ok ? await tradesRes.json() : [];
-      const posts: RealPost[] = postsRes.ok ? await postsRes.json() : [];
+      const trades: RealTrade[] = tradesRes?.ok ? await tradesRes.json() : [];
+      const posts: RealPost[] = postsRes?.ok ? await postsRes.json() : [];
       const newItems: FeedItem[] = [
         ...trades.map((t) => ({ ...t, type: "trade" as const })),
         ...posts.map((p) => ({ ...p, type: "post" as const })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      feedHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+      if (tradesRes) {
+        feedTradesHasMoreRef.current = trades.length === PAGE_SIZE;
+        if (trades.length) feedTradesCursorRef.current = oldestOf(trades);
+      }
+      if (postsRes) {
+        feedPostsHasMoreRef.current = posts.length === PAGE_SIZE;
+        if (posts.length) feedPostsCursorRef.current = oldestOf(posts);
+      }
       if (newItems.length) {
-        setFeedItems((prev) => {
-          const merged = [...prev, ...newItems];
-          feedCursorRef.current = oldestCreatedAt(merged);
-          return merged;
-        });
+        setFeedItems((prev) => [...prev, ...newItems]);
       }
     } catch { /* silently fail */ }
     feedLoadingMoreRef.current = false;
@@ -147,17 +173,27 @@ function FeedPageInner() {
         ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setFollowingItems(merged);
-      followingCursorRef.current = oldestCreatedAt(merged);
-      followingHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+      followingTradesCursorRef.current = oldestOf(trades);
+      followingPostsCursorRef.current = oldestOf(posts);
+      followingTradesHasMoreRef.current = trades.length === PAGE_SIZE;
+      followingPostsHasMoreRef.current = posts.length === PAGE_SIZE;
     } catch { /* silently fail */ }
   }, []);
 
   const loadMoreFollowing = useCallback(async () => {
-    if (followingLoadingMoreRef.current || !followingHasMoreRef.current || !followingCursorRef.current) return;
+    if (followingLoadingMoreRef.current) return;
+    if (!followingTradesHasMoreRef.current && !followingPostsHasMoreRef.current) return;
     followingLoadingMoreRef.current = true;
     try {
-      const before = encodeURIComponent(followingCursorRef.current);
-      const res = await fetch(`/api/following-feed?before=${before}`);
+      // Always send both cursors, even for an exhausted type — querying
+      // "older than the last known item" on an already-exhausted source
+      // just correctly returns empty again, which is harmless. Omitting it
+      // instead would restart that source from the top and reintroduce
+      // duplicates.
+      const params = new URLSearchParams();
+      if (followingTradesCursorRef.current) params.set("beforeTrades", followingTradesCursorRef.current);
+      if (followingPostsCursorRef.current) params.set("beforePosts", followingPostsCursorRef.current);
+      const res = await fetch(`/api/following-feed?${params.toString()}`);
       if (res.ok) {
         const { trades, posts } = await res.json();
         const newItems: FeedItem[] = [
@@ -165,13 +201,12 @@ function FeedPageInner() {
           ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
         ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        followingHasMoreRef.current = trades.length === PAGE_SIZE || posts.length === PAGE_SIZE;
+        followingTradesHasMoreRef.current = trades.length === PAGE_SIZE;
+        followingPostsHasMoreRef.current = posts.length === PAGE_SIZE;
+        if (trades.length) followingTradesCursorRef.current = oldestOf(trades);
+        if (posts.length) followingPostsCursorRef.current = oldestOf(posts);
         if (newItems.length) {
-          setFollowingItems((prev) => {
-            const merged = [...prev, ...newItems];
-            followingCursorRef.current = oldestCreatedAt(merged);
-            return merged;
-          });
+          setFollowingItems((prev) => [...prev, ...newItems]);
         }
       }
     } catch { /* silently fail */ }
@@ -208,8 +243,10 @@ function FeedPageInner() {
   }, [tab, followingOnly, feedItems.length, followingItems.length, loadMoreFeed, loadMoreFollowing]);
 
   const handleRefresh = useCallback(async () => {
-    feedHasMoreRef.current = true;
-    followingHasMoreRef.current = true;
+    feedTradesHasMoreRef.current = true;
+    feedPostsHasMoreRef.current = true;
+    followingTradesHasMoreRef.current = true;
+    followingPostsHasMoreRef.current = true;
     await Promise.all([loadFeed(), loadFollowing()]);
   }, [loadFeed, loadFollowing]);
 

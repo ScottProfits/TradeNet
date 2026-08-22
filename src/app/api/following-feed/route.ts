@@ -6,9 +6,12 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  // Cursor pagination: pass the created_at of the oldest item already shown
-  // to get the next page.
-  const before = req.nextUrl.searchParams.get("before");
+  // Cursor pagination — separate cursors per type, since trades and posts
+  // can have very different age distributions. A single shared cursor can
+  // silently skip items: one newer than the shared cursor but older than
+  // what's already been shown of its own type would never get fetched.
+  const beforeTrades = req.nextUrl.searchParams.get("beforeTrades");
+  const beforePosts = req.nextUrl.searchParams.get("beforePosts");
 
   // Get who the user follows
   const { data: follows } = await supabase
@@ -26,7 +29,7 @@ export async function GET(req: NextRequest) {
     .in("user_id", followingIds)
     .order("created_at", { ascending: false })
     .limit(15);
-  if (before) tradesQuery = tradesQuery.lt("created_at", before);
+  if (beforeTrades) tradesQuery = tradesQuery.lt("created_at", beforeTrades);
 
   let postsQuery = supabase
     .from("posts")
@@ -34,7 +37,7 @@ export async function GET(req: NextRequest) {
     .in("user_id", followingIds)
     .order("created_at", { ascending: false })
     .limit(15);
-  if (before) postsQuery = postsQuery.lt("created_at", before);
+  if (beforePosts) postsQuery = postsQuery.lt("created_at", beforePosts);
 
   const [{ data: trades }, { data: posts }] = await Promise.all([tradesQuery, postsQuery]);
 

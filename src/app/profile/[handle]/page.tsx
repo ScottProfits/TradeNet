@@ -154,12 +154,22 @@ function ProfilePageInner() {
   const [tradeHistoryTab, setTradeHistoryTab] = useState<"history" | "videos">("history");
   // Cursor pagination for trade/post history — same reasoning as the feed
   // (src/app/feed/page.tsx): keep each page small so the DOM/image count
-  // doesn't overwhelm WebKit's tile compositor.
+  // doesn't overwhelm WebKit's tile compositor. Trades and posts get their
+  // own cursors, not one shared "oldest overall" cursor — they can have
+  // very different age distributions, so a single shared cursor can
+  // silently skip items that fall between the two tables' real boundaries.
   const HISTORY_PAGE_SIZE = 20;
-  const historyCursorRef = useRef<string | null>(null);
-  const historyHasMoreRef = useRef(true);
+  const historyTradesCursorRef = useRef<string | null>(null);
+  const historyPostsCursorRef = useRef<string | null>(null);
+  const historyTradesHasMoreRef = useRef(true);
+  const historyPostsHasMoreRef = useRef(true);
   const historyLoadingMoreRef = useRef(false);
   const historySentinelRef = useRef<HTMLDivElement>(null);
+
+  function oldestOf(items: { created_at: string }[]): string | null {
+    if (!items.length) return null;
+    return items.reduce((oldest, i) => (i.created_at < oldest ? i.created_at : oldest), items[0].created_at);
+  }
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -188,34 +198,37 @@ function ProfilePageInner() {
         for (const t of d.trades) vis[t.id] = (t as any).is_public !== false;
         setTradeVisibility(vis);
 
-        const oldest = [...d.trades, ...d.posts].reduce(
-          (o: string | null, i: { created_at: string }) => (!o || i.created_at < o ? i.created_at : o),
-          null
-        );
-        historyCursorRef.current = oldest;
-        historyHasMoreRef.current = d.trades.length === HISTORY_PAGE_SIZE || d.posts.length === HISTORY_PAGE_SIZE;
+        historyTradesCursorRef.current = oldestOf(d.trades);
+        historyPostsCursorRef.current = oldestOf(d.posts);
+        historyTradesHasMoreRef.current = d.trades.length === HISTORY_PAGE_SIZE;
+        historyPostsHasMoreRef.current = d.posts.length === HISTORY_PAGE_SIZE;
       });
   }, [handle, isDemo]);
 
   const loadMoreHistory = useCallback(async () => {
-    if (isDemo || historyLoadingMoreRef.current || !historyHasMoreRef.current || !historyCursorRef.current) return;
+    if (isDemo || historyLoadingMoreRef.current) return;
+    if (!historyTradesHasMoreRef.current && !historyPostsHasMoreRef.current) return;
     historyLoadingMoreRef.current = true;
     try {
-      const before = encodeURIComponent(historyCursorRef.current);
-      const res = await fetch(`/api/profile/${handle}?before=${before}`);
+      // Always send both cursors, even for an exhausted type — querying
+      // "older than the last known item" on an already-exhausted source
+      // just correctly returns empty again, which is harmless. Omitting it
+      // instead would restart that source from the top and reintroduce
+      // duplicates.
+      const params = new URLSearchParams();
+      if (historyTradesCursorRef.current) params.set("beforeTrades", historyTradesCursorRef.current);
+      if (historyPostsCursorRef.current) params.set("beforePosts", historyPostsCursorRef.current);
+      const res = await fetch(`/api/profile/${handle}?${params.toString()}`);
       if (res.ok) {
         const { trades: newTrades, posts: newPosts } = await res.json();
-        historyHasMoreRef.current = newTrades.length === HISTORY_PAGE_SIZE || newPosts.length === HISTORY_PAGE_SIZE;
+        historyTradesHasMoreRef.current = newTrades.length === HISTORY_PAGE_SIZE;
+        historyPostsHasMoreRef.current = newPosts.length === HISTORY_PAGE_SIZE;
+        if (newTrades.length) historyTradesCursorRef.current = oldestOf(newTrades);
+        if (newPosts.length) historyPostsCursorRef.current = oldestOf(newPosts);
         if (newTrades.length || newPosts.length) {
           setData((prev) => {
             if (!prev) return prev;
-            const merged = { ...prev, trades: [...prev.trades, ...newTrades], posts: [...prev.posts, ...newPosts] };
-            const oldest = [...newTrades, ...newPosts].reduce(
-              (o: string | null, i: { created_at: string }) => (!o || i.created_at < o ? i.created_at : o),
-              historyCursorRef.current
-            );
-            historyCursorRef.current = oldest;
-            return merged;
+            return { ...prev, trades: [...prev.trades, ...newTrades], posts: [...prev.posts, ...newPosts] };
           });
           setTradeVisibility((prev) => {
             const vis = { ...prev };

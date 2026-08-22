@@ -4,10 +4,16 @@ import { supabase } from "@/lib/supabase";
 export async function GET(req: Request, { params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   const { userId } = await auth();
-  // Cursor pagination for "load more" on the trade/post history — when
-  // present, skip the profile/followers/following work below and return
-  // just the next page (see loadMoreHistory in the profile page).
-  const before = new URL(req.url).searchParams.get("before");
+  // Cursor pagination for "load more" on the trade/post history — separate
+  // cursors per type (trades and posts can have very different age
+  // distributions, so one shared cursor can silently skip items that fall
+  // between the two tables' real boundaries). When either is present, skip
+  // the profile/followers/following work below and return just the next
+  // page (see loadMoreHistory in the profile page).
+  const url = new URL(req.url);
+  const beforeTrades = url.searchParams.get("beforeTrades");
+  const beforePosts = url.searchParams.get("beforePosts");
+  const isPaginating = beforeTrades !== null || beforePosts !== null;
 
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -26,7 +32,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
     .limit(20);
 
   if (!isOwner) tradesQuery = tradesQuery.eq("is_public", true);
-  if (before) tradesQuery = tradesQuery.lt("created_at", before);
+  if (beforeTrades) tradesQuery = tradesQuery.lt("created_at", beforeTrades);
 
   const { data: tradesRaw } = await tradesQuery;
 
@@ -46,7 +52,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(20);
-  if (before) postsQuery = postsQuery.lt("created_at", before);
+  if (beforePosts) postsQuery = postsQuery.lt("created_at", beforePosts);
 
   const { data: postsRaw } = await postsQuery;
 
@@ -64,7 +70,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
     }));
   }
 
-  if (before) return Response.json({ trades, posts });
+  if (isPaginating) return Response.json({ trades, posts });
 
   const { count: followersCount } = await supabase
     .from("follows")
