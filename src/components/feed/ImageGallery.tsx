@@ -30,11 +30,20 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
     if (trackRef.current) trackRef.current.style.transition = "none";
   }
 
+  // translateX percentages resolve against the track's own width (which is
+  // images.length * 100% of the container), not the container itself — so
+  // shifting by "one photo" is (100 / images.length)% of the track, not 100%.
+  // Using a flat 100% here was overshooting by a factor of images.length,
+  // which is why one swipe blew past multiple photos.
+  function slidePercent(index: number) {
+    return (index * 100) / images.length;
+  }
+
   function onTouchMove(e: React.TouchEvent) {
     if (!draggingRef.current || openIndex === null) return;
     deltaXRef.current = e.touches[0].clientX - startXRef.current;
     if (trackRef.current) {
-      trackRef.current.style.transform = `translateX(calc(${-openIndex * 100}% + ${deltaXRef.current}px))`;
+      trackRef.current.style.transform = `translateX(calc(${-slidePercent(openIndex)}% + ${deltaXRef.current}px))`;
     }
   }
 
@@ -45,7 +54,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
     const threshold = 50;
     if (deltaXRef.current < -threshold) goTo(openIndex + 1);
     else if (deltaXRef.current > threshold) goTo(openIndex - 1);
-    else if (trackRef.current) trackRef.current.style.transform = `translateX(${-openIndex * 100}%)`;
+    else if (trackRef.current) trackRef.current.style.transform = `translateX(-${slidePercent(openIndex)}%)`;
     deltaXRef.current = 0;
   }
 
@@ -93,7 +102,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
           <div
             ref={trackRef}
             className="flex h-full"
-            style={{ transform: `translateX(${-openIndex * 100}%)`, width: `${images.length * 100}%` }}
+            style={{ transform: `translateX(-${slidePercent(openIndex)}%)`, width: `${images.length * 100}%` }}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
