@@ -36,6 +36,7 @@ function FeedPageInner() {
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const initialTab = searchParams.get("tab");
   const [tab, setTabState] = useState<"feed" | "video" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
@@ -64,7 +65,7 @@ function FeedPageInner() {
   }, [isDemo]);
 
   const loadFeed = useCallback(async () => {
-    if (isDemo) { setFeedItems(demoFeedItems); return; }
+    if (isDemo) { setFeedItems(demoFeedItems); setFeedLoading(false); return; }
     try {
       const [tradesRes, postsRes] = await Promise.all([
         fetch("/api/trades"),
@@ -80,6 +81,7 @@ function FeedPageInner() {
 
       setFeedItems(merged);
     } catch { /* silently fail */ }
+    setFeedLoading(false);
   }, [isDemo]);
 
   const loadFollowing = useCallback(async () => {
@@ -196,6 +198,12 @@ function FeedPageInner() {
                     }
                     return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
                   })
+            ) : feedLoading ? (
+              <>
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="glass-card rounded-2xl h-40 animate-pulse" />
+                ))}
+              </>
             ) : (
               <>
                 {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {

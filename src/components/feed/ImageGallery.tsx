@@ -41,9 +41,14 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
 
   function onTouchMove(e: React.TouchEvent) {
     if (!draggingRef.current || openIndex === null) return;
-    deltaXRef.current = e.touches[0].clientX - startXRef.current;
+    let delta = e.touches[0].clientX - startXRef.current;
+    // Block dragging past the first/last photo entirely — otherwise the
+    // track slides past its own edge and reveals blank space beyond it.
+    if (openIndex === 0 && delta > 0) delta = 0;
+    if (openIndex === images.length - 1 && delta < 0) delta = 0;
+    deltaXRef.current = delta;
     if (trackRef.current) {
-      trackRef.current.style.transform = `translateX(calc(${-slidePercent(openIndex)}% + ${deltaXRef.current}px))`;
+      trackRef.current.style.transform = `translateX(calc(${-slidePercent(openIndex)}% + ${delta}px))`;
     }
   }
 
