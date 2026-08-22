@@ -10,7 +10,7 @@ import VideoTab from "@/components/feed/VideoTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
 import PullToRefresh from "@/components/ui/PullToRefresh";
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Users } from "lucide-react";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
@@ -36,16 +36,7 @@ function FeedPageInner() {
   const [showModal, setShowModal] = useState(false);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
-  const [feedLoading, setFeedLoading] = useState(true);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  // Rendering all ~100 fetched trades+posts (each with up to 3 images) into
-  // the DOM at once overwhelms WebKit's tile compositor — it falls behind
-  // and shows blank, unpainted stretches while scrolling that "catch up" a
-  // moment later. Rendering a small batch and growing it as the user
-  // approaches the bottom keeps the live DOM/image count much lower.
-  const BATCH_SIZE = 8;
-  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const initialTab = searchParams.get("tab");
   const [tab, setTabState] = useState<"feed" | "video" | "explore">(isValidTab(initialTab) ? initialTab : "feed");
   const [followingOnly, setFollowingOnly] = useState(false);
@@ -73,7 +64,7 @@ function FeedPageInner() {
   }, [isDemo]);
 
   const loadFeed = useCallback(async () => {
-    if (isDemo) { setFeedItems(demoFeedItems); setFeedLoading(false); return; }
+    if (isDemo) { setFeedItems(demoFeedItems); return; }
     try {
       const [tradesRes, postsRes] = await Promise.all([
         fetch("/api/trades"),
@@ -88,9 +79,7 @@ function FeedPageInner() {
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFeedItems(merged);
-      setVisibleCount(BATCH_SIZE);
     } catch { /* silently fail */ }
-    setFeedLoading(false);
   }, [isDemo]);
 
   const loadFollowing = useCallback(async () => {
@@ -107,21 +96,6 @@ function FeedPageInner() {
   }, []);
 
   useEffect(() => { loadFeed(); loadFollowing(); }, [loadFeed, loadFollowing]);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((c) => c + BATCH_SIZE);
-        }
-      },
-      { rootMargin: "600px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [tab, followingOnly, feedItems, followingItems]);
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([loadFeed(), loadFollowing()]);
@@ -215,25 +189,16 @@ function FeedPageInner() {
             {followingOnly ? (
               followingItems.length === 0
                 ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
-                : <>
-                    {followingItems.filter((item) => !deletedIds.has(item.id)).slice(0, visibleCount).map((item) => {
-                      if (item.type === "trade") {
-                        const { trade, trader } = realTradeToCardProps(item);
-                        return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
-                      }
-                      return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-                    })}
-                    <div ref={sentinelRef} />
-                  </>
-            ) : feedLoading ? (
-              <>
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="glass-card rounded-2xl h-40 animate-pulse" />
-                ))}
-              </>
+                : followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
+                    if (item.type === "trade") {
+                      const { trade, trader } = realTradeToCardProps(item);
+                      return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
+                    }
+                    return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
+                  })
             ) : (
               <>
-                {feedItems.filter((item) => !deletedIds.has(item.id)).slice(0, visibleCount).map((item) => {
+                {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
                   if (item.type === "trade") {
                     const { trade, trader } = realTradeToCardProps(item);
                     return (
@@ -256,7 +221,6 @@ function FeedPageInner() {
                   }
                   return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
                 })}
-                <div ref={sentinelRef} />
               </>
             )}
           </>

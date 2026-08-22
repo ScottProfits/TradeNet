@@ -152,25 +152,6 @@ function ProfilePageInner() {
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
   const [tradeHistoryTab, setTradeHistoryTab] = useState<"history" | "videos">("history");
-  // Rendering the whole trade/post history at once (each with up to 3
-  // images) overwhelms WebKit's tile compositor and causes blank unpainted
-  // stretches while scrolling — see the same fix in src/app/feed/page.tsx.
-  const HISTORY_BATCH_SIZE = 8;
-  const [historyVisibleCount, setHistoryVisibleCount] = useState(HISTORY_BATCH_SIZE);
-  const historySentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setHistoryVisibleCount(HISTORY_BATCH_SIZE); }, [tradeHistoryTab, data]);
-
-  useEffect(() => {
-    const el = historySentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) setHistoryVisibleCount((c) => c + HISTORY_BATCH_SIZE); },
-      { rootMargin: "600px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [tradeHistoryTab, data]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -592,7 +573,6 @@ function ProfilePageInner() {
             if (b.kind === "trade" && b.id === pinnedTradeId) return 1;
             return 0;
           })
-          .slice(0, historyVisibleCount)
           .map((item) => {
             if (item.kind === "post") {
               return <PostCard key={item.id} post={item} />;
@@ -656,7 +636,6 @@ function ProfilePageInner() {
               </div>
             );
               })}
-              <div ref={historySentinelRef} />
             </>
           );
         })()}
