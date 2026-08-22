@@ -21,13 +21,13 @@ export async function GET() {
       .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
       .in("user_id", followingIds)
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(15),
     supabase
       .from("posts")
       .select("*")
       .in("user_id", followingIds)
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(15),
   ]);
 
   // liked trades

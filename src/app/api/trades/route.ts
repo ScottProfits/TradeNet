@@ -10,7 +10,11 @@ export async function GET() {
     .from("trades")
     .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
     .order("created_at", { ascending: false })
-    .limit(50);
+    // Rendering everything (each with up to 3 images) overwhelms WebKit's
+    // tile compositor and shows blank unpainted stretches while scrolling.
+    // No client-side pagination exists yet, so keep the initial payload
+    // itself small until that's built properly.
+    .limit(15);
 
   if (error) return new Response(error.message, { status: 500 });
 
