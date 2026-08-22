@@ -228,6 +228,10 @@ function ProfilePageInner() {
     historyLoadingMoreRef.current = false;
   }, [handle, isDemo]);
 
+  // `data` is in the deps because the sentinel div doesn't exist in the DOM
+  // until profile data has actually loaded — without it, the effect's first
+  // run finds historySentinelRef.current still null, bails out, and never
+  // gets another chance to attach once the sentinel actually renders.
   useEffect(() => {
     const el = historySentinelRef.current;
     if (!el) return;
@@ -237,7 +241,7 @@ function ProfilePageInner() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [tradeHistoryTab, loadMoreHistory]);
+  }, [tradeHistoryTab, data, loadMoreHistory]);
 
   useEffect(() => {
     if (isDemo) return;

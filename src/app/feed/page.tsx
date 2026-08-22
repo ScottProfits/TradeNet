@@ -183,6 +183,15 @@ function FeedPageInner() {
   // Single observer for the "load more" sentinel at the bottom of whichever
   // list is currently rendered — the callback always dispatches to the
   // right loader via the followingOnly ref-mirrored check below.
+  //
+  // The item-count deps aren't for reacting to every change — they're
+  // there because the sentinel div doesn't exist in the DOM at all until
+  // there's actual content to render (loading skeleton / empty state show
+  // instead). Without them, the effect's first run finds sentinelRef.current
+  // still null, bails out, and never gets another chance to attach once
+  // real content (and the sentinel) actually renders. Re-attaching after
+  // each loadMore completion is harmless — it's just a re-subscribe to the
+  // same still-mounted node, not a rapid loop.
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -196,7 +205,7 @@ function FeedPageInner() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [tab, followingOnly, loadMoreFeed, loadMoreFollowing]);
+  }, [tab, followingOnly, feedItems.length, followingItems.length, loadMoreFeed, loadMoreFollowing]);
 
   const handleRefresh = useCallback(async () => {
     feedHasMoreRef.current = true;
