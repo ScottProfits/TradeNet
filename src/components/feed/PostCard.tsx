@@ -6,7 +6,6 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
 import ExpandableVideo from "@/components/feed/ExpandableVideo";
-import ImageGallery from "@/components/feed/ImageGallery";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
@@ -167,11 +166,6 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
               {isVideoUrl(src) ? <ExpandableVideo src={src} /> : <ExpandableImage src={src} alt="Post media" />}
             </div>
           );
-        }
-        // Compose only allows up to 3 photos OR a single video (never mixed),
-        // so a multi-item gallery is always all-images — swipeable lightbox.
-        if (media.every((src) => !isVideoUrl(src))) {
-          return <ImageGallery images={media} />;
         }
         return (
           <div className={clsx("grid gap-1 rounded-lg overflow-hidden border border-[var(--border)]", media.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
