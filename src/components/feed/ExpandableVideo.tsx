@@ -23,6 +23,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [objectFit, setObjectFit] = useState<"cover" | "contain">("contain");
+  const [showControls, setShowControls] = useState(false);
   const draggingRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const expandedVideoRef = useRef<HTMLVideoElement>(null);
@@ -84,6 +85,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
     // still tied to the user's tap that set `open`, so browsers allow it.
     if (open) {
       setIsPlaying(true);
+      setShowControls(false);
       expandedVideoRef.current?.play().catch(() => {});
     }
   }, [open]);
@@ -132,12 +134,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             autoPlay
             playsInline
             className={`absolute inset-0 w-full h-full object-${objectFit}`}
-            onClick={() => {
-              const v = expandedVideoRef.current;
-              if (!v) return;
-              if (v.paused) v.play().catch(() => {});
-              else v.pause();
-            }}
+            onClick={() => setShowControls((s) => !s)}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
@@ -154,12 +151,14 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             }}
           />
 
-          {/* Bottom playback bar */}
+          {/* Bottom playback bar — hidden until the video is tapped */}
           <div
-            className="absolute inset-x-0 bottom-0 z-10 flex items-center gap-3 px-4 py-3"
+            className="absolute inset-x-0 bottom-0 z-10 flex items-center gap-3 px-4 py-3 transition-opacity duration-200"
             style={{
               paddingBottom: "0.75rem",
               background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))",
+              opacity: showControls ? 1 : 0,
+              pointerEvents: showControls ? "auto" : "none",
             }}
             onClick={(e) => e.stopPropagation()}
           >
