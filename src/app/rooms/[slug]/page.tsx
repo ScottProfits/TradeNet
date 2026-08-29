@@ -59,6 +59,7 @@ function RoomPageInner() {
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
   // Mobile is master–detail like Discord: the topic list and the chat are
   // separate screens. Desktop shows both side by side.
@@ -68,6 +69,7 @@ function RoomPageInner() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastIdRef = useRef<string | null>(null);
+  const lastTypingPingRef = useRef(0);
   const isMod = membership?.role === "owner" || membership?.role === "mod";
 
   const loadRoom = useCallback(async () => {
@@ -106,10 +108,35 @@ function RoomPageInner() {
     if (!activeChannel || !canParticipate) return;
     lastIdRef.current = null;
     setMessages([]);
+    setTypingUsers([]);
     fetchMessages(activeChannel);
     const t = setInterval(() => fetchMessages(activeChannel, { silent: true }), 4000);
     return () => clearInterval(t);
   }, [activeChannel, canParticipate, fetchMessages]);
+
+  // "Who's typing" — a tighter poll, only while the chat pane is on screen.
+  useEffect(() => {
+    if (!activeChannel || !canParticipate) return;
+    const chatVisible = () => typeof window !== "undefined" && (window.innerWidth >= 768 || showChat);
+    const poll = () => {
+      if (!chatVisible()) return;
+      fetch(`/api/channels/${activeChannel}/typing`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((h: string[]) => setTypingUsers(Array.isArray(h) ? h : []))
+        .catch(() => {});
+    };
+    poll();
+    const t = setInterval(poll, 2500);
+    return () => clearInterval(t);
+  }, [activeChannel, canParticipate, showChat]);
+
+  function pingTyping() {
+    if (!activeChannel) return;
+    const now = Date.now();
+    if (now - lastTypingPingRef.current < 3000) return;
+    lastTypingPingRef.current = now;
+    fetch(`/api/channels/${activeChannel}/typing`, { method: "POST" }).catch(() => {});
+  }
 
   async function join() {
     if (!userId) { router.push("/sign-in"); return; }
@@ -447,7 +474,24 @@ function RoomPageInner() {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={send} className="p-3 border-t border-[var(--border)] space-y-2">
+            <div className="h-4 px-4 pt-1.5 flex items-center border-t border-[var(--border)]">
+              {typingUsers.length > 0 && (
+                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                  <span className="flex gap-0.5">
+                    <span className="w-1 h-1 rounded-full bg-gray-500 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1 h-1 rounded-full bg-gray-500 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1 h-1 rounded-full bg-gray-500 animate-bounce" />
+                  </span>
+                  {typingUsers.length === 1
+                    ? `@${typingUsers[0]} is typing`
+                    : typingUsers.length === 2
+                    ? `@${typingUsers[0]} and @${typingUsers[1]} are typing`
+                    : "several people are typing"}
+                </span>
+              )}
+            </div>
+
+            <form onSubmit={send} className="px-3 pb-3 pt-1 space-y-2">
               {mediaPreview && (
                 <div className="relative inline-block">
                   {media?.type.startsWith("video/") ? (
@@ -467,7 +511,7 @@ function RoomPageInner() {
                 </button>
                 <input
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => { setText(e.target.value); pingTyping(); }}
                   placeholder="Message"
                   maxLength={4000}
                   className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-full px-4 py-2 text-sm text-white outline-none focus:border-[var(--green)]"
