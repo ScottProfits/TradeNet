@@ -605,7 +605,10 @@ function RoomPageInner() {
                         )
                       )}
                       {m.image_url && (
-                        <div className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]">
+                        <div
+                          className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {isVideoUrl(m.image_url) ? (
                             <ExpandableVideo src={m.image_url} poster={m.poster_url ?? undefined} />
                           ) : (
