@@ -39,6 +39,32 @@ export function slugify(name: string): string {
   return base ? `${base}-${suffix}` : suffix;
 }
 
+/** A slug for a topic name that's unique within its room. */
+export async function uniqueChannelSlug(
+  roomId: string,
+  name: string,
+  ignoreChannelId?: string
+): Promise<string> {
+  const base =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 32) || "topic";
+
+  const { data } = await supabaseAdmin.from("channels").select("id, slug").eq("room_id", roomId);
+  const taken = new Set(
+    (data ?? []).filter((c) => c.id !== ignoreChannelId).map((c) => c.slug)
+  );
+
+  if (!taken.has(base)) return base;
+  for (let i = 2; i < 100; i++) {
+    const s = `${base}-${i}`;
+    if (!taken.has(s)) return s;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 /** True if either user has blocked the other. */
 export async function isBlockedBetween(a: string, b: string): Promise<boolean> {
   const { data } = await supabaseAdmin

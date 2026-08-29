@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getMembership, canModerate } from "@/lib/rooms";
+import { getMembership, canModerate, uniqueChannelSlug } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 async function channelRoom(channelId: string) {
@@ -30,6 +30,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const trimmed = body.name.trim();
     if (!trimmed || trimmed.length > 32) return new Response("Name must be 1–32 characters", { status: 400 });
     patch.name = trimmed;
+    // Keep the slug (used by ?c= deep links) roughly in sync with the name.
+    patch.slug = await uniqueChannelSlug(channel.room_id, trimmed, id);
   }
   if (typeof body.modsOnly === "boolean") patch.mods_only_posts = body.modsOnly;
   if (!Object.keys(patch).length) return new Response("Nothing to update", { status: 400 });
