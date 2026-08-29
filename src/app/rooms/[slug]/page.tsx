@@ -44,7 +44,8 @@ function RoomPageInner() {
   const { slug } = useParams<{ slug: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { userId } = useAuth();
+  const { userId, isLoaded } = useAuth();
+  const [signedOut, setSignedOut] = useState(false);
 
   const [room, setRoom] = useState<Room | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -76,6 +77,21 @@ function RoomPageInner() {
   const isMod = membership?.role === "owner" || membership?.role === "mod";
 
   const loadRoom = useCallback(async () => {
+    if (!isLoaded) return;
+
+    // Signed-out visitor (e.g. followed an invite link in a browser):
+    // show a public preview + a sign-in prompt.
+    if (!userId) {
+      const res = await fetch(`/api/rooms/${slug}/preview`);
+      if (res.ok) {
+        const data = await res.json();
+        setRoom(data.room);
+        setSignedOut(true);
+      }
+      setLoading(false);
+      return;
+    }
+
     const res = await fetch(`/api/rooms/${slug}`);
     if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
@@ -86,7 +102,7 @@ function RoomPageInner() {
     const wanted = searchParams.get("c");
     setActiveChannel((prev) => prev ?? (data.channels.find((c: Channel) => c.id === wanted)?.id ?? data.channels[0]?.id ?? null));
     setLoading(false);
-  }, [slug, searchParams]);
+  }, [slug, searchParams, userId, isLoaded]);
 
   useEffect(() => { loadRoom(); }, [loadRoom]);
 
@@ -152,7 +168,10 @@ function RoomPageInner() {
   }
 
   async function join() {
-    if (!userId) { router.push("/sign-in"); return; }
+    if (!userId) {
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(`/rooms/${slug}`)}`);
+      return;
+    }
     setJoining(true);
     const paidRoom = !!room!.price_cents && room!.price_cents > 0;
     if (paidRoom) {
@@ -418,7 +437,15 @@ function RoomPageInner() {
         <div className="flex-1 glass-card border-t-0 rounded-b-2xl flex flex-col items-center justify-center text-center p-8 gap-3">
           <Lock className="w-8 h-8 text-gray-600" />
           <p className="text-gray-300 text-sm max-w-sm">{room.description || `Join to see the conversation in ${room.name}.`}</p>
-          {paid ? (
+          {signedOut ? (
+            <>
+              {paid && <p className="text-white font-semibold">${(room.price_cents! / 100).toFixed(2)}/month</p>}
+              <button onClick={join} className="px-5 py-2 rounded-lg bg-[var(--green)] text-black text-sm font-semibold">
+                Sign in to join
+              </button>
+              <p className="text-gray-600 text-xs">New to Ryzr? You can create an account on the next screen.</p>
+            </>
+          ) : paid ? (
             <>
               <p className="text-white font-semibold">${(room.price_cents! / 100).toFixed(2)}/month</p>
               <p className="text-gray-500 text-xs max-w-xs">Secure checkout on Stripe. Cancel anytime.</p>
