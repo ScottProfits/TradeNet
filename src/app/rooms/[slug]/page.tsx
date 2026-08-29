@@ -59,7 +59,10 @@ function RoomPageInner() {
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mobile is master–detail like Discord: the topic list and the chat are
   // separate screens. Desktop shows both side by side.
@@ -257,10 +260,15 @@ function RoomPageInner() {
     await fetch(`/api/channel-messages/${id}`, { method: "DELETE" }).catch(() => {});
   }
 
-  async function editMessage(m: ChatMessage) {
-    const next = prompt("Edit message", m.content);
-    if (next === null) return;
-    const trimmed = next.trim();
+  function startEdit(m: ChatMessage) {
+    setReactingId(null);
+    setEditingId(m.id);
+    setEditText(m.content);
+  }
+
+  async function saveEdit(m: ChatMessage) {
+    const trimmed = editText.trim();
+    setEditingId(null);
     if (!trimmed || trimmed === m.content) return;
     setMessages((msgs) => msgs.map((x) => (x.id === m.id ? { ...x, content: trimmed, edited_at: new Date().toISOString() } : x)));
     const res = await fetch(`/api/channel-messages/${m.id}`, {
@@ -269,6 +277,17 @@ function RoomPageInner() {
       body: JSON.stringify({ content: trimmed }),
     });
     if (!res.ok) alert(await errorMessage(res));
+  }
+
+  function armLongPress(id: string) {
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+    longPressRef.current = setTimeout(() => setReactingId(id), 450);
+  }
+  function cancelLongPress() {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current);
+      longPressRef.current = null;
+    }
   }
 
   async function addCustomReaction(m: ChatMessage) {
@@ -325,7 +344,7 @@ function RoomPageInner() {
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-64px)] -mb-6">
       {/* Header — room info, or (mobile chat screen) the current topic */}
-      <div className="glass-card rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="glass-card rounded-t-2xl pl-4 pr-14 md:pr-4 py-3 flex items-center gap-3 flex-shrink-0">
         {mobileChat ? (
           <>
             <button onClick={() => setShowChat(false)} className="md:hidden text-gray-400 hover:text-white -ml-1">
@@ -417,7 +436,14 @@ function RoomPageInner() {
                 const mine = m.sender_id === userId;
                 if (m.hidden) return null;
                 return (
-                  <div key={m.id} className="group flex gap-2.5">
+                  <div
+                    key={m.id}
+                    className="group flex gap-2.5"
+                    onTouchStart={() => armLongPress(m.id)}
+                    onTouchEnd={cancelLongPress}
+                    onTouchMove={cancelLongPress}
+                    onContextMenu={(e) => { e.preventDefault(); setReactingId(m.id); }}
+                  >
                     <SafeAvatar src={m.sender?.avatar_url} alt={m.sender?.handle ?? ""} initials={m.sender?.handle ?? "?"} className="w-8 h-8 text-xs shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -426,13 +452,13 @@ function RoomPageInner() {
                         </Link>
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
-                        <span className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="ml-auto flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
-                            <SmilePlus className="w-3 h-3" />
+                            <SmilePlus className="w-3.5 h-3.5" />
                           </button>
                           {mine && m.content && (
-                            <button onClick={() => editMessage(m)} className="text-gray-600 hover:text-white" title="Edit">
-                              <Pencil className="w-3 h-3" />
+                            <button onClick={() => startEdit(m)} className="text-gray-600 hover:text-white" title="Edit">
+                              <Pencil className="w-3.5 h-3.5" />
                             </button>
                           )}
                           {!mine && (
@@ -442,16 +468,36 @@ function RoomPageInner() {
                           )}
                           {(mine || isMod) && (
                             <button onClick={() => deleteMessage(m.id)} className="text-gray-600 hover:text-red-500" title="Delete">
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </span>
                       </div>
-                      {m.content && (
-                        <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">
-                          {m.content}
-                          {m.edited_at && <span className="text-[10px] text-gray-600 ml-1">(edited)</span>}
-                        </p>
+                      {editingId === m.id ? (
+                        <div className="mt-1 space-y-1.5">
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") saveEdit(m);
+                              if (e.key === "Escape") setEditingId(null);
+                            }}
+                            rows={Math.min(6, editText.split("\n").length + 1)}
+                            autoFocus
+                            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--green)] resize-none"
+                          />
+                          <div className="flex gap-2 text-xs">
+                            <button onClick={() => saveEdit(m)} className="px-2.5 py-1 rounded bg-[var(--green)] text-black font-semibold">Save</button>
+                            <button onClick={() => setEditingId(null)} className="px-2.5 py-1 rounded bg-white/5 text-gray-400">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        m.content && (
+                          <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">
+                            {m.content}
+                            {m.edited_at && <span className="text-[10px] text-gray-600 ml-1">(edited)</span>}
+                          </p>
+                        )
                       )}
                       {m.image_url && (
                         <div className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]">

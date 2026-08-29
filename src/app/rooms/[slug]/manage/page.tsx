@@ -237,14 +237,11 @@ export default function ManageRoomPage() {
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">Topics</h2>
         {topics.map((t) => (
-          <div key={t.id} className="px-4 py-3 border-t border-[var(--border)] space-y-2">
+          <div key={t.id} className="px-4 py-3 border-t border-[var(--border)] space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-gray-500">#</span>
               <span className="flex-1 text-sm text-white truncate">{t.name}</span>
               <button onClick={() => renameTopic(t)} className="text-xs text-gray-400 hover:text-white">Rename</button>
-              {topics.length > 1 && (
-                <button onClick={() => deleteTopic(t)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
-              )}
             </div>
             <button onClick={() => toggleModsOnly(t)} className="w-full flex items-center justify-between gap-3 text-left">
               <span className="text-xs text-gray-500">
@@ -260,6 +257,11 @@ export default function ManageRoomPage() {
                 />
               </span>
             </button>
+            {topics.length > 1 && (
+              <div className="pt-1 text-right">
+                <button onClick={() => deleteTopic(t)} className="text-xs text-gray-600 hover:text-red-400">Delete topic</button>
+              </div>
+            )}
           </div>
         ))}
       </section>
