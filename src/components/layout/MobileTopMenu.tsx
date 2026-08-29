@@ -79,7 +79,7 @@ export default function MobileTopMenu() {
                 className="flex items-center gap-2.5 px-3 py-3 hover:bg-white/5 transition-colors border-b border-white/5"
               >
                 <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-200 flex-1">Rooms</span>
+                <span className="text-sm text-gray-200 flex-1">Channels</span>
               </Link>
               <Link
                 href="/messages"

@@ -48,12 +48,12 @@ export default function RoomsPage() {
       <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Rooms</h1>
+        <h1 className="text-2xl font-bold text-white">Channels</h1>
         <Link
           href="/rooms/new"
           className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-[var(--green)] text-black hover:opacity-90 transition-opacity"
         >
-          <Plus className="w-4 h-4" /> New room
+          <Plus className="w-4 h-4" /> New channel
         </Link>
       </div>
 
@@ -61,7 +61,7 @@ export default function RoomsPage() {
 
       {!loading && mine.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your rooms</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your channels</h2>
           <div className="glass-card rounded-2xl overflow-hidden">
             {mine.map((r) => (
               <RoomRow key={r.id} room={r} />
@@ -76,7 +76,7 @@ export default function RoomsPage() {
           {browse.length === 0 ? (
             <div className="glass-card rounded-2xl p-10 text-center">
               <Users className="w-9 h-9 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No rooms to show yet.</p>
+              <p className="text-gray-500 text-sm">No channels to show yet.</p>
             </div>
           ) : (
             <div className="glass-card rounded-2xl overflow-hidden">

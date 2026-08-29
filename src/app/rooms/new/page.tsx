@@ -33,7 +33,7 @@ export default function NewRoomPage() {
   return (
     <div className="max-w-lg mx-auto space-y-5">
       <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
-      <h1 className="text-2xl font-bold text-white">New room</h1>
+      <h1 className="text-2xl font-bold text-white">New channel</h1>
 
       <form onSubmit={create} className="glass-card rounded-2xl p-5 space-y-4">
         <div>
@@ -56,7 +56,7 @@ export default function NewRoomPage() {
             onChange={(e) => setDescription(e.target.value)}
             maxLength={280}
             rows={3}
-            placeholder="What's this room about?"
+            placeholder="What's this channel about?"
             className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--green)] resize-none"
           />
         </div>
@@ -82,8 +82,8 @@ export default function NewRoomPage() {
         </div>
 
         <p className="text-xs text-gray-500 leading-relaxed">
-          Your room starts free with a <span className="text-gray-300">#general</span> channel. You can add channels and
-          set a monthly price once payouts are connected.
+          Your channel starts free with a <span className="text-gray-300">#general</span> topic. You can add more topics
+          and set a monthly price once payouts are connected.
         </p>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
@@ -93,7 +93,7 @@ export default function NewRoomPage() {
           disabled={!name.trim() || busy}
           className="w-full py-2.5 rounded-lg bg-[var(--green)] text-black font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
-          {busy ? "Creating..." : "Create room"}
+          {busy ? "Creating..." : "Create channel"}
         </button>
       </form>
     </div>

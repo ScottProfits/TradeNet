@@ -72,7 +72,7 @@ export default function ManageRoomPage() {
       body: JSON.stringify({ priceCents: cents }),
     });
     if (res.ok) {
-      setPriceMsg(cents > 0 ? `Members now pay $${(cents / 100).toFixed(2)}/mo` : "Room is now free");
+      setPriceMsg(cents > 0 ? `Members now pay $${(cents / 100).toFixed(2)}/mo` : "Channel is now free");
       load();
     } else {
       setPriceMsg(await res.text());
@@ -90,7 +90,7 @@ export default function ManageRoomPage() {
     else alert(await res.text());
   }
 
-  if (forbidden) return <p className="text-gray-500 text-sm text-center pt-20">You don&apos;t manage this room.</p>;
+  if (forbidden) return <p className="text-gray-500 text-sm text-center pt-20">You don&apos;t manage this channel.</p>;
   if (!room) return <p className="text-gray-500 text-sm text-center pt-20">Loading...</p>;
 
   const isOwner = me?.role === "owner";
@@ -126,7 +126,7 @@ export default function ManageRoomPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Membership price</h2>
           {!payoutsEnabled ? (
             <p className="text-xs text-gray-500">
-              Connect payouts first to charge for this room.{" "}
+              Connect payouts first to charge for this channel.{" "}
               <Link href="/settings/earnings" className="text-[var(--green)]">Set up earnings →</Link>
             </p>
           ) : (
@@ -145,7 +145,7 @@ export default function ManageRoomPage() {
                   Save
                 </button>
               </div>
-              <p className="text-xs text-gray-600">Leave blank for a free room. Ryzr keeps 4.5%. Existing members keep their current price until they resubscribe.</p>
+              <p className="text-xs text-gray-600">Leave blank for a free channel. Ryzr keeps 4.5%. Existing members keep their current price until they resubscribe.</p>
               {priceMsg && <p className="text-xs text-gray-300">{priceMsg}</p>}
             </>
           )}

@@ -19,11 +19,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!room) return new Response("Not found", { status: 404 });
 
   const existing = await getMembership(room.id, userId);
-  if (existing?.status === "banned") return new Response("You are banned from this room", { status: 403 });
+  if (existing?.status === "banned") return new Response("You are banned from this channel", { status: 403 });
   if (existing?.status === "active") return Response.json({ status: "active" });
 
   if (room.price_cents && room.price_cents > 0) {
-    return new Response("This room requires a subscription", { status: 402 });
+    return new Response("This channel requires a subscription", { status: 402 });
   }
 
   await supabaseAdmin.from("room_members").upsert(
@@ -48,7 +48,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const membership = await getMembership(id, userId);
   if (!membership) return Response.json({ ok: true });
-  if (membership.role === "owner") return new Response("The owner cannot leave their own room", { status: 400 });
+  if (membership.role === "owner") return new Response("The owner cannot leave their own channel", { status: 400 });
 
   await supabaseAdmin.from("room_members").delete().match({ room_id: id, user_id: userId });
 

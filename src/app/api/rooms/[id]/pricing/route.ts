@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .eq("user_id", userId)
       .maybeSingle();
     if (!creator?.payouts_enabled) {
-      return new Response("Connect payouts before charging for a room", { status: 402 });
+      return new Response("Connect payouts before charging for a channel", { status: 402 });
     }
   }
 
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let productId = room.stripe_product_id as string | null;
   if (!productId) {
     const product = await stripe.products.create({
-      name: `Ryzr room — ${room.name}`,
+      name: `Ryzr channel — ${room.name}`,
       metadata: { ryzr_room_id: id, ryzr_owner_id: userId },
     });
     productId = product.id;

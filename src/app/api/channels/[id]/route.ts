@@ -55,7 +55,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     .from("channels")
     .select("*", { count: "exact", head: true })
     .eq("room_id", channel.room_id);
-  if ((count ?? 0) <= 1) return new Response("A room must keep at least one channel", { status: 400 });
+  if ((count ?? 0) <= 1) return new Response("A channel must keep at least one topic", { status: 400 });
 
   await supabaseAdmin.from("channels").delete().eq("id", id);
   return Response.json({ ok: true });

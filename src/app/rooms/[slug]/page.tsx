@@ -237,7 +237,7 @@ function RoomPageInner() {
   }
 
   async function addChannel() {
-    const name = prompt("New channel name");
+    const name = prompt("New topic name");
     if (!name?.trim()) return;
     const res = await fetch(`/api/rooms/${room!.id}/channels`, {
       method: "POST",
@@ -300,7 +300,7 @@ function RoomPageInner() {
             </>
           ) : (
             <button onClick={join} disabled={joining} className="px-5 py-2 rounded-lg bg-[var(--green)] text-black text-sm font-semibold disabled:opacity-40">
-              {joining ? "Joining..." : "Join room"}
+              {joining ? "Joining..." : "Join channel"}
             </button>
           )}
         </div>

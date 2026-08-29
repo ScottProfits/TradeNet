@@ -19,12 +19,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .maybeSingle();
   if (!room) return new Response("Not found", { status: 404 });
   if (!room.price_cents || !room.stripe_price_id) {
-    return new Response("This room is free — just join it", { status: 400 });
+    return new Response("This channel is free — just join it", { status: 400 });
   }
-  if (room.owner_id === userId) return new Response("You own this room", { status: 400 });
+  if (room.owner_id === userId) return new Response("You own this channel", { status: 400 });
 
   const existing = await getMembership(id, userId);
-  if (existing?.status === "banned") return new Response("You are banned from this room", { status: 403 });
+  if (existing?.status === "banned") return new Response("You are banned from this channel", { status: 403 });
   if (existing?.status === "active") return new Response("Already a member", { status: 400 });
 
   const { data: creator } = await supabaseAdmin
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .eq("user_id", room.owner_id)
     .maybeSingle();
   if (!creator?.stripe_account_id || !creator.payouts_enabled) {
-    return new Response("This room can't take payments right now", { status: 409 });
+    return new Response("This channel can't take payments right now", { status: 409 });
   }
 
   // Reuse (or create) the caller's Stripe Customer.

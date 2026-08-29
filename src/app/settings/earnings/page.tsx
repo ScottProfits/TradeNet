@@ -55,7 +55,7 @@ function EarningsInner() {
           <>
             <p className="text-sm text-white font-semibold">✅ Payouts active</p>
             <p className="text-xs text-gray-500">
-              You can set a monthly price on any room you own. Ryzr keeps a 4.5% platform fee; Stripe pays you out on a
+              You can set a monthly price on any channel you own. Ryzr keeps a 4.5% platform fee; Stripe pays you out on a
               rolling schedule.
             </p>
             <button
