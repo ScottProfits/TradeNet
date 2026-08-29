@@ -64,6 +64,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (typeof body.description === "string") patch.description = body.description.trim() || null;
   if (typeof body.avatarUrl === "string") patch.avatar_url = body.avatarUrl || null;
   if (body.visibility === "public" || body.visibility === "unlisted") patch.visibility = body.visibility;
+  if (typeof body.showOnProfile === "boolean") patch.show_on_profile = body.showOnProfile;
   if (!Object.keys(patch).length) return new Response("Nothing to update", { status: 400 });
 
   const { data, error } = await supabaseAdmin

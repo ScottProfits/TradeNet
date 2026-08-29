@@ -6,6 +6,7 @@ Run in the Supabase SQL editor, in order:
 
 1. `supabase-rooms-migration.sql`
 2. `supabase-rooms-billing-migration.sql`
+3. `supabase-rooms-profile-link-migration.sql`  (adds `rooms.show_on_profile`)
 
 ## 2. Environment variables
 

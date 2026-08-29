@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request, { params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -94,6 +95,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
     isFollowing = !!followRow;
   }
 
+  // Channels this user owns and has chosen to surface on their profile.
+  // rooms has RLS with no policies, so this must use the admin client.
+  const { data: channelsRaw } = await supabaseAdmin
+    .from("rooms")
+    .select("id, name, slug, avatar_url, price_cents, member_count")
+    .eq("owner_id", profile.id)
+    .eq("show_on_profile", true)
+    .order("created_at", { ascending: true });
+
   return Response.json({
     profile,
     trades: trades ?? [],
@@ -102,5 +112,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
     followingCount: followingCount ?? 0,
     isFollowing,
     isOwner,
+    channels: channelsRaw ?? [],
   });
 }

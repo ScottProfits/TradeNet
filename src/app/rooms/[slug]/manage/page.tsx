@@ -9,6 +9,7 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   visibility: string; owner_id: string; price_cents: number | null;
+  show_on_profile: boolean;
 }
 interface Member {
   user_id: string; role: string; status: string; joined_at: string;
@@ -27,6 +28,7 @@ export default function ManageRoomPage() {
   const [priceDollars, setPriceDollars] = useState("");
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   const [priceMsg, setPriceMsg] = useState<string | null>(null);
+  const [showOnProfile, setShowOnProfile] = useState(true);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/rooms/${slug}`);
@@ -36,6 +38,7 @@ export default function ManageRoomPage() {
     setMe(data.membership);
     setName(data.room.name);
     setDescription(data.room.description ?? "");
+    setShowOnProfile(data.room.show_on_profile ?? true);
     setPriceDollars(data.room.price_cents ? (data.room.price_cents / 100).toFixed(2) : "");
     const mRes = await fetch(`/api/rooms/${data.room.id}/members`);
     if (mRes.status === 403) { setForbidden(true); return; }
@@ -56,6 +59,17 @@ export default function ManageRoomPage() {
       body: JSON.stringify({ name, description }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  }
+
+  async function toggleShowOnProfile() {
+    if (!room) return;
+    const next = !showOnProfile;
+    setShowOnProfile(next);
+    await fetch(`/api/rooms/${room.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showOnProfile: next }),
+    }).catch(() => setShowOnProfile(!next));
   }
 
   async function savePrice() {
@@ -120,6 +134,31 @@ export default function ManageRoomPage() {
           {saved ? "Saved" : "Save"}
         </button>
       </section>
+
+      {isOwner && (
+        <section className="glass-card rounded-2xl p-5">
+          <button
+            onClick={toggleShowOnProfile}
+            className="w-full flex items-center justify-between gap-3 text-left"
+          >
+            <span>
+              <span className="block text-sm text-white font-medium">Show on my profile</span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                Adds a link to this channel on your public profile. Turn off if you&apos;re not looking for new members.
+              </span>
+            </span>
+            <span
+              className="relative w-10 h-6 rounded-full transition-colors shrink-0"
+              style={{ background: showOnProfile ? "var(--green)" : "var(--border)" }}
+            >
+              <span
+                className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+                style={{ left: showOnProfile ? "1.125rem" : "0.125rem" }}
+              />
+            </span>
+          </button>
+        </section>
+      )}
 
       {isOwner && (
         <section className="glass-card rounded-2xl p-5 space-y-3">

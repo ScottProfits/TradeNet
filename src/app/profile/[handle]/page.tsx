@@ -89,6 +89,15 @@ interface Trade {
   source?: string | null;
 }
 
+interface ProfileChannel {
+  id: string;
+  name: string;
+  slug: string;
+  avatar_url: string | null;
+  price_cents: number | null;
+  member_count: number;
+}
+
 interface ProfileData {
   profile: Profile;
   trades: Trade[];
@@ -96,6 +105,7 @@ interface ProfileData {
   followersCount: number;
   followingCount: number;
   isOwner: boolean;
+  channels?: ProfileChannel[];
 }
 
 interface LikedItem {
@@ -554,6 +564,29 @@ function ProfilePageInner() {
             </div>
           );
         })()}
+
+        {/* Channels this trader runs */}
+        {data.channels && data.channels.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {data.channels.map((ch) => {
+              const paid = !!ch.price_cents && ch.price_cents > 0;
+              return (
+                <Link
+                  key={ch.id}
+                  href={`/rooms/${ch.slug}`}
+                  className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-[var(--green)]/30 hover:bg-[var(--green)]/5 text-gray-300 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                >
+                  <span>💬</span>
+                  {ch.name}
+                  <span className={paid ? "text-[var(--green)]" : "text-gray-500"}>
+                    · {paid ? `$${(ch.price_cents! / 100).toFixed(ch.price_cents! % 100 ? 2 : 0)}/mo` : "Free"}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         <BadgeDisplay handle={profile.handle} />
 
         {/* Stats row */}
