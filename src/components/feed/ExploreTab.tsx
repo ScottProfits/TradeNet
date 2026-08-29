@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight, Trophy } from "lucide-react";
+import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight, Trophy, Hash, Lock } from "lucide-react";
+import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import { demoExplore } from "@/lib/demoData";
@@ -14,6 +15,16 @@ interface Trader {
   avatar_url: string;
   verified: boolean;
   trading_style: string | null;
+}
+
+interface PopularChannel {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  avatar_url: string | null;
+  price_cents: number | null;
+  member_count: number;
 }
 
 interface TrendingTicker { ticker: string; count: number; }
@@ -56,6 +67,7 @@ export default function ExploreTab() {
   const isDemo = searchParams.get("demo") === "1";
   const [data, setData] = useState<ExploreData | null>(isDemo ? demoExplore : null);
   const [loading, setLoading] = useState(!isDemo);
+  const [channels, setChannels] = useState<PopularChannel[]>([]);
 
   useEffect(() => {
     if (isDemo) { setData(demoExplore); setLoading(false); return; }
@@ -63,7 +75,16 @@ export default function ExploreTab() {
     fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setData(d); setLoading(false); });
+    fetch("/api/rooms")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rooms: PopularChannel[]) => setChannels(Array.isArray(rooms) ? rooms.slice(0, 6) : []))
+      .catch(() => {});
   }, [isDemo]);
+
+  function priceLabel(cents: number | null) {
+    if (!cents || cents <= 0) return "Free";
+    return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}/mo`;
+  }
 
   return (
     <div className="space-y-8">
@@ -77,6 +98,43 @@ export default function ExploreTab() {
         </div>
         <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[var(--green)] transition-colors" />
       </Link>
+
+      {/* Popular Channels */}
+      {channels.length > 0 && (
+        <section>
+          <Link href="/rooms" className="flex items-center gap-2 mb-3 group w-fit">
+            <Hash className="w-5 h-5 text-[var(--green)]" />
+            <h2 className="font-semibold text-white group-hover:text-[var(--green)] transition-colors">Popular Channels</h2>
+            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[var(--green)] transition-colors" />
+          </Link>
+          <div className="space-y-2">
+            {channels.map((c) => {
+              const paid = !!c.price_cents && c.price_cents > 0;
+              return (
+                <Link
+                  key={c.id}
+                  href={`/rooms/${c.slug}`}
+                  className="flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-[var(--green)]/40 transition-colors group"
+                >
+                  <SafeAvatar src={c.avatar_url} alt={c.name} initials={c.name} className="w-11 h-11 rounded-xl text-sm shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-white group-hover:text-[var(--green)] transition-colors truncate">{c.name}</span>
+                      {paid && <Lock className="w-3 h-3 text-[var(--green)] shrink-0" />}
+                    </div>
+                    <p className="text-xs text-gray-500 truncate">
+                      {c.description || `${c.member_count} member${c.member_count === 1 ? "" : "s"}`}
+                    </p>
+                  </div>
+                  <span className={clsx("text-xs font-semibold shrink-0 px-1.5 py-0.5 rounded-full", paid ? "bg-[var(--green)]/15 text-[var(--green)]" : "bg-white/[0.06] text-gray-400")}>
+                    {priceLabel(c.price_cents)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Top Today */}
       <section>
