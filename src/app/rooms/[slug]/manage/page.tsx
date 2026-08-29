@@ -33,6 +33,7 @@ export default function ManageRoomPage() {
   const [priceMsg, setPriceMsg] = useState<string | null>(null);
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/rooms/${slug}`);
@@ -185,6 +186,29 @@ export default function ManageRoomPage() {
         <button onClick={saveMeta} className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-[var(--green)] text-black">
           {saved ? "Saved" : "Save"}
         </button>
+      </section>
+
+      <section className="glass-card rounded-2xl p-5 space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invite link</h2>
+        <p className="text-xs text-gray-500">Anyone with this link can open the channel and join.</p>
+        <div className="flex items-center gap-2">
+          <input
+            readOnly
+            value={typeof window !== "undefined" ? `${window.location.origin}/rooms/${slug}` : `/rooms/${slug}`}
+            onFocus={(e) => e.currentTarget.select()}
+            className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-gray-300 outline-none"
+          />
+          <button
+            onClick={async () => {
+              const url = `${window.location.origin}/rooms/${slug}`;
+              try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+              catch { prompt("Invite link", url); }
+            }}
+            className="text-sm font-semibold px-3 py-2 rounded-lg bg-[var(--green)] text-black shrink-0"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
       </section>
 
       {isOwner && (

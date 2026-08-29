@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, SmilePlus, ChevronLeft, Megaphone, Pencil } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, SmilePlus, ChevronLeft, Megaphone, Pencil, Share2 } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -351,6 +351,22 @@ function RoomPageInner() {
     setShowChat(true);
   }
 
+  async function shareChannel() {
+    const url = `${window.location.origin}/rooms/${room!.slug}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: room!.name, text: `Join ${room!.name} on Ryzr`, url });
+        return;
+      }
+    } catch { /* user cancelled the share sheet */ return; }
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("Invite link copied");
+    } catch {
+      prompt("Invite link", url);
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-64px)] -mb-6">
       {/* Header — room info, or (mobile chat screen) the current topic */}
@@ -380,6 +396,11 @@ function RoomPageInner() {
               </p>
             </div>
           </>
+        )}
+        {!mobileChat && (
+          <button onClick={shareChannel} className="text-gray-400 hover:text-white shrink-0" title="Share invite link">
+            <Share2 className="w-4 h-4" />
+          </button>
         )}
         {isMod && (
           <Link href={`/rooms/${room.slug}/manage`} className="text-xs text-gray-400 hover:text-white shrink-0">
