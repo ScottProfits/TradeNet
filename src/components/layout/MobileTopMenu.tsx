@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Grid2x2, Search, Bell, MessageSquare } from "lucide-react";
+import { Grid2x2, Search, Bell, MessageSquare, Users } from "lucide-react";
 import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 
@@ -72,6 +72,14 @@ export default function MobileTopMenu() {
                     {unreadNotifs > 9 ? "9+" : unreadNotifs}
                   </span>
                 )}
+              </Link>
+              <Link
+                href="/rooms"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-3 hover:bg-white/5 transition-colors border-b border-white/5"
+              >
+                <Users className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-200 flex-1">Rooms</span>
               </Link>
               <Link
                 href="/messages"
