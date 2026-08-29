@@ -260,7 +260,7 @@ function RoomPageInner() {
   const paid = !!room.price_cents && room.price_cents > 0;
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-96px)]">
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-64px)] -mb-6">
       {/* Header */}
       <div className="glass-card rounded-t-2xl px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <BackButton fallbackHref="/rooms" iconOnly className="text-gray-500 hover:text-white transition-colors" />
@@ -329,7 +329,7 @@ function RoomPageInner() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && <p className="text-center text-gray-600 text-sm pt-8">No messages yet — say hi.</p>}
               {messages.map((m) => {

@@ -16,6 +16,7 @@ interface Member {
   user_id: string; role: string; status: string; joined_at: string;
   profile: { handle: string; avatar_url: string; verified: boolean } | null;
 }
+interface Topic { id: string; name: string; slug: string; position: number }
 
 export default function ManageRoomPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -30,6 +31,7 @@ export default function ManageRoomPage() {
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   const [priceMsg, setPriceMsg] = useState<string | null>(null);
   const [showOnProfile, setShowOnProfile] = useState(true);
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/rooms/${slug}`);
@@ -40,6 +42,7 @@ export default function ManageRoomPage() {
     setName(data.room.name);
     setDescription(data.room.description ?? "");
     setShowOnProfile(data.room.show_on_profile ?? true);
+    setTopics(data.channels ?? []);
     setPriceDollars(data.room.price_cents ? (data.room.price_cents / 100).toFixed(2) : "");
     const mRes = await fetch(`/api/rooms/${data.room.id}/members`);
     if (mRes.status === 403) { setForbidden(true); return; }
@@ -92,6 +95,31 @@ export default function ManageRoomPage() {
     } else {
       setPriceMsg(await errorMessage(res));
     }
+  }
+
+  async function renameTopic(topic: Topic) {
+    const next = prompt("Rename topic", topic.name);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed || trimmed === topic.name) return;
+    const res = await fetch(`/api/channels/${topic.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setTopics((t) => t.map((x) => (x.id === topic.id ? { ...x, name: updated.name } : x)));
+    } else {
+      alert(await errorMessage(res));
+    }
+  }
+
+  async function deleteTopic(topic: Topic) {
+    if (!confirm(`Delete #${topic.name}? Its messages will be removed.`)) return;
+    const res = await fetch(`/api/channels/${topic.id}`, { method: "DELETE" });
+    if (res.ok) setTopics((t) => t.filter((x) => x.id !== topic.id));
+    else alert(await errorMessage(res));
   }
 
   async function updateMember(userId: string, patch: { role?: string; status?: string }) {
@@ -191,6 +219,20 @@ export default function ManageRoomPage() {
           )}
         </section>
       )}
+
+      <section className="glass-card rounded-2xl overflow-hidden">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">Topics</h2>
+        {topics.map((t) => (
+          <div key={t.id} className="flex items-center gap-2 px-4 py-3 border-t border-[var(--border)]">
+            <span className="text-gray-500">#</span>
+            <span className="flex-1 text-sm text-white truncate">{t.name}</span>
+            <button onClick={() => renameTopic(t)} className="text-xs text-gray-400 hover:text-white">Rename</button>
+            {topics.length > 1 && (
+              <button onClick={() => deleteTopic(t)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
+            )}
+          </div>
+        ))}
+      </section>
 
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">
