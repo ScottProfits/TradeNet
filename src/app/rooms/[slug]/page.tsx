@@ -400,7 +400,7 @@ function RoomPageInner() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-64px)] -mb-6">
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-20px)] -mb-6">
       {/* Header — room info, or (mobile chat screen) the current topic */}
       <div className="glass-card rounded-t-2xl pl-4 pr-14 md:pr-4 py-3 flex items-center gap-3 flex-shrink-0">
         {mobileChat ? (
@@ -652,7 +652,7 @@ function RoomPageInner() {
                 <Megaphone className="w-3.5 h-3.5" /> Only channel admins post in this topic.
               </p>
             ) : (
-            <form onSubmit={send} className="px-3 pb-3 pt-1 space-y-2">
+            <form onSubmit={send} className="px-3 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
               {mediaPreview && (
                 <div className="relative inline-block">
                   {media?.type.startsWith("video/") ? (
