@@ -5,6 +5,7 @@ import Link from "next/link";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { errorMessage } from "@/lib/apiError";
 
 interface Room {
   id: string; name: string; slug: string; description: string | null;
@@ -89,7 +90,7 @@ export default function ManageRoomPage() {
       setPriceMsg(cents > 0 ? `Members now pay $${(cents / 100).toFixed(2)}/mo` : "Channel is now free");
       load();
     } else {
-      setPriceMsg(await res.text());
+      setPriceMsg(await errorMessage(res));
     }
   }
 
@@ -101,7 +102,7 @@ export default function ManageRoomPage() {
       body: JSON.stringify({ userId, ...patch }),
     });
     if (res.ok) load();
-    else alert(await res.text());
+    else alert(await errorMessage(res));
   }
 
   if (forbidden) return <p className="text-gray-500 text-sm text-center pt-20">You don&apos;t manage this channel.</p>;

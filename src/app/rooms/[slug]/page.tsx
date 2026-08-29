@@ -13,6 +13,7 @@ import { timeAgo } from "@/lib/timeAgo";
 import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
+import { errorMessage } from "@/lib/apiError";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
 
@@ -119,7 +120,7 @@ function RoomPageInner() {
         window.location.href = url;
         return;
       }
-      alert(await res.text());
+      alert(await errorMessage(res));
       setJoining(false);
       return;
     }
@@ -138,7 +139,7 @@ function RoomPageInner() {
       const { url } = await res.json();
       window.location.href = url;
     } else {
-      alert(await res.text());
+      alert(await errorMessage(res));
     }
   }
 
@@ -249,7 +250,7 @@ function RoomPageInner() {
       setChannels((c) => [...c, ch]);
       setActiveChannel(ch.id);
     } else {
-      alert(await res.text());
+      alert(await errorMessage(res));
     }
   }
 

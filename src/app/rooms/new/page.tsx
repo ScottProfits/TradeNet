@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/ui/BackButton";
+import { errorMessage } from "@/lib/apiError";
 
 export default function NewRoomPage() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function NewRoomPage() {
       const room = await res.json();
       router.push(`/rooms/${room.slug}`);
     } else {
-      setError(await res.text());
+      setError(await errorMessage(res));
       setBusy(false);
     }
   }

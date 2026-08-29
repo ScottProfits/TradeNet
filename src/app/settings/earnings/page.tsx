@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { DollarSign, ExternalLink } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
+import { errorMessage } from "@/lib/apiError";
 
 export default function EarningsPage() {
   return (
@@ -36,7 +37,7 @@ function EarningsInner() {
       const { url } = await res.json();
       window.location.href = url;
     } else {
-      alert(await res.text());
+      alert(await errorMessage(res));
       setBusy(false);
     }
   }
