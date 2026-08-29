@@ -27,7 +27,7 @@ interface Membership { role: "owner" | "mod" | "member"; status: string }
 interface ChatMessage {
   id: string; sender_id: string; content: string; image_url: string | null;
   poster_url?: string | null;
-  created_at: string; deleted: boolean; hidden?: boolean;
+  created_at: string; hidden?: boolean;
   reactions: Record<string, { count: number; mine: boolean }>;
   sender: { handle: string; avatar_url: string; verified: boolean } | null;
 }
@@ -226,8 +226,16 @@ function RoomPageInner() {
 
   async function deleteMessage(id: string) {
     if (!confirm("Delete this message?")) return;
-    setMessages((m) => m.map((x) => (x.id === id ? { ...x, deleted: true, content: "" } : x)));
+    setMessages((m) => m.filter((x) => x.id !== id));
     await fetch(`/api/channel-messages/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
+  async function addCustomReaction(m: ChatMessage) {
+    const picked = prompt("React with an emoji");
+    if (!picked) return;
+    const emoji = picked.trim();
+    if (!emoji || /[A-Za-z0-9\s]/.test(emoji)) return;
+    await toggleReaction(m, emoji);
   }
 
   async function report(id: string) {
@@ -375,60 +383,62 @@ function RoomPageInner() {
                         </Link>
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
-                        {!m.deleted && (
-                          <span className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
-                              <SmilePlus className="w-3 h-3" />
+                        <span className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
+                            <SmilePlus className="w-3 h-3" />
+                          </button>
+                          {!mine && (
+                            <button onClick={() => report(m.id)} className="text-gray-600 hover:text-yellow-500" title="Report">
+                              <Flag className="w-3 h-3" />
                             </button>
-                            {!mine && (
-                              <button onClick={() => report(m.id)} className="text-gray-600 hover:text-yellow-500" title="Report">
-                                <Flag className="w-3 h-3" />
-                              </button>
-                            )}
-                            {(mine || isMod) && (
-                              <button onClick={() => deleteMessage(m.id)} className="text-gray-600 hover:text-red-500" title="Delete">
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                      {m.deleted ? (
-                        <p className="text-xs text-gray-600 italic">message deleted</p>
-                      ) : (
-                        <>
-                          {m.content && <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">{m.content}</p>}
-                          {m.image_url && (
-                            <div className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]">
-                              {isVideoUrl(m.image_url) ? (
-                                <ExpandableVideo src={m.image_url} poster={m.poster_url ?? undefined} />
-                              ) : (
-                                <ExpandableImage src={m.image_url} alt="" />
-                              )}
-                            </div>
                           )}
-                          {(Object.keys(m.reactions).length > 0 || reactingId === m.id) && (
-                            <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                              {Object.entries(m.reactions).map(([emoji, r]) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => toggleReaction(m, emoji)}
-                                  className={`text-xs px-1.5 py-0.5 rounded-full border ${
-                                    r.mine ? "border-[var(--green)] bg-[var(--green)]/10" : "border-[var(--border)]"
-                                  }`}
-                                >
-                                  {emoji} {r.count}
+                          {(mine || isMod) && (
+                            <button onClick={() => deleteMessage(m.id)} className="text-gray-600 hover:text-red-500" title="Delete">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                      {m.content && <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">{m.content}</p>}
+                      {m.image_url && (
+                        <div className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]">
+                          {isVideoUrl(m.image_url) ? (
+                            <ExpandableVideo src={m.image_url} poster={m.poster_url ?? undefined} />
+                          ) : (
+                            <ExpandableImage src={m.image_url} alt="" />
+                          )}
+                        </div>
+                      )}
+                      {(Object.keys(m.reactions).length > 0 || reactingId === m.id) && (
+                        <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                          {Object.entries(m.reactions).map(([emoji, r]) => (
+                            <button
+                              key={emoji}
+                              onClick={() => toggleReaction(m, emoji)}
+                              className={`text-xs px-1.5 py-0.5 rounded-full border ${
+                                r.mine ? "border-[var(--green)] bg-[var(--green)]/10" : "border-[var(--border)]"
+                              }`}
+                            >
+                              {emoji} {r.count}
+                            </button>
+                          ))}
+                          {reactingId === m.id && (
+                            <>
+                              {REACTIONS.map((emoji) => (
+                                <button key={emoji} onClick={() => toggleReaction(m, emoji)} className="text-sm px-1 hover:scale-125 transition-transform">
+                                  {emoji}
                                 </button>
                               ))}
-                              {reactingId === m.id &&
-                                REACTIONS.map((emoji) => (
-                                  <button key={emoji} onClick={() => toggleReaction(m, emoji)} className="text-xs px-1 hover:scale-125 transition-transform">
-                                    {emoji}
-                                  </button>
-                                ))}
-                            </div>
+                              <button
+                                onClick={() => addCustomReaction(m)}
+                                className="text-xs w-6 h-6 rounded-full border border-[var(--border)] text-gray-400 hover:text-white flex items-center justify-center"
+                                title="Add another emoji"
+                              >
+                                +
+                              </button>
+                            </>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -3,8 +3,16 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getMembership, canParticipate } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
-// A small allowlist keeps this from becoming a text field.
-const EMOJI = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
+// Accept any short emoji-ish string — at least one non-ASCII code point,
+// no letters/digits/whitespace, capped in length. Keeps it from becoming
+// a free text field without hard-coding a list.
+function isEmoji(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  const s = v.trim();
+  if (!s || [...s].length > 8) return false;
+  if (/[A-Za-z0-9\s]/.test(s)) return false;
+  return /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}\u{200D}\u{20E3}\u{2764}]/u.test(s);
+}
 
 async function guard(messageId: string, userId: string) {
   const { data: msg } = await supabaseAdmin
@@ -28,12 +36,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const { emoji } = await req.json();
-  if (!EMOJI.includes(emoji)) return new Response("Unsupported reaction", { status: 400 });
+  if (!isEmoji(emoji)) return new Response("Unsupported reaction", { status: 400 });
   if (!(await guard(id, userId))) return new Response("Forbidden", { status: 403 });
 
   await supabaseAdmin
     .from("channel_message_reactions")
-    .upsert({ message_id: id, user_id: userId, emoji }, { onConflict: "message_id,user_id,emoji" });
+    .upsert({ message_id: id, user_id: userId, emoji: emoji.trim() }, { onConflict: "message_id,user_id,emoji" });
   return Response.json({ ok: true });
 }
 

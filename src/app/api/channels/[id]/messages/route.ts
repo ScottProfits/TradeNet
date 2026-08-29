@@ -42,8 +42,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabaseAdmin
     .from("channel_messages")
-    .select("id, channel_id, sender_id, content, image_url, poster_url, created_at, edited_at, deleted_at")
+    .select("id, channel_id, sender_id, content, image_url, poster_url, created_at, edited_at")
     .eq("channel_id", id)
+    .is("deleted_at", null) // deleted messages disappear entirely
     .order("created_at", { ascending: false })
     .limit(PAGE);
   if (before) query = query.lt("created_at", before);
@@ -74,11 +75,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const result = rows.map((m) => ({
     ...m,
-    content: m.deleted_at ? "" : m.content,
-    image_url: m.deleted_at ? null : m.image_url,
-    deleted: !!m.deleted_at,
     hidden: blockedSet.has(m.sender_id),
-    reactions: m.deleted_at ? {} : reactionMap.get(m.id) ?? {},
+    reactions: reactionMap.get(m.id) ?? {},
     sender: profileMap[m.sender_id] ?? null,
   }));
 
