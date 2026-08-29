@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// build-cache-bust: 2026-08-29a — force a clean route build (rooms sub-routes)
 const nextConfig = {
   serverExternalPackages: ["protobufjs", "ws", "yahoo-finance2"],
   images: {
