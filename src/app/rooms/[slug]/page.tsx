@@ -58,7 +58,7 @@ interface Channel { id: string; name: string; slug: string; position: number; mo
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   avatar_url: string | null; price_cents: number | null; member_count: number;
-  visibility?: string;
+  visibility?: string; requires_approval?: boolean;
   owner_id: string; owner?: { handle: string; avatar_url: string; verified: boolean } | null;
 }
 interface Membership { role: "owner" | "mod" | "member"; status: string }
@@ -94,6 +94,7 @@ function RoomPageInner() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -136,6 +137,7 @@ function RoomPageInner() {
     setChannels(data.channels);
     setMembership(data.membership);
     setCanParticipate(data.canParticipate);
+    setPendingApproval(data.membership?.status === "pending");
     const wanted = searchParams.get("c");
     setActiveChannel((prev) => prev ?? (data.channels.find((c: Channel) => c.id === wanted)?.id ?? data.channels[0]?.id ?? null));
     setLoading(false);
@@ -228,7 +230,11 @@ function RoomPageInner() {
       return;
     }
     const res = await fetch(`/api/rooms/${room!.id}/join`, { method: "POST" });
-    if (res.ok) await loadRoom();
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.status === "pending") setPendingApproval(true);
+      else await loadRoom();
+    }
     setJoining(false);
   }
 
@@ -485,7 +491,9 @@ function RoomPageInner() {
         <div className="flex-1 glass-card border-t-0 rounded-b-2xl flex flex-col items-center justify-center text-center p-8 gap-3">
           <Lock className="w-8 h-8 text-gray-600" />
           <p className="text-gray-300 text-sm max-w-sm">{room.description || `Join to see the conversation in ${room.name}.`}</p>
-          {signedOut ? (
+          {pendingApproval ? (
+            <p className="text-[var(--green)] text-sm font-semibold">Request sent — waiting for the channel owner to approve you.</p>
+          ) : signedOut ? (
             <>
               {paid && <p className="text-white font-semibold">${(room.price_cents! / 100).toFixed(2)}/month</p>}
               <button onClick={join} className="px-5 py-2 rounded-lg bg-[var(--green)] text-black text-sm font-semibold">
@@ -503,7 +511,7 @@ function RoomPageInner() {
             </>
           ) : (
             <button onClick={join} disabled={joining} className="px-5 py-2 rounded-lg bg-[var(--green)] text-black text-sm font-semibold disabled:opacity-40">
-              {joining ? "Joining..." : "Join channel"}
+              {joining ? "..." : room.requires_approval ? "Request to join" : "Join channel"}
             </button>
           )}
         </div>

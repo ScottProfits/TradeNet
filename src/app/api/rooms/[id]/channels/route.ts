@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getMembership, canModerate, uniqueChannelSlug } from "@/lib/rooms";
+import { getMembership, canManageChannel, uniqueChannelSlug } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 // PATCH /api/rooms/:id/channels — reorder topics. Body: { orderedIds: string[] }.
@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
-  if (!canModerate(await getMembership(id, userId))) return new Response("Forbidden", { status: 403 });
+  if (!canManageChannel(await getMembership(id, userId))) return new Response("Forbidden", { status: 403 });
 
   const { orderedIds } = await req.json();
   if (!Array.isArray(orderedIds) || !orderedIds.length) return new Response("orderedIds required", { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
   const membership = await getMembership(id, userId);
-  if (!canModerate(membership)) return new Response("Forbidden", { status: 403 });
+  if (!canManageChannel(membership)) return new Response("Forbidden", { status: 403 });
 
   const { name } = await req.json();
   const trimmed = (name ?? "").trim();

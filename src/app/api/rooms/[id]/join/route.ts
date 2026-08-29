@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data: room } = await supabaseAdmin
     .from("rooms")
-    .select("id, price_cents")
+    .select("id, price_cents, requires_approval")
     .eq("id", id)
     .maybeSingle();
   if (!room) return new Response("Not found", { status: 404 });
@@ -21,9 +21,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const existing = await getMembership(room.id, userId);
   if (existing?.status === "banned") return new Response("You are banned from this channel", { status: 403 });
   if (existing?.status === "active") return Response.json({ status: "active" });
+  if (existing?.status === "pending") return Response.json({ status: "pending" });
 
   if (room.price_cents && room.price_cents > 0) {
     return new Response("This channel requires a subscription", { status: 402 });
+  }
+
+  // Approval-gated free channel: create a pending request, don't let them in.
+  if (room.requires_approval) {
+    await supabaseAdmin.from("room_members").upsert(
+      { room_id: room.id, user_id: userId, role: "member", status: "pending" },
+      { onConflict: "room_id,user_id" }
+    );
+    return Response.json({ status: "pending" });
   }
 
   await supabaseAdmin.from("room_members").upsert(

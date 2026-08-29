@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getMembership, canParticipate, canModerate } from "@/lib/rooms";
+import { getMembership, canParticipate, canManageChannel } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,7 +56,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!room) return new Response("Not found", { status: 404 });
 
   const membership = await getMembership(room.id, userId);
-  if (!canModerate(membership)) return new Response("Forbidden", { status: 403 });
+  if (!canManageChannel(membership)) return new Response("Forbidden", { status: 403 });
 
   const body = await req.json();
   const patch: Record<string, unknown> = {};
@@ -65,6 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (typeof body.avatarUrl === "string") patch.avatar_url = body.avatarUrl || null;
   if (body.visibility === "public" || body.visibility === "unlisted") patch.visibility = body.visibility;
   if (typeof body.showOnProfile === "boolean") patch.show_on_profile = body.showOnProfile;
+  if (typeof body.requiresApproval === "boolean") patch.requires_approval = body.requiresApproval;
   if (!Object.keys(patch).length) return new Response("Nothing to update", { status: 400 });
 
   const { data, error } = await supabaseAdmin

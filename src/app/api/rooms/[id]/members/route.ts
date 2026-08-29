@@ -54,7 +54,40 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await supabaseAdmin.from("room_members").update(patch).match({ room_id: id, user_id: targetId });
 
-  if (patch.status === "banned") {
+  // Approving a pending request bumps the count; banning drops it.
+  const bumpBy =
+    patch.status === "banned"
+      ? -1
+      : patch.status === "active" && target.status !== "active"
+      ? 1
+      : 0;
+  if (bumpBy) {
+    const { data } = await supabaseAdmin.from("rooms").select("member_count").eq("id", id).single();
+    await supabaseAdmin
+      .from("rooms")
+      .update({ member_count: Math.max(0, (data?.member_count ?? 0) + bumpBy) })
+      .eq("id", id);
+  }
+  return Response.json({ ok: true });
+}
+
+// DELETE /api/rooms/:id/members?userId=... — kick a member or reject a
+// pending request (owner/mod). Unlike a ban, they can re-request later.
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+  if (!canModerate(await getMembership(id, userId))) return new Response("Forbidden", { status: 403 });
+
+  const targetId = req.nextUrl.searchParams.get("userId");
+  if (!targetId || targetId === userId) return new Response("Bad target", { status: 400 });
+
+  const target = await getMembership(id, targetId);
+  if (!target || target.role === "owner") return new Response("Cannot remove", { status: 400 });
+
+  await supabaseAdmin.from("room_members").delete().match({ room_id: id, user_id: targetId });
+
+  if (target.status === "active") {
     const { data } = await supabaseAdmin.from("rooms").select("member_count").eq("id", id).single();
     await supabaseAdmin
       .from("rooms")

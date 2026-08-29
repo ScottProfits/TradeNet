@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getMembership, canModerate, uniqueChannelSlug } from "@/lib/rooms";
+import { getMembership, canManageChannel, uniqueChannelSlug } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 async function channelRoom(channelId: string) {
@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const channel = await channelRoom(id);
   if (!channel) return new Response("Not found", { status: 404 });
-  if (!canModerate(await getMembership(channel.room_id, userId))) {
+  if (!canManageChannel(await getMembership(channel.room_id, userId))) {
     return new Response("Forbidden", { status: 403 });
   }
 
@@ -55,7 +55,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const channel = await channelRoom(id);
   if (!channel) return new Response("Not found", { status: 404 });
-  if (!canModerate(await getMembership(channel.room_id, userId))) {
+  if (!canManageChannel(await getMembership(channel.room_id, userId))) {
     return new Response("Forbidden", { status: 403 });
   }
 

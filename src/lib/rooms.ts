@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export interface Membership {
   role: "owner" | "mod" | "member";
-  status: "active" | "past_due" | "canceled" | "banned";
+  status: "active" | "past_due" | "canceled" | "banned" | "pending";
 }
 
 /** The caller's membership row for a room, or null if they've never joined. */
@@ -24,8 +24,14 @@ export function canParticipate(m: Membership | null): boolean {
   return !!m && m.status === "active";
 }
 
+/** Delete messages, ban/kick members, approve join requests. */
 export function canModerate(m: Membership | null): boolean {
   return canParticipate(m) && (m!.role === "owner" || m!.role === "mod");
+}
+
+/** Owner-only: edit the channel, its topics, pricing, visibility, mods. */
+export function canManageChannel(m: Membership | null): boolean {
+  return canParticipate(m) && m!.role === "owner";
 }
 
 /** URL-safe slug from a display name, with a short random suffix for uniqueness. */

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data: room } = await supabaseAdmin
     .from("rooms")
-    .select("id, name, slug, description, avatar_url, member_count, price_cents, owner_id")
+    .select("id, name, slug, description, avatar_url, member_count, price_cents, requires_approval, owner_id")
     .eq(column, id)
     .maybeSingle();
   if (!room) return new Response("Not found", { status: 404 });
@@ -31,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       avatar_url: room.avatar_url,
       member_count: room.member_count,
       price_cents: room.price_cents,
+      requires_approval: room.requires_approval,
       owner: owner ?? null,
     },
   });

@@ -13,7 +13,7 @@ import { errorMessage } from "@/lib/apiError";
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   visibility: string; owner_id: string; price_cents: number | null;
-  show_on_profile: boolean; avatar_url: string | null;
+  show_on_profile: boolean; avatar_url: string | null; requires_approval: boolean;
 }
 interface Member {
   user_id: string; role: string; status: string; joined_at: string;
@@ -38,6 +38,7 @@ export default function ManageRoomPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [copied, setCopied] = useState(false);
   const [visibility, setVisibility] = useState<"public" | "unlisted">("public");
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { userId } = useAuth();
@@ -52,6 +53,7 @@ export default function ManageRoomPage() {
     setDescription(data.room.description ?? "");
     setShowOnProfile(data.room.show_on_profile ?? true);
     setVisibility(data.room.visibility === "unlisted" ? "unlisted" : "public");
+    setRequiresApproval(!!data.room.requires_approval);
     setAvatarUrl(data.room.avatar_url ?? null);
     setTopics(data.channels ?? []);
     setPriceDollars(data.room.price_cents ? (data.room.price_cents / 100).toFixed(2) : "");
@@ -95,6 +97,36 @@ export default function ManageRoomPage() {
       body: JSON.stringify({ name, description }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  }
+
+  async function toggleApproval() {
+    if (!room) return;
+    const next = !requiresApproval;
+    setRequiresApproval(next);
+    const res = await fetch(`/api/rooms/${room.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requiresApproval: next }),
+    });
+    if (!res.ok) { setRequiresApproval(!next); alert(await errorMessage(res)); }
+  }
+
+  async function approveMember(userId: string) {
+    if (!room) return;
+    const res = await fetch(`/api/rooms/${room.id}/members`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, status: "active" }),
+    });
+    if (res.ok) load();
+    else alert(await errorMessage(res));
+  }
+
+  async function removeMember(userId: string) {
+    if (!room) return;
+    const res = await fetch(`/api/rooms/${room.id}/members?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+    if (res.ok) load();
+    else alert(await errorMessage(res));
   }
 
   async function changeVisibility(next: "public" | "unlisted") {
@@ -225,6 +257,14 @@ export default function ManageRoomPage() {
       <BackButton fallbackHref={`/rooms/${slug}`} iconOnly className="text-gray-400 hover:text-white transition-colors" />
       <h1 className="text-2xl font-bold text-white">Manage {room.name}</h1>
 
+      {!isOwner && (
+        <p className="text-xs text-gray-500 glass-card rounded-2xl p-4">
+          You&apos;re a moderator here. You can review members, approve requests, and remove or delete messages —
+          channel settings are owner-only.
+        </p>
+      )}
+
+      {isOwner && (
       <section className="glass-card rounded-2xl p-5 space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Details</h2>
 
@@ -262,7 +302,9 @@ export default function ManageRoomPage() {
           {saved ? "Saved" : "Save"}
         </button>
       </section>
+      )}
 
+      {isOwner && (
       <section className="glass-card rounded-2xl p-5 space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Visibility</h2>
         <div className="flex gap-2">
@@ -285,7 +327,28 @@ export default function ManageRoomPage() {
             ? "Hidden from Discover — only people with the invite link can find it."
             : "Shows in the Discover list for everyone."}
         </p>
+
+        {!(room.price_cents && room.price_cents > 0) && (
+          <button onClick={toggleApproval} className="w-full flex items-center justify-between gap-3 text-left pt-3 border-t border-[var(--border)]">
+            <span>
+              <span className="block text-sm text-white font-medium">Require approval to join</span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                New members wait in a request queue until you or a mod approves them.
+              </span>
+            </span>
+            <span
+              className="relative w-10 h-6 rounded-full transition-colors shrink-0"
+              style={{ background: requiresApproval ? "var(--green)" : "var(--border)" }}
+            >
+              <span
+                className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+                style={{ left: requiresApproval ? "1.125rem" : "0.125rem" }}
+              />
+            </span>
+          </button>
+        )}
       </section>
+      )}
 
       <section className="glass-card rounded-2xl p-5 space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invite link</h2>
@@ -366,6 +429,7 @@ export default function ManageRoomPage() {
         </section>
       )}
 
+      {isOwner && (
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">Topics</h2>
         {topics.map((t, i) => (
@@ -415,12 +479,29 @@ export default function ManageRoomPage() {
           </div>
         ))}
       </section>
+      )}
+
+      {members.some((m) => m.status === "pending") && (
+        <section className="glass-card rounded-2xl overflow-hidden">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--green)] p-4 pb-2">
+            Join requests ({members.filter((m) => m.status === "pending").length})
+          </h2>
+          {members.filter((m) => m.status === "pending").map((m) => (
+            <div key={m.user_id} className="flex items-center gap-3 p-4 border-t border-[var(--border)]">
+              <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
+              <span className="flex-1 text-sm font-semibold text-white truncate">@{m.profile?.handle}</span>
+              <button onClick={() => approveMember(m.user_id)} className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[var(--green)] text-black">Approve</button>
+              <button onClick={() => removeMember(m.user_id)} className="text-xs text-gray-500 hover:text-red-400">Deny</button>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">
-          Members ({members.length})
+          Members ({members.filter((m) => m.status !== "pending").length})
         </h2>
-        {members.map((m) => (
+        {members.filter((m) => m.status !== "pending").map((m) => (
           <div key={m.user_id} className="flex items-center gap-3 p-4 border-t border-[var(--border)]">
             <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
             <div className="flex-1 min-w-0">
@@ -442,6 +523,9 @@ export default function ManageRoomPage() {
                   >
                     {m.role === "mod" ? "Remove mod" : "Make mod"}
                   </button>
+                )}
+                {m.status !== "banned" && (
+                  <button onClick={() => removeMember(m.user_id)} className="text-gray-400 hover:text-white">Kick</button>
                 )}
                 <button
                   onClick={() => updateMember(m.user_id, { status: m.status === "banned" ? "active" : "banned" })}
