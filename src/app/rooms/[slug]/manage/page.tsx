@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -20,6 +20,7 @@ interface Topic { id: string; name: string; slug: string; position: number; mods
 
 export default function ManageRoomPage() {
   const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [me, setMe] = useState<{ role: string } | null>(null);
@@ -119,6 +120,14 @@ export default function ManageRoomPage() {
     if (!confirm(`Delete #${topic.name}? Its messages will be removed.`)) return;
     const res = await fetch(`/api/channels/${topic.id}`, { method: "DELETE" });
     if (res.ok) setTopics((t) => t.filter((x) => x.id !== topic.id));
+    else alert(await errorMessage(res));
+  }
+
+  async function deleteChannel() {
+    if (!room) return;
+    if (prompt(`This permanently deletes "${room.name}" and every message in it. Type the name to confirm:`) !== room.name) return;
+    const res = await fetch(`/api/rooms/${room.id}`, { method: "DELETE" });
+    if (res.ok) router.push("/rooms");
     else alert(await errorMessage(res));
   }
 
@@ -304,6 +313,18 @@ export default function ManageRoomPage() {
           </div>
         ))}
       </section>
+
+      {isOwner && (
+        <section className="glass-card rounded-2xl p-5 border border-red-500/20">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-red-400/80 mb-2">Danger zone</h2>
+          <p className="text-xs text-gray-500 mb-3">
+            Deleting the channel removes every topic, message and membership. This can&apos;t be undone.
+          </p>
+          <button onClick={deleteChannel} className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25">
+            Delete channel
+          </button>
+        </section>
+      )}
     </div>
   );
 }

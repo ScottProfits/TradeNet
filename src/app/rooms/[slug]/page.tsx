@@ -133,6 +133,16 @@ function RoomPageInner() {
     return () => clearInterval(t);
   }, [activeChannel, canParticipate, showChat]);
 
+  // Tap anywhere else to dismiss the reaction picker.
+  useEffect(() => {
+    if (!reactingId) return;
+    const close = (e: Event) => {
+      if (!(e.target as HTMLElement)?.closest?.("[data-reaction-ui]")) setReactingId(null);
+    };
+    const t = setTimeout(() => document.addEventListener("pointerdown", close), 0);
+    return () => { clearTimeout(t); document.removeEventListener("pointerdown", close); };
+  }, [reactingId]);
+
   function pingTyping() {
     if (!activeChannel) return;
     const now = Date.now();
@@ -438,7 +448,7 @@ function RoomPageInner() {
                 return (
                   <div
                     key={m.id}
-                    className="group flex gap-2.5"
+                    className="group flex gap-2.5 select-none [-webkit-touch-callout:none]"
                     onTouchStart={() => armLongPress(m.id)}
                     onTouchEnd={cancelLongPress}
                     onTouchMove={cancelLongPress}
@@ -453,7 +463,7 @@ function RoomPageInner() {
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
                         <span className="ml-auto flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
+                          <button data-reaction-ui onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
                             <SmilePlus className="w-3.5 h-3.5" />
                           </button>
                           {mine && m.content && (
@@ -509,7 +519,7 @@ function RoomPageInner() {
                         </div>
                       )}
                       {(Object.keys(m.reactions).length > 0 || reactingId === m.id) && (
-                        <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                        <div data-reaction-ui className="flex flex-wrap items-center gap-1 mt-1.5">
                           {Object.entries(m.reactions).map(([emoji, r]) => (
                             <button
                               key={emoji}
