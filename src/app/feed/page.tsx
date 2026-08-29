@@ -12,7 +12,8 @@ import MarketPulse from "@/components/feed/MarketPulse";
 import PullToRefresh from "@/components/ui/PullToRefresh";
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Users } from "lucide-react";
+import Link from "next/link";
+import { Plus, Users, Hash } from "lucide-react";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 import { realTradeToCardProps, RealTrade, RealPost } from "@/lib/tradeCardProps";
 
@@ -259,6 +260,17 @@ function FeedPageInner() {
     setDeletedIds((s) => new Set(s).add(id));
   }
 
+  const channelsPill = (
+    <Link
+      href="/rooms"
+      className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-colors"
+      style={{ background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
+    >
+      <Hash className="w-2.5 h-2.5" />
+      Channels
+    </Link>
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-4 lg:gap-6">
       <aside className="hidden lg:block space-y-4">
@@ -320,20 +332,28 @@ function FeedPageInner() {
 
         {tab === "explore" && <ExploreTab />}
 
-        {tab === "video" && <VideoTab />}
+        {tab === "video" && (
+          <>
+            <div className="flex justify-end mb-2">{channelsPill}</div>
+            <VideoTab />
+          </>
+        )}
 
         {tab === "feed" && (
           <>
-            <button
-              onClick={() => setFollowingOnly((v) => !v)}
-              className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-colors"
-              style={followingOnly
-                ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
-                : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
-            >
-              <Users className="w-2.5 h-2.5" />
-              Following only
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setFollowingOnly((v) => !v)}
+                className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-colors"
+                style={followingOnly
+                  ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
+                  : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
+              >
+                <Users className="w-2.5 h-2.5" />
+                Following only
+              </button>
+              {channelsPill}
+            </div>
 
             {followingOnly ? (
               followingItems.length === 0
