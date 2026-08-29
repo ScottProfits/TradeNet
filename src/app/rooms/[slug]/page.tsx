@@ -607,7 +607,7 @@ function RoomPageInner() {
                         </Link>
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
-                        <span className="ml-auto flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span data-reaction-ui className="ml-auto hidden md:flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           {mine && m.content && editingId !== m.id && (
                             <button onClick={() => startEdit(m)} className="text-gray-600 hover:text-white" title="Edit">
                               <Pencil className="w-3.5 h-3.5" />
@@ -685,7 +685,7 @@ function RoomPageInner() {
                           {reactingId === m.id && (
                             <>
                               {REACTIONS.map((emoji) => (
-                                <button key={emoji} onClick={() => toggleReaction(m, emoji)} className="text-sm px-1 hover:scale-125 transition-transform">
+                                <button key={emoji} onClick={() => toggleReaction(m, emoji)} className="text-base px-1 active:scale-125 hover:scale-125 transition-transform">
                                   {emoji}
                                 </button>
                               ))}
@@ -695,6 +695,32 @@ function RoomPageInner() {
                                 title="Add another emoji"
                               >
                                 +
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Tap-opened actions (mobile-first; desktop also has the hover row) */}
+                      {reactingId === m.id && (
+                        <div data-reaction-ui className="flex items-center gap-3 mt-2 text-xs">
+                          {mine && m.content && editingId !== m.id && (
+                            <button onClick={() => startEdit(m)} className="flex items-center gap-1 text-gray-400 hover:text-white">
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </button>
+                          )}
+                          {(mine || isMod) && (
+                            <button onClick={() => deleteMessage(m.id)} className="flex items-center gap-1 text-gray-400 hover:text-red-400">
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          )}
+                          {!mine && (
+                            <>
+                              <button onClick={() => report(m.id)} className="flex items-center gap-1 text-gray-400 hover:text-yellow-500">
+                                <Flag className="w-3.5 h-3.5" /> Report
+                              </button>
+                              <button onClick={() => blockSender(m)} className="flex items-center gap-1 text-gray-400 hover:text-red-400">
+                                <Ban className="w-3.5 h-3.5" /> Block
                               </button>
                             </>
                           )}
