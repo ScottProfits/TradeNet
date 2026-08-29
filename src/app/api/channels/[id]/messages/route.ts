@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
-import { getMembership, canParticipate } from "@/lib/rooms";
+import { getMembership, canParticipate, canModerate } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 const PAGE = 30;
@@ -9,7 +9,7 @@ const PAGE = 30;
 async function loadChannel(channelId: string) {
   const { data } = await supabaseAdmin
     .from("channels")
-    .select("id, name, room_id")
+    .select("id, name, room_id, mods_only_posts")
     .eq("id", channelId)
     .maybeSingle();
   return data;
@@ -94,6 +94,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const membership = await getMembership(channel.room_id, userId);
   if (!canParticipate(membership)) return new Response("Not a member", { status: 403 });
+  if (channel.mods_only_posts && !canModerate(membership)) {
+    return new Response("Only channel admins can post in this topic", { status: 403 });
+  }
 
   const { content, imageUrl, posterUrl } = await req.json();
   const trimmed = (content ?? "").trim();

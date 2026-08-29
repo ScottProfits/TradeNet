@@ -24,15 +24,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return new Response("Forbidden", { status: 403 });
   }
 
-  const { name } = await req.json();
-  const trimmed = (name ?? "").trim();
-  if (!trimmed || trimmed.length > 32) return new Response("Name must be 1–32 characters", { status: 400 });
+  const body = await req.json();
+  const patch: Record<string, unknown> = {};
+  if (typeof body.name === "string") {
+    const trimmed = body.name.trim();
+    if (!trimmed || trimmed.length > 32) return new Response("Name must be 1–32 characters", { status: 400 });
+    patch.name = trimmed;
+  }
+  if (typeof body.modsOnly === "boolean") patch.mods_only_posts = body.modsOnly;
+  if (!Object.keys(patch).length) return new Response("Nothing to update", { status: 400 });
 
   const { data, error } = await supabaseAdmin
     .from("channels")
-    .update({ name: trimmed })
+    .update(patch)
     .eq("id", id)
-    .select("id, name, slug, position")
+    .select("id, name, slug, position, mods_only_posts")
     .single();
   if (error) return new Response(error.message, { status: 500 });
   return Response.json(data);

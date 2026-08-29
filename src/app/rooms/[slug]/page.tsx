@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, SmilePlus, ChevronLeft } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, SmilePlus, ChevronLeft, Megaphone, Pencil } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -17,7 +17,7 @@ import { errorMessage } from "@/lib/apiError";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
 
-interface Channel { id: string; name: string; slug: string; position: number }
+interface Channel { id: string; name: string; slug: string; position: number; mods_only_posts?: boolean }
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   avatar_url: string | null; price_cents: number | null; member_count: number;
@@ -27,7 +27,7 @@ interface Membership { role: "owner" | "mod" | "member"; status: string }
 interface ChatMessage {
   id: string; sender_id: string; content: string; image_url: string | null;
   poster_url?: string | null;
-  created_at: string; hidden?: boolean;
+  created_at: string; edited_at?: string | null; hidden?: boolean;
   reactions: Record<string, { count: number; mine: boolean }>;
   sender: { handle: string; avatar_url: string; verified: boolean } | null;
 }
@@ -257,6 +257,20 @@ function RoomPageInner() {
     await fetch(`/api/channel-messages/${id}`, { method: "DELETE" }).catch(() => {});
   }
 
+  async function editMessage(m: ChatMessage) {
+    const next = prompt("Edit message", m.content);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed || trimmed === m.content) return;
+    setMessages((msgs) => msgs.map((x) => (x.id === m.id ? { ...x, content: trimmed, edited_at: new Date().toISOString() } : x)));
+    const res = await fetch(`/api/channel-messages/${m.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: trimmed }),
+    });
+    if (!res.ok) alert(await errorMessage(res));
+  }
+
   async function addCustomReaction(m: ChatMessage) {
     const picked = prompt("React with an emoji");
     if (!picked) return;
@@ -298,7 +312,9 @@ function RoomPageInner() {
   if (!room) return <p className="text-gray-500 text-sm text-center pt-20">Room not found.</p>;
 
   const paid = !!room.price_cents && room.price_cents > 0;
-  const activeChannelName = channels.find((c) => c.id === activeChannel)?.name ?? "";
+  const activeChannelObj = channels.find((c) => c.id === activeChannel);
+  const activeChannelName = activeChannelObj?.name ?? "";
+  const canPostHere = !activeChannelObj?.mods_only_posts || isMod;
   const mobileChat = canParticipate && showChat;
 
   function openTopic(id: string) {
@@ -382,7 +398,7 @@ function RoomPageInner() {
                     : "text-gray-300 md:text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Hash className="w-3.5 h-3.5 shrink-0" />
+                {c.mods_only_posts ? <Megaphone className="w-3.5 h-3.5 shrink-0" /> : <Hash className="w-3.5 h-3.5 shrink-0" />}
                 <span className="truncate">{c.name}</span>
               </button>
             ))}
@@ -414,6 +430,11 @@ function RoomPageInner() {
                           <button onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
                             <SmilePlus className="w-3 h-3" />
                           </button>
+                          {mine && m.content && (
+                            <button onClick={() => editMessage(m)} className="text-gray-600 hover:text-white" title="Edit">
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
                           {!mine && (
                             <button onClick={() => report(m.id)} className="text-gray-600 hover:text-yellow-500" title="Report">
                               <Flag className="w-3 h-3" />
@@ -426,7 +447,12 @@ function RoomPageInner() {
                           )}
                         </span>
                       </div>
-                      {m.content && <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">{m.content}</p>}
+                      {m.content && (
+                        <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">
+                          {m.content}
+                          {m.edited_at && <span className="text-[10px] text-gray-600 ml-1">(edited)</span>}
+                        </p>
+                      )}
                       {m.image_url && (
                         <div className="mt-1.5 rounded-lg overflow-hidden max-w-[280px]">
                           {isVideoUrl(m.image_url) ? (
@@ -475,7 +501,7 @@ function RoomPageInner() {
             </div>
 
             <div className="h-4 px-4 pt-1.5 flex items-center border-t border-[var(--border)]">
-              {typingUsers.length > 0 && (
+              {canPostHere && typingUsers.length > 0 && (
                 <span className="text-[11px] text-gray-500 flex items-center gap-1">
                   <span className="flex gap-0.5">
                     <span className="w-1 h-1 rounded-full bg-gray-500 animate-bounce [animation-delay:-0.3s]" />
@@ -491,6 +517,11 @@ function RoomPageInner() {
               )}
             </div>
 
+            {!canPostHere ? (
+              <p className="px-4 pb-4 pt-1 text-xs text-gray-500 flex items-center gap-1.5">
+                <Megaphone className="w-3.5 h-3.5" /> Only channel admins post in this topic.
+              </p>
+            ) : (
             <form onSubmit={send} className="px-3 pb-3 pt-1 space-y-2">
               {mediaPreview && (
                 <div className="relative inline-block">
@@ -521,6 +552,7 @@ function RoomPageInner() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

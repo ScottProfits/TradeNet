@@ -16,7 +16,7 @@ interface Member {
   user_id: string; role: string; status: string; joined_at: string;
   profile: { handle: string; avatar_url: string; verified: boolean } | null;
 }
-interface Topic { id: string; name: string; slug: string; position: number }
+interface Topic { id: string; name: string; slug: string; position: number; mods_only_posts?: boolean }
 
 export default function ManageRoomPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -122,6 +122,20 @@ export default function ManageRoomPage() {
     else alert(await errorMessage(res));
   }
 
+  async function toggleModsOnly(topic: Topic) {
+    const next = !topic.mods_only_posts;
+    setTopics((t) => t.map((x) => (x.id === topic.id ? { ...x, mods_only_posts: next } : x)));
+    const res = await fetch(`/api/channels/${topic.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modsOnly: next }),
+    });
+    if (!res.ok) {
+      setTopics((t) => t.map((x) => (x.id === topic.id ? { ...x, mods_only_posts: !next } : x)));
+      alert(await errorMessage(res));
+    }
+  }
+
   async function updateMember(userId: string, patch: { role?: string; status?: string }) {
     if (!room) return;
     const res = await fetch(`/api/rooms/${room.id}/members`, {
@@ -223,13 +237,29 @@ export default function ManageRoomPage() {
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">Topics</h2>
         {topics.map((t) => (
-          <div key={t.id} className="flex items-center gap-2 px-4 py-3 border-t border-[var(--border)]">
-            <span className="text-gray-500">#</span>
-            <span className="flex-1 text-sm text-white truncate">{t.name}</span>
-            <button onClick={() => renameTopic(t)} className="text-xs text-gray-400 hover:text-white">Rename</button>
-            {topics.length > 1 && (
-              <button onClick={() => deleteTopic(t)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
-            )}
+          <div key={t.id} className="px-4 py-3 border-t border-[var(--border)] space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">#</span>
+              <span className="flex-1 text-sm text-white truncate">{t.name}</span>
+              <button onClick={() => renameTopic(t)} className="text-xs text-gray-400 hover:text-white">Rename</button>
+              {topics.length > 1 && (
+                <button onClick={() => deleteTopic(t)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
+              )}
+            </div>
+            <button onClick={() => toggleModsOnly(t)} className="w-full flex items-center justify-between gap-3 text-left">
+              <span className="text-xs text-gray-500">
+                {t.mods_only_posts ? "Admins only — members read & react" : "Everyone can post"}
+              </span>
+              <span
+                className="relative w-9 h-5 rounded-full transition-colors shrink-0"
+                style={{ background: t.mods_only_posts ? "var(--green)" : "var(--border)" }}
+              >
+                <span
+                  className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                  style={{ left: t.mods_only_posts ? "1.125rem" : "0.125rem" }}
+                />
+              </span>
+            </button>
           </div>
         ))}
       </section>

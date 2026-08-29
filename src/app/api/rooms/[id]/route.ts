@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const [{ data: channels }, { data: owner }] = await Promise.all([
     supabaseAdmin
       .from("channels")
-      .select("id, name, slug, position")
+      .select("id, name, slug, position, mods_only_posts")
       .eq("room_id", room.id)
       .order("position", { ascending: true }),
     supabaseAdmin
