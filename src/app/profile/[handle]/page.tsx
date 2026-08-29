@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, MoreHorizontal, Ban, Flag } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
@@ -151,6 +151,8 @@ function ProfilePageInner() {
   const [notFound, setNotFound] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [followerCount, setFollowerCount] = useState(isDemo ? demoProfileData.followersCount : 0);
   const [modal, setModal] = useState<"followers" | "following" | null>(null);
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -297,6 +299,41 @@ function ProfilePageInner() {
       setFollowerCount((c) => c + (next ? -1 : 1));
     }
     setFollowLoading(false);
+  }
+
+  useEffect(() => {
+    if (isDemo || !userId || !data?.profile?.id || data.isOwner) return;
+    fetch("/api/blocks")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((ids: string[]) => setBlocked(Array.isArray(ids) && ids.includes(data.profile.id)))
+      .catch(() => {});
+  }, [isDemo, userId, data?.profile?.id, data?.isOwner]);
+
+  async function toggleBlock() {
+    if (isDemo || !data?.profile?.id) return;
+    setMenuOpen(false);
+    const next = !blocked;
+    if (next && !confirm(`Block @${handle}? You won't see their messages or trades, and they can't message you.`)) return;
+    setBlocked(next);
+    if (next) { setFollowing(false); }
+    await fetch("/api/blocks", {
+      method: next ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: data.profile.id }),
+    }).catch(() => setBlocked(!next));
+  }
+
+  async function reportUser() {
+    if (isDemo || !data?.profile?.id) return;
+    setMenuOpen(false);
+    const reason = prompt(`Report @${handle} — what's the issue?`);
+    if (reason === null) return;
+    await fetch("/api/reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetType: "user", targetId: data.profile.id, reason }),
+    }).catch(() => {});
+    alert("Thanks — our team will review this within 24 hours.");
   }
 
   async function toggleVisibility(tradeId: string) {
@@ -529,6 +566,28 @@ function ProfilePageInner() {
                 >
                   <MessageSquare className="w-4 h-4" />
                 </button>
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setMenuOpen((o) => !o)}
+                    className="p-1.5 sm:p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                    title="More"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                  {menuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                      <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl glass-card border border-[var(--border)] overflow-hidden">
+                        <button onClick={reportUser} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 text-left">
+                          <Flag className="w-4 h-4 text-yellow-500" /> Report
+                        </button>
+                        <button onClick={toggleBlock} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-white/5 border-t border-[var(--border)] text-red-400">
+                          <Ban className="w-4 h-4" /> {blocked ? "Unblock" : "Block"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>

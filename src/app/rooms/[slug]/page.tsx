@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, ChevronLeft, Megaphone, Pencil, Share2 } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, ChevronLeft, Megaphone, Pencil, Share2, Ban } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -374,6 +374,17 @@ function RoomPageInner() {
     alert("Thanks — our team will review this within 24 hours.");
   }
 
+  async function blockSender(m: ChatMessage) {
+    if (!m.sender?.handle) return;
+    if (!confirm(`Block @${m.sender.handle}? You won't see their messages anywhere.`)) return;
+    setMessages((msgs) => msgs.filter((x) => x.sender_id !== m.sender_id));
+    await fetch("/api/blocks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: m.sender_id }),
+    }).catch(() => {});
+  }
+
   async function addChannel() {
     const name = prompt("New topic name");
     if (!name?.trim()) return;
@@ -604,7 +615,12 @@ function RoomPageInner() {
                           )}
                           {!mine && (
                             <button onClick={() => report(m.id)} className="text-gray-600 hover:text-yellow-500" title="Report">
-                              <Flag className="w-3 h-3" />
+                              <Flag className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {!mine && (
+                            <button onClick={() => blockSender(m)} className="text-gray-600 hover:text-red-500" title="Block user">
+                              <Ban className="w-3.5 h-3.5" />
                             </button>
                           )}
                           {!mine && isMod && (

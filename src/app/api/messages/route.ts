@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
+import { isBlockedBetween } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -89,6 +90,10 @@ export async function POST(req: NextRequest) {
   const { receiverId, content, imageUrl, posterUrl } = await req.json();
   const trimmedContent = content?.trim() ?? "";
   if (!receiverId || (!trimmedContent && !imageUrl)) return new Response("Missing fields", { status: 400 });
+
+  if (await isBlockedBetween(userId, receiverId)) {
+    return new Response("You can't message this person", { status: 403 });
+  }
 
   const { data, error } = await supabaseAdmin
     .from("messages")
