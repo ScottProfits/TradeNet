@@ -15,6 +15,7 @@ interface Room {
   avatar_url: string | null;
   price_cents: number | null;
   member_count: number;
+  visibility?: string;
   owner?: { handle: string; avatar_url: string; verified: boolean } | null;
 }
 
@@ -103,6 +104,11 @@ function RoomRow({ room, showOwner }: { room: Room; showOwner?: boolean }) {
         <div className="flex items-center gap-1.5">
           <span className="font-semibold text-sm text-white truncate">{room.name}</span>
           {paid && <Lock className="w-3 h-3 text-[var(--green)] shrink-0" />}
+          {room.visibility === "unlisted" && (
+            <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 border border-[var(--border)] rounded px-1 py-px shrink-0">
+              Unlisted
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-500 truncate mt-0.5">
           {showOwner && room.owner ? (

@@ -21,6 +21,7 @@ interface Channel { id: string; name: string; slug: string; position: number; mo
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   avatar_url: string | null; price_cents: number | null; member_count: number;
+  visibility?: string;
   owner_id: string; owner?: { handle: string; avatar_url: string; verified: boolean } | null;
 }
 interface Membership { role: "owner" | "mod" | "member"; status: string }
@@ -411,6 +412,7 @@ function RoomPageInner() {
               </div>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <Users className="w-3 h-3" /> {room.member_count}
+                {room.visibility === "unlisted" && <> · Unlisted</>}
                 {room.owner && <> · @{room.owner.handle}</>}
               </p>
             </div>
@@ -463,8 +465,20 @@ function RoomPageInner() {
         <div className="flex-1 flex min-h-0 glass-card border-t-0 rounded-b-2xl overflow-hidden">
           {/* Topic list — full screen on mobile, sidebar on desktop */}
           <div
-            className={`${showChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-48 flex-shrink-0 md:border-r border-[var(--border)] p-2 overflow-y-auto`}
+            className={`${showChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-52 flex-shrink-0 md:border-r border-[var(--border)] p-2 overflow-y-auto`}
           >
+            {(room.description || room.visibility === "unlisted") && (
+              <div className="mb-2 px-2 py-2 rounded-lg bg-white/[0.03] border border-[var(--border)]">
+                {room.visibility === "unlisted" && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">
+                    <Lock className="w-2.5 h-2.5" /> Unlisted
+                  </span>
+                )}
+                {room.description && (
+                  <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{room.description}</p>
+                )}
+              </div>
+            )}
             {channels.map((c) => (
               <button
                 key={c.id}

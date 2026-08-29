@@ -34,6 +34,7 @@ export default function ManageRoomPage() {
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [copied, setCopied] = useState(false);
+  const [visibility, setVisibility] = useState<"public" | "unlisted">("public");
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/rooms/${slug}`);
@@ -44,6 +45,7 @@ export default function ManageRoomPage() {
     setName(data.room.name);
     setDescription(data.room.description ?? "");
     setShowOnProfile(data.room.show_on_profile ?? true);
+    setVisibility(data.room.visibility === "unlisted" ? "unlisted" : "public");
     setTopics(data.channels ?? []);
     setPriceDollars(data.room.price_cents ? (data.room.price_cents / 100).toFixed(2) : "");
     const mRes = await fetch(`/api/rooms/${data.room.id}/members`);
@@ -65,6 +67,20 @@ export default function ManageRoomPage() {
       body: JSON.stringify({ name, description }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
+  }
+
+  async function changeVisibility(next: "public" | "unlisted") {
+    if (!room || next === visibility) return;
+    setVisibility(next);
+    const res = await fetch(`/api/rooms/${room.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visibility: next }),
+    });
+    if (!res.ok) {
+      setVisibility(next === "public" ? "unlisted" : "public");
+      alert(await errorMessage(res));
+    }
   }
 
   async function toggleShowOnProfile() {
@@ -186,6 +202,30 @@ export default function ManageRoomPage() {
         <button onClick={saveMeta} className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-[var(--green)] text-black">
           {saved ? "Saved" : "Save"}
         </button>
+      </section>
+
+      <section className="glass-card rounded-2xl p-5 space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Visibility</h2>
+        <div className="flex gap-2">
+          {(["public", "unlisted"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => changeVisibility(v)}
+              className={`flex-1 text-sm py-2 rounded-lg border capitalize transition-colors ${
+                visibility === v
+                  ? "border-[var(--green)] text-white bg-[var(--green)]/10"
+                  : "border-[var(--border)] text-gray-400 hover:text-white"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-600">
+          {visibility === "unlisted"
+            ? "Hidden from Discover — only people with the invite link can find it."
+            : "Shows in the Discover list for everyone."}
+        </p>
       </section>
 
       <section className="glass-card rounded-2xl p-5 space-y-2">
