@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, SmilePlus, ChevronLeft, Megaphone, Pencil, Share2 } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, ChevronLeft, Megaphone, Pencil, Share2 } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -64,8 +64,6 @@ function RoomPageInner() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Mobile is master–detail like Discord: the topic list and the chat are
   // separate screens. Desktop shows both side by side.
@@ -151,11 +149,14 @@ function RoomPageInner() {
     return () => clearInterval(t);
   }, [activeChannel, canParticipate, showChat]);
 
-  // Tap anywhere else to dismiss the reaction picker.
+  // Tap outside a message / the picker to dismiss it. Taps on a message
+  // row are handled by onMessageTap (toggle), so ignore those here.
   useEffect(() => {
     if (!reactingId) return;
     const close = (e: Event) => {
-      if (!(e.target as HTMLElement)?.closest?.("[data-reaction-ui]")) setReactingId(null);
+      const el = e.target as HTMLElement;
+      if (el?.closest?.("[data-reaction-ui]") || el?.closest?.("[data-msg]")) return;
+      setReactingId(null);
     };
     const t = setTimeout(() => document.addEventListener("pointerdown", close), 0);
     return () => { clearTimeout(t); document.removeEventListener("pointerdown", close); };
@@ -310,26 +311,11 @@ function RoomPageInner() {
     if (!res.ok) alert(await errorMessage(res));
   }
 
-  function armLongPress(id: string, e: React.TouchEvent) {
-    const t = e.touches[0];
-    touchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null;
-    if (longPressRef.current) clearTimeout(longPressRef.current);
-    longPressRef.current = setTimeout(() => {
-      setReactingId(id);
-      longPressRef.current = null;
-    }, 400);
-  }
-  function moveLongPress(e: React.TouchEvent) {
-    // Only cancel if the finger actually slid (scroll) — ignore micro-jitter.
-    const s = touchStartRef.current;
-    const t = e.touches[0];
-    if (s && t && Math.hypot(t.clientX - s.x, t.clientY - s.y) > 12) cancelLongPress();
-  }
-  function cancelLongPress() {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current);
-      longPressRef.current = null;
-    }
+  // Tap a message to open its reaction picker. Ignore taps that land on
+  // something interactive (links, buttons, the picker itself, media).
+  function onMessageTap(id: string, e: React.MouseEvent) {
+    if ((e.target as HTMLElement)?.closest?.("a, button, textarea, img, video, [data-reaction-ui]")) return;
+    setReactingId((cur) => (cur === id ? null : id));
   }
 
   async function addCustomReaction(m: ChatMessage) {
@@ -477,39 +463,83 @@ function RoomPageInner() {
         <div className="flex-1 flex min-h-0 glass-card border-t-0 rounded-b-2xl overflow-hidden">
           {/* Topic list — full screen on mobile, sidebar on desktop */}
           <div
-            className={`${showChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-52 flex-shrink-0 md:border-r border-[var(--border)] p-2 overflow-y-auto`}
+            className={`${showChat ? "hidden" : "flex"} md:flex flex-col w-full md:w-56 flex-shrink-0 md:border-r border-[var(--border)] overflow-y-auto`}
           >
-            {(room.description || room.visibility === "unlisted") && (
-              <div className="mb-2 px-2 py-2 rounded-lg bg-white/[0.03] border border-[var(--border)]">
-                {room.visibility === "unlisted" && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">
-                    <Lock className="w-2.5 h-2.5" /> Unlisted
-                  </span>
-                )}
-                {room.description && (
-                  <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{room.description}</p>
-                )}
+            {/* Hero (mobile) */}
+            <div
+              className="md:hidden px-4 pt-4 pb-3 border-b border-[var(--border)]"
+              style={{ background: "radial-gradient(120% 80% at 0% 0%, rgba(0,200,150,0.10), transparent 60%)" }}
+            >
+              <div className="flex items-center gap-3">
+                <SafeAvatar src={room.avatar_url} alt={room.name} initials={room.name} className="w-12 h-12 rounded-2xl text-base" />
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-white truncate">{room.name}</p>
+                  <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                    <Users className="w-3 h-3" /> {room.member_count} member{room.member_count === 1 ? "" : "s"}
+                    {room.visibility === "unlisted" && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--green)] border border-[var(--green)]/30 rounded px-1 py-px">
+                        <Lock className="w-2 h-2" /> Unlisted
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
+              {room.description && (
+                <p className="mt-3 text-[13px] text-gray-300 leading-relaxed whitespace-pre-wrap border-l-2 border-[var(--green)]/40 pl-3">
+                  {room.description}
+                </p>
+              )}
+            </div>
+
+            {/* Desktop compact about */}
+            {room.description && (
+              <p className="hidden md:block px-3 py-2 text-xs text-gray-400 leading-relaxed whitespace-pre-wrap border-b border-[var(--border)]">
+                {room.description}
+              </p>
             )}
-            {channels.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => openTopic(c.id)}
-                className={`w-full flex items-center gap-1.5 px-2 py-2.5 md:py-1.5 rounded-lg text-sm transition-colors ${
-                  activeChannel === c.id
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 md:text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {c.mods_only_posts ? <Megaphone className="w-3.5 h-3.5 shrink-0" /> : <Hash className="w-3.5 h-3.5 shrink-0" />}
-                <span className="truncate">{c.name}</span>
-              </button>
-            ))}
-            {isMod && (
-              <button onClick={addChannel} className="w-full flex items-center gap-1.5 px-2 py-2.5 md:py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5">
-                <Plus className="w-3.5 h-3.5" /> Add topic
-              </button>
-            )}
+
+            <div className="p-2 md:p-2 space-y-1">
+              <p className="hidden md:block px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Topics</p>
+              {channels.map((c) => {
+                const active = activeChannel === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => openTopic(c.id)}
+                    className={`group/topic w-full flex items-center gap-2.5 px-2.5 py-2.5 md:py-2 rounded-xl text-sm transition-all ${
+                      active
+                        ? "bg-[var(--green)]/10 text-white ring-1 ring-inset ring-[var(--green)]/30"
+                        : "text-gray-300 hover:text-white hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span
+                      className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 transition-colors ${
+                        c.mods_only_posts
+                          ? "bg-[var(--green)]/15 text-[var(--green)]"
+                          : active
+                          ? "bg-[var(--green)]/20 text-[var(--green)]"
+                          : "bg-white/[0.06] text-gray-400 group-hover/topic:text-white"
+                      }`}
+                    >
+                      {c.mods_only_posts ? <Megaphone className="w-3.5 h-3.5" /> : <Hash className="w-3.5 h-3.5" />}
+                    </span>
+                    <span className="truncate flex-1 text-left font-medium">{c.name}</span>
+                    <ChevronLeft className="w-4 h-4 rotate-180 text-gray-600 md:hidden" />
+                  </button>
+                );
+              })}
+              {isMod && (
+                <button
+                  onClick={addChannel}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2.5 md:py-2 rounded-xl text-sm text-gray-500 hover:text-white border border-dashed border-[var(--border)] hover:border-[var(--green)]/40 transition-colors"
+                >
+                  <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/[0.04] shrink-0">
+                    <Plus className="w-3.5 h-3.5" />
+                  </span>
+                  Add topic
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Messages */}
@@ -520,14 +550,7 @@ function RoomPageInner() {
                 const mine = m.sender_id === userId;
                 if (m.hidden) return null;
                 return (
-                  <div
-                    key={m.id}
-                    className="group flex gap-2.5 select-none [-webkit-touch-callout:none]"
-                    onTouchStart={(e) => armLongPress(m.id, e)}
-                    onTouchEnd={cancelLongPress}
-                    onTouchMove={moveLongPress}
-                    onContextMenu={(e) => { e.preventDefault(); setReactingId(m.id); }}
-                  >
+                  <div key={m.id} data-msg className="group flex gap-2.5" onClick={(e) => onMessageTap(m.id, e)}>
                     <SafeAvatar src={m.sender?.avatar_url} alt={m.sender?.handle ?? ""} initials={m.sender?.handle ?? "?"} className="w-8 h-8 text-xs shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -537,10 +560,7 @@ function RoomPageInner() {
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
                         <span className="ml-auto flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button data-reaction-ui onClick={() => setReactingId((cur) => (cur === m.id ? null : m.id))} className="text-gray-600 hover:text-white" title="React">
-                            <SmilePlus className="w-3.5 h-3.5" />
-                          </button>
-                          {mine && m.content && (
+                          {mine && m.content && editingId !== m.id && (
                             <button onClick={() => startEdit(m)} className="text-gray-600 hover:text-white" title="Edit">
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
@@ -550,7 +570,7 @@ function RoomPageInner() {
                               <Flag className="w-3 h-3" />
                             </button>
                           )}
-                          {(mine || isMod) && (
+                          {!mine && isMod && (
                             <button onClick={() => deleteMessage(m.id)} className="text-gray-600 hover:text-red-500" title="Delete">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -573,6 +593,7 @@ function RoomPageInner() {
                           <div className="flex gap-2 text-xs">
                             <button onClick={() => saveEdit(m)} className="px-2.5 py-1 rounded bg-[var(--green)] text-black font-semibold">Save</button>
                             <button onClick={() => setEditingId(null)} className="px-2.5 py-1 rounded bg-white/5 text-gray-400">Cancel</button>
+                            <button onClick={() => { setEditingId(null); deleteMessage(m.id); }} className="px-2.5 py-1 rounded bg-red-500/15 text-red-400 ml-auto">Delete</button>
                           </div>
                         </div>
                       ) : (
