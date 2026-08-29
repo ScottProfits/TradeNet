@@ -65,6 +65,7 @@ function RoomPageInner() {
   const [editText, setEditText] = useState("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Mobile is master–detail like Discord: the topic list and the chat are
   // separate screens. Desktop shows both side by side.
@@ -309,9 +310,20 @@ function RoomPageInner() {
     if (!res.ok) alert(await errorMessage(res));
   }
 
-  function armLongPress(id: string) {
+  function armLongPress(id: string, e: React.TouchEvent) {
+    const t = e.touches[0];
+    touchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null;
     if (longPressRef.current) clearTimeout(longPressRef.current);
-    longPressRef.current = setTimeout(() => setReactingId(id), 450);
+    longPressRef.current = setTimeout(() => {
+      setReactingId(id);
+      longPressRef.current = null;
+    }, 400);
+  }
+  function moveLongPress(e: React.TouchEvent) {
+    // Only cancel if the finger actually slid (scroll) — ignore micro-jitter.
+    const s = touchStartRef.current;
+    const t = e.touches[0];
+    if (s && t && Math.hypot(t.clientX - s.x, t.clientY - s.y) > 12) cancelLongPress();
   }
   function cancelLongPress() {
     if (longPressRef.current) {
@@ -511,9 +523,9 @@ function RoomPageInner() {
                   <div
                     key={m.id}
                     className="group flex gap-2.5 select-none [-webkit-touch-callout:none]"
-                    onTouchStart={() => armLongPress(m.id)}
+                    onTouchStart={(e) => armLongPress(m.id, e)}
                     onTouchEnd={cancelLongPress}
-                    onTouchMove={cancelLongPress}
+                    onTouchMove={moveLongPress}
                     onContextMenu={(e) => { e.preventDefault(); setReactingId(m.id); }}
                   >
                     <SafeAvatar src={m.sender?.avatar_url} alt={m.sender?.handle ?? ""} initials={m.sender?.handle ?? "?"} className="w-8 h-8 text-xs shrink-0" />
@@ -525,7 +537,7 @@ function RoomPageInner() {
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
                         <span className="ml-auto flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button data-reaction-ui onClick={() => setReactingId(reactingId === m.id ? null : m.id)} className="text-gray-600 hover:text-white" title="React">
+                          <button data-reaction-ui onClick={() => setReactingId((cur) => (cur === m.id ? null : m.id))} className="text-gray-600 hover:text-white" title="React">
                             <SmilePlus className="w-3.5 h-3.5" />
                           </button>
                           {mine && m.content && (

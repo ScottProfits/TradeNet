@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -138,6 +139,20 @@ export default function ManageRoomPage() {
     const res = await fetch(`/api/channels/${topic.id}`, { method: "DELETE" });
     if (res.ok) setTopics((t) => t.filter((x) => x.id !== topic.id));
     else alert(await errorMessage(res));
+  }
+
+  async function moveTopic(index: number, dir: -1 | 1) {
+    if (!room) return;
+    const target = index + dir;
+    if (target < 0 || target >= topics.length) return;
+    const next = [...topics];
+    [next[index], next[target]] = [next[target], next[index]];
+    setTopics(next);
+    await fetch(`/api/rooms/${room.id}/channels`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedIds: next.map((t) => t.id) }),
+    }).catch(() => load());
   }
 
   async function deleteChannel() {
@@ -309,9 +324,27 @@ export default function ManageRoomPage() {
 
       <section className="glass-card rounded-2xl overflow-hidden">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 p-4 pb-2">Topics</h2>
-        {topics.map((t) => (
+        {topics.map((t, i) => (
           <div key={t.id} className="px-4 py-3 border-t border-[var(--border)] space-y-3">
             <div className="flex items-center gap-2">
+              <div className="flex flex-col -my-1">
+                <button
+                  onClick={() => moveTopic(i, -1)}
+                  disabled={i === 0}
+                  className="text-gray-500 hover:text-white disabled:opacity-20 leading-none"
+                  aria-label="Move up"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => moveTopic(i, 1)}
+                  disabled={i === topics.length - 1}
+                  className="text-gray-500 hover:text-white disabled:opacity-20 leading-none"
+                  aria-label="Move down"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
               <span className="text-gray-500">#</span>
               <span className="flex-1 text-sm text-white truncate">{t.name}</span>
               <button onClick={() => renameTopic(t)} className="text-xs text-gray-400 hover:text-white">Rename</button>

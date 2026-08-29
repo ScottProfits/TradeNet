@@ -3,6 +3,26 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getMembership, canModerate, uniqueChannelSlug } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
+// PATCH /api/rooms/:id/channels — reorder topics. Body: { orderedIds: string[] }.
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+  if (!canModerate(await getMembership(id, userId))) return new Response("Forbidden", { status: 403 });
+
+  const { orderedIds } = await req.json();
+  if (!Array.isArray(orderedIds) || !orderedIds.length) return new Response("orderedIds required", { status: 400 });
+
+  const { data: owned } = await supabaseAdmin.from("channels").select("id").eq("room_id", id);
+  const valid = new Set((owned ?? []).map((c) => c.id));
+  const clean = orderedIds.filter((x: unknown) => typeof x === "string" && valid.has(x));
+
+  await Promise.all(
+    clean.map((cid, i) => supabaseAdmin.from("channels").update({ position: i }).eq("id", cid))
+  );
+  return Response.json({ ok: true });
+}
+
 // POST /api/rooms/:id/channels — owner/mod adds a topic channel.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
