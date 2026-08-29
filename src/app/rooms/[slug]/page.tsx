@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
@@ -16,6 +17,42 @@ import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
 import { errorMessage } from "@/lib/apiError";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
+
+/** Channel avatar that opens full-size when it's a real photo. */
+function ChannelAvatar({ src, name, className }: { src: string | null; name: string; className: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); if (src) setOpen(true); }}
+        className={src ? "cursor-zoom-in shrink-0" : "shrink-0"}
+      >
+        <SafeAvatar src={src} alt={name} initials={name} className={className} />
+      </button>
+      {open && src && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+          style={{ background: "radial-gradient(ellipse 90% 70% at 50% 42%, rgba(20,32,28,1) 0%, rgba(6,10,9,1) 60%, rgba(0,0,0,1) 100%)" }}
+          onClick={() => setOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="absolute flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white"
+            style={{ top: "max(1rem, env(safe-area-inset-top))", right: "1rem" }}
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={name} className="max-w-full max-h-full rounded-2xl object-contain" />
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
 
 interface Channel { id: string; name: string; slug: string; position: number; mods_only_posts?: boolean }
 interface Room {
@@ -402,7 +439,7 @@ function RoomPageInner() {
         ) : (
           <>
             <BackButton fallbackHref="/rooms" iconOnly className="text-gray-500 hover:text-white transition-colors" />
-            <SafeAvatar src={room.avatar_url} alt={room.name} initials={room.name} className="w-9 h-9 rounded-lg text-sm" />
+            <ChannelAvatar src={room.avatar_url} name={room.name} className="w-9 h-9 rounded-lg text-sm" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-white truncate">{room.name}</span>
@@ -471,7 +508,7 @@ function RoomPageInner() {
               style={{ background: "radial-gradient(120% 80% at 0% 0%, rgba(0,200,150,0.10), transparent 60%)" }}
             >
               <div className="flex items-center gap-3">
-                <SafeAvatar src={room.avatar_url} alt={room.name} initials={room.name} className="w-12 h-12 rounded-2xl text-base" />
+                <ChannelAvatar src={room.avatar_url} name={room.name} className="w-12 h-12 rounded-2xl text-base" />
                 <div className="min-w-0">
                   <p className="text-base font-bold text-white truncate">{room.name}</p>
                   <p className="text-xs text-gray-400 flex items-center gap-1.5">
