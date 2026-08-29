@@ -2,16 +2,18 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Camera } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { supabase } from "@/lib/supabase";
 import { errorMessage } from "@/lib/apiError";
 
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   visibility: string; owner_id: string; price_cents: number | null;
-  show_on_profile: boolean;
+  show_on_profile: boolean; avatar_url: string | null;
 }
 interface Member {
   user_id: string; role: string; status: string; joined_at: string;
@@ -36,6 +38,9 @@ export default function ManageRoomPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [copied, setCopied] = useState(false);
   const [visibility, setVisibility] = useState<"public" | "unlisted">("public");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const { userId } = useAuth();
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/rooms/${slug}`);
@@ -47,6 +52,7 @@ export default function ManageRoomPage() {
     setDescription(data.room.description ?? "");
     setShowOnProfile(data.room.show_on_profile ?? true);
     setVisibility(data.room.visibility === "unlisted" ? "unlisted" : "public");
+    setAvatarUrl(data.room.avatar_url ?? null);
     setTopics(data.channels ?? []);
     setPriceDollars(data.room.price_cents ? (data.room.price_cents / 100).toFixed(2) : "");
     const mRes = await fetch(`/api/rooms/${data.room.id}/members`);
@@ -59,6 +65,27 @@ export default function ManageRoomPage() {
   }, [slug]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function uploadAvatar(file: File) {
+    if (!room || !userId) return;
+    setUploadingAvatar(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${userId}/room-${room.id}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("trade-images").upload(path, file, { contentType: file.type, upsert: true });
+    if (!error) {
+      const url = supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl;
+      const res = await fetch(`/api/rooms/${room.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      if (res.ok) setAvatarUrl(url);
+      else alert(await errorMessage(res));
+    } else {
+      alert("Upload failed");
+    }
+    setUploadingAvatar(false);
+  }
 
   async function saveMeta() {
     if (!room) return;
@@ -200,6 +227,23 @@ export default function ManageRoomPage() {
 
       <section className="glass-card rounded-2xl p-5 space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Details</h2>
+
+        <div className="flex items-center gap-4">
+          <label className="relative cursor-pointer shrink-0">
+            <SafeAvatar src={avatarUrl} alt={name} initials={name || room.name} className="w-16 h-16 rounded-2xl text-lg" />
+            <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--green)] text-black flex items-center justify-center border-2 border-[var(--card,#111)]">
+              <Camera className="w-3 h-3" />
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }}
+            />
+          </label>
+          <p className="text-xs text-gray-500">{uploadingAvatar ? "Uploading…" : "Tap the photo to set a channel image."}</p>
+        </div>
+
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
