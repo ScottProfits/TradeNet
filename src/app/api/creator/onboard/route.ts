@@ -19,7 +19,8 @@ export async function GET() {
 
   // Re-check with Stripe so we reflect verification that finished on their side.
   const account = await stripe.accounts.retrieve(acct.stripe_account_id);
-  const payoutsEnabled = !!account.payouts_enabled && !!account.charges_enabled;
+  // Destination charges only need payouts + an active transfers capability.
+  const payoutsEnabled = !!account.payouts_enabled && account.capabilities?.transfers === "active";
   if (payoutsEnabled !== acct.payouts_enabled || !acct.onboarding_complete) {
     await supabaseAdmin
       .from("creator_accounts")
@@ -47,10 +48,11 @@ export async function POST() {
     .maybeSingle();
 
   if (!acct?.stripe_account_id) {
+    // Destination charges: the platform is merchant of record, the
+    // connected account only needs `transfers` — keeps onboarding short.
     const account = await stripe.accounts.create({
       type: "express",
-      capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
-      business_type: "individual",
+      capabilities: { transfers: { requested: true } },
       metadata: { ryzr_user_id: userId },
     });
     await supabaseAdmin

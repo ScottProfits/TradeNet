@@ -112,7 +112,7 @@ export async function POST(req: Request) {
           await supabaseAdmin
             .from("creator_accounts")
             .update({
-              payouts_enabled: !!acct.payouts_enabled && !!acct.charges_enabled,
+              payouts_enabled: !!acct.payouts_enabled && acct.capabilities?.transfers === "active",
               onboarding_complete: !!acct.details_submitted,
             })
             .eq("user_id", uid);
