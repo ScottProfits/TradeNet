@@ -22,6 +22,7 @@ interface TradeDetail {
   caption: string;
   image_url: string | null;
   strategy: string | null;
+  source: string | null;
   likes_count: number;
   comments_count: number;
   created_at: string;
@@ -143,6 +144,15 @@ export default function TradePage() {
         </div>
 
         {trade.caption && <p className="text-sm text-gray-300 leading-relaxed">{trade.caption}</p>}
+
+        {trade.source === "rithmic" && (
+          <div className="flex items-center gap-2.5 opacity-60">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brokers/rithmic-logo-white.png" alt="Trading Platform by Rithmic" className="h-3.5" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brokers/omne-logo-white.png" alt="Powered by OMNE" className="h-3.5" />
+          </div>
+        )}
 
         {/* Trade stats */}
         <div className="bg-[var(--bg)] rounded-xl p-4 grid grid-cols-2 gap-4">
