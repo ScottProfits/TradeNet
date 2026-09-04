@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import BackButton from "@/components/ui/BackButton";
+import DeleteSheet from "@/components/ui/DeleteSheet";
 
 interface Conversation {
   id: string;
@@ -19,14 +20,40 @@ interface Conversation {
 
 export default function MessagesPage() {
   const { userId } = useAuth();
+  const router = useRouter();
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmHide, setConfirmHide] = useState<Conversation | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
 
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.ok ? r.json() : [])
       .then((d) => { setConvos(d); setLoading(false); });
   }, []);
+
+  function startPress(c: Conversation) {
+    longPressed.current = false;
+    cancelPress();
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setConfirmHide(c);
+    }, 500);
+  }
+  function cancelPress() {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+  }
+
+  async function hideConvo(c: Conversation) {
+    setConfirmHide(null);
+    setConvos((list) => list.filter((x) => x.partner?.id !== c.partner?.id));
+    await fetch("/api/messages/hide", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ partnerId: c.partner?.id }),
+    }).catch(() => {});
+  }
 
   if (loading) return <div className="max-w-xl mx-auto pt-20 text-center"><p className="text-gray-500 text-sm">Loading...</p></div>;
 
@@ -49,10 +76,16 @@ export default function MessagesPage() {
           const unread = !c.read && c.receiver_id === userId;
 
           return (
-            <Link
+            <button
               key={c.id}
-              href={`/messages/${partner?.handle}`}
-              className="flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0"
+              type="button"
+              onClick={() => { if (!longPressed.current && partner?.handle) router.push(`/messages/${partner.handle}`); }}
+              onPointerDown={() => startPress(c)}
+              onPointerUp={cancelPress}
+              onPointerLeave={cancelPress}
+              onPointerCancel={cancelPress}
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-full text-left flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0"
             >
               <SafeAvatar src={partner?.avatar_url} alt={partner?.handle ?? ""} initials={partner?.handle ?? "?"} className="w-11 h-11" />
               <div className="flex-1 min-w-0">
@@ -66,10 +99,18 @@ export default function MessagesPage() {
                 <span className="text-xs text-gray-600">{new Date(c.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
                 {unread && <span className="w-2.5 h-2.5 rounded-full bg-[var(--green)]" />}
               </div>
-            </Link>
+            </button>
           );
         })}
       </div>
+
+      {confirmHide && (
+        <DeleteSheet
+          label="conversation for you (the other person keeps their copy)"
+          onConfirm={() => hideConvo(confirmHide)}
+          onCancel={() => setConfirmHide(null)}
+        />
+      )}
     </div>
   );
 }

@@ -21,12 +21,22 @@ export async function GET(req: NextRequest) {
     return Response.json({ count: count ?? 0 });
   }
 
+  // "Delete for me" — threads the caller has hidden, and up to when.
+  const { data: hiddenRows } = await supabaseAdmin
+    .from("dm_hidden")
+    .select("partner_id, hidden_at")
+    .eq("user_id", userId);
+  const hiddenAt = new Map<string, string>((hiddenRows ?? []).map((h) => [h.partner_id, h.hidden_at]));
+
   if (withUser) {
-    const { data } = await supabaseAdmin
+    let msgQuery = supabaseAdmin
       .from("messages")
       .select("*")
       .or(`and(sender_id.eq.${userId},receiver_id.eq.${withUser}),and(sender_id.eq.${withUser},receiver_id.eq.${userId})`)
       .order("created_at", { ascending: true });
+    const hidAt = hiddenAt.get(withUser);
+    if (hidAt) msgQuery = msgQuery.gt("created_at", hidAt);
+    const { data } = await msgQuery;
 
     await supabaseAdmin
       .from("messages")
@@ -57,12 +67,15 @@ export async function GET(req: NextRequest) {
 
   if (!data) return Response.json([]);
 
-  // Deduplicate by partner
+  // Deduplicate by partner, dropping threads hidden ("deleted for me") with
+  // no newer message since they were hidden.
   const seen = new Set<string>();
   const convos = data.filter((m) => {
     const partner = m.sender_id === userId ? m.receiver_id : m.sender_id;
     if (seen.has(partner)) return false;
     seen.add(partner);
+    const hidAt = hiddenAt.get(partner);
+    if (hidAt && new Date(m.created_at).getTime() <= new Date(hidAt).getTime()) return false;
     return true;
   });
 
