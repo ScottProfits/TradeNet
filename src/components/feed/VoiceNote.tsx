@@ -29,17 +29,35 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
 
   useEffect(() => {
     const a = new Audio(src);
+    a.preload = "metadata";
     audioRef.current = a;
     const onTime = () => setCur(a.currentTime);
-    const onMeta = () => { if (isFinite(a.duration)) setTotal(a.duration); };
+    const setIfReal = () => { if (a.duration && isFinite(a.duration) && a.duration > 0) setTotal(a.duration); };
+    const onMeta = () => {
+      // MediaRecorder webm/opus files often report duration Infinity until the
+      // playhead is forced to the end — nudge it, then reset.
+      if (!isFinite(a.duration) || a.duration === 0) {
+        const fix = () => {
+          setIfReal();
+          a.currentTime = 0;
+          a.removeEventListener("timeupdate", fix);
+        };
+        a.addEventListener("timeupdate", fix);
+        try { a.currentTime = 1e7; } catch { /* ignore */ }
+      } else {
+        setIfReal();
+      }
+    };
     const onEnd = () => { setPlaying(false); setCur(0); };
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
+    a.addEventListener("durationchange", setIfReal);
     a.addEventListener("ended", onEnd);
     return () => {
       a.pause();
       a.removeEventListener("timeupdate", onTime);
       a.removeEventListener("loadedmetadata", onMeta);
+      a.removeEventListener("durationchange", setIfReal);
       a.removeEventListener("ended", onEnd);
     };
   }, [src]);
@@ -53,14 +71,16 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
 
   function seekTo(clientX: number, el: HTMLElement) {
     const a = audioRef.current;
-    if (!a || !total) return;
+    const dur = total || duration;
+    if (!a || !dur) return;
     const rect = el.getBoundingClientRect();
     const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    a.currentTime = pct * total;
+    a.currentTime = pct * dur;
     setCur(a.currentTime);
   }
 
-  const progress = total ? cur / total : 0;
+  const eff = total || duration || 0;
+  const progress = eff ? Math.min(1, cur / eff) : 0;
 
   return (
     <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.07] pl-1 pr-2.5 py-1 max-w-[210px]">
@@ -91,7 +111,7 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
         })}
       </div>
 
-      <span className="shrink-0 text-[10px] text-gray-500 tabular-nums">{clock(cur || total)}</span>
+      <span className="shrink-0 text-[10px] text-gray-500 tabular-nums">{clock(playing || cur ? cur : eff)}</span>
     </div>
   );
 }
