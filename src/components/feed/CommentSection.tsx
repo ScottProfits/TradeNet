@@ -35,11 +35,14 @@ function fmtClock(s: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-// iOS home-screen (standalone) web views crash on MediaRecorder — gate voice
-// there until it's the real App Store build. Safari tabs are fine.
+// The native app (Capacitor) handles the mic prompt itself — once, via iOS.
+// A plain iOS home-screen web view (standalone Safari PWA) crashes on
+// MediaRecorder, so block voice there; Safari tabs are fine.
 function voiceRecordingSupported() {
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") return false;
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  if (cap?.isNativePlatform?.()) return true;
   const nav = navigator as Navigator & { standalone?: boolean };
   const standalone = nav.standalone === true || window.matchMedia?.("(display-mode: standalone)")?.matches === true;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -119,8 +122,15 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
         setElapsed(s);
         if (s >= MAX_SECONDS) stopRecording();
       }, 200);
-    } catch {
-      setRecError("Mic access denied.");
+    } catch (err) {
+      const name = (err as { name?: string })?.name;
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        setRecError("Microphone access is off. Turn it on in Settings › Ryzr › Microphone, then try again.");
+      } else if (name === "NotFoundError") {
+        setRecError("No microphone found.");
+      } else {
+        setRecError("Couldn't start recording — try again.");
+      }
     }
   }, [clip, stopRecording]);
 
