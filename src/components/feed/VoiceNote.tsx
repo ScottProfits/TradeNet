@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
 
 function clock(s: number) {
@@ -7,12 +7,25 @@ function clock(s: number) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 }
 
-// Compact voice-note player — play/pause, scrub bar, elapsed/total time.
+// Stable pseudo-random bar heights so each clip has its own "waveform".
+function bars(src: string, n: number) {
+  let h = 0;
+  for (let i = 0; i < src.length; i++) h = (h * 31 + src.charCodeAt(i)) >>> 0;
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    out.push(0.28 + ((h >>> 8) % 100) / 100 * 0.72);
+  }
+  return out;
+}
+
+// Compact voice-note player — waveform scrubber, tiny controls.
 export default function VoiceNote({ src, duration = 0 }: { src: string; duration?: number }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [cur, setCur] = useState(0);
   const [total, setTotal] = useState(duration);
+  const wave = useMemo(() => bars(src, 34), [src]);
 
   useEffect(() => {
     const a = new Audio(src);
@@ -38,30 +51,47 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
     else { a.play().then(() => setPlaying(true)).catch(() => {}); }
   }
 
-  function seek(e: React.MouseEvent<HTMLDivElement>) {
+  function seekTo(clientX: number, el: HTMLElement) {
     const a = audioRef.current;
     if (!a || !total) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const rect = el.getBoundingClientRect();
+    const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
     a.currentTime = pct * total;
     setCur(a.currentTime);
   }
 
-  const pct = total ? Math.min(100, (cur / total) * 100) : 0;
+  const progress = total ? cur / total : 0;
 
   return (
-    <div className="flex items-center gap-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] px-2.5 py-1.5 max-w-[240px]">
+    <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.07] pl-1 pr-2.5 py-1 max-w-[210px]">
       <button
         onClick={toggle}
-        className="shrink-0 w-7 h-7 rounded-full bg-[var(--green)] text-black flex items-center justify-center"
+        className="shrink-0 w-6 h-6 rounded-full bg-[var(--green)] text-black flex items-center justify-center"
         aria-label={playing ? "Pause" : "Play"}
       >
-        {playing ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current translate-x-[1px]" />}
+        {playing ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current translate-x-[0.5px]" />}
       </button>
-      <div onClick={seek} className="flex-1 h-1.5 rounded-full bg-white/15 cursor-pointer overflow-hidden">
-        <div className="h-full bg-[var(--green)] rounded-full" style={{ width: `${pct}%` }} />
+
+      <div
+        className="flex items-center gap-[2px] h-5 flex-1 cursor-pointer"
+        onClick={(e) => seekTo(e.clientX, e.currentTarget)}
+      >
+        {wave.map((v, i) => {
+          const on = i / wave.length <= progress;
+          return (
+            <span
+              key={i}
+              className="w-[2px] rounded-full transition-colors"
+              style={{
+                height: `${Math.round(v * 100)}%`,
+                background: on ? "var(--green)" : "rgba(255,255,255,0.22)",
+              }}
+            />
+          );
+        })}
       </div>
-      <span className="shrink-0 text-[11px] text-gray-400 tabular-nums">{clock(cur || total)}</span>
+
+      <span className="shrink-0 text-[10px] text-gray-500 tabular-nums">{clock(cur || total)}</span>
     </div>
   );
 }
