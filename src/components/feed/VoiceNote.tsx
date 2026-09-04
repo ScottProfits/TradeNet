@@ -34,12 +34,14 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
   const totalRef = useRef(total);
   totalRef.current = total;
 
+  const wantPlayRef = useRef(false);
+
   useEffect(() => {
     const a = new Audio(src);
-    a.preload = "metadata";
+    a.preload = "auto";
     audioRef.current = a;
 
-    const reset = () => { a.pause(); a.currentTime = 0; setCur(0); setPlaying(false); };
+    const reset = () => { wantPlayRef.current = false; a.pause(); a.currentTime = 0; setCur(0); setPlaying(false); };
     const onTime = () => {
       const t = a.currentTime;
       setCur(t);
@@ -49,16 +51,32 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
       else if (dur === 0 && t > 60) reset();
     };
     const onMeta = () => { if (a.duration && isFinite(a.duration) && a.duration > 0) setMetaDur(a.duration); };
+    // If the user tapped play before the file was buffered, start once it is.
+    const onCanPlay = () => {
+      if (wantPlayRef.current && a.paused) a.play().catch(() => {});
+    };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
 
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("durationchange", onMeta);
     a.addEventListener("loadedmetadata", onMeta);
+    a.addEventListener("canplaythrough", onCanPlay);
+    a.addEventListener("canplay", onCanPlay);
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
     a.addEventListener("ended", reset);
+    a.load();
     return () => {
+      wantPlayRef.current = false;
       a.pause();
       a.removeEventListener("timeupdate", onTime);
       a.removeEventListener("durationchange", onMeta);
       a.removeEventListener("loadedmetadata", onMeta);
+      a.removeEventListener("canplaythrough", onCanPlay);
+      a.removeEventListener("canplay", onCanPlay);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
       a.removeEventListener("ended", reset);
     };
   }, [src]);
@@ -66,9 +84,11 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
   function toggle() {
     const a = audioRef.current;
     if (!a) return;
-    if (playing) { a.pause(); setPlaying(false); return; }
-    if (total > 0 && a.currentTime >= total - 0.05) a.currentTime = 0;
-    a.play().then(() => setPlaying(true)).catch(() => {});
+    if (!a.paused) { wantPlayRef.current = false; a.pause(); return; }
+    if (total > 0 && a.currentTime >= total - 0.05) { a.currentTime = 0; setCur(0); }
+    wantPlayRef.current = true;
+    // If it's not buffered yet, this rejects and the canplay listener starts it.
+    a.play().catch(() => {});
   }
 
   function seekTo(clientX: number, el: HTMLElement) {
