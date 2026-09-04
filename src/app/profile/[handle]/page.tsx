@@ -546,7 +546,7 @@ function ProfilePageInner() {
           </div>
 
           <div className="min-w-0 flex-1">
-            {profile.full_name && <p className={clsx(nameSizeClass(profile.full_name), "text-gray-300 whitespace-nowrap")}>{profile.full_name}</p>}
+            {profile.full_name && <p className={clsx(nameSizeClass(profile.full_name), "text-gray-300 truncate")}>{profile.full_name}</p>}
             <div className="flex flex-col items-center gap-1 mt-1 w-fit">
               {profile.trading_style && (
                 <span className="flex items-center text-xs leading-none bg-white/5 border border-[var(--border)] text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
