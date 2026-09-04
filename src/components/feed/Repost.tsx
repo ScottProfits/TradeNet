@@ -10,7 +10,7 @@ export interface Reposter {
   verified?: boolean;
 }
 
-// Ryzr's repost mark — a slim single-loop arrow. Minimal on purpose.
+// Ryzr's repost mark — a clean spiral. Minimal on purpose.
 // (Trivial to swap: it's the only place the glyph is defined.)
 export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -18,16 +18,13 @@ export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M6 9.5h9.5a3.5 3.5 0 0 1 3.5 3.5" />
-      <path d="m8.5 6.5-3 3 3 3" />
-      <path d="M18 14.5H8.5A3.5 3.5 0 0 1 5 11" />
-      <path d="m15.5 17.5 3-3-3-3" />
+      <path d="M12 11.5L12.2 11.3L12.6 11.2L13 11.4L13.4 11.7L13.7 12.2L13.7 12.8L13.5 13.5L13.1 14.1L12.3 14.6L11.4 14.8L10.4 14.7L9.4 14.1L8.6 13.2L8.2 12.1L8.1 10.7L8.6 9.4L9.5 8.2L10.8 7.4L12.4 7L14.1 7.2L15.7 8L17.1 9.4L17.9 11.1L18.1 13.2L17.6 15.2L16.3 17L14.5 18.4L12.3 19.1L9.9 19L7.5 18.1" />
     </svg>
   );
 }

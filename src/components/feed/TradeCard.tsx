@@ -2,7 +2,7 @@
 import { Heart, MessageCircle, Share2, BarChart2, ShieldCheck, NotebookPen, Check } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
@@ -36,9 +36,10 @@ interface TradeCardProps {
   repostedBy?: Reposter | null;
   repostedByMe?: boolean;
   repostCount?: number;
+  headerExtra?: ReactNode;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false, repostedBy, repostedByMe, repostCount = 0 }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false, repostedBy, repostedByMe, repostCount = 0, headerExtra }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [avatarFailed, setAvatarFailed] = useState(false);
   const likeCacheKey = `trade:${trade.id}`;
@@ -54,8 +55,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
   const [savingJournal, setSavingJournal] = useState(false);
   const [journalSaved, setJournalSaved] = useState(false);
-  const [isVerified, setIsVerified] = useState(verifiedPnl ?? false);
-  const [verifying, setVerifying] = useState(false);
+  // "Verified P&L" = the trade came in as a real broker fill, nothing else.
+  const isFillVerified = trade.source === "rithmic" || trade.source === "tradovate";
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [localTicker, setLocalTicker] = useState(trade.ticker);
@@ -118,17 +119,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
     setTimeout(() => setJournalSaved(false), 2000);
   }
 
-  async function handleVerify() {
-    setVerifying(true);
-    const res = await fetch("/api/verify-trade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId: trade.id }),
-    });
-    if (res.ok) setIsVerified(true);
-    else alert(await res.text());
-    setVerifying(false);
-  }
 
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
@@ -187,7 +177,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
             >
               {positive ? "+" : ""}${localPnl.toLocaleString()}{trade.createdAt && isToday(trade.createdAt) ? " today" : ""}
             </span>
-            {isVerified && (
+            {isFillVerified && (
               <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--green)] bg-[var(--green)]/10 border border-[var(--green)]/30 rounded-full px-1.5 py-0.5">
                 <ShieldCheck className="w-3 h-3" /> Verified P&L
               </span>
@@ -198,11 +188,16 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           </p>
         </div>
 
-        {isOwner && (
-          <DotsMenu
-            onEdit={() => setShowEditModal(true)}
-            onDelete={() => setShowDeleteSheet(true)}
-          />
+        {(headerExtra || isOwner) && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {headerExtra}
+            {isOwner && (
+              <DotsMenu
+                onEdit={() => setShowEditModal(true)}
+                onDelete={() => setShowDeleteSheet(true)}
+              />
+            )}
+          </div>
         )}
       </div>
 
@@ -280,12 +275,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
             <button onClick={() => setShowJournal((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showJournal ? "text-white" : "text-gray-500 hover:text-yellow-400")}>
               <NotebookPen className="w-4 h-4" />
               <span className="hidden sm:inline">Journal</span>
-            </button>
-          )}
-          {isOwner && !isVerified && (
-            <button onClick={handleVerify} disabled={verifying} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[var(--green)] transition-colors disabled:opacity-50">
-              <ShieldCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify"}</span>
             </button>
           )}
         </div>

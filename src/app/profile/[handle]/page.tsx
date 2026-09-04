@@ -843,20 +843,22 @@ function ProfilePageInner() {
                   likedByMe={(t as { liked_by_me?: boolean }).liked_by_me}
                   repostedByMe={myReposts.has(`trade:${t.id}`)}
                   repostCount={(t as { reposts_count?: number }).reposts_count ?? 0}
+                  headerExtra={
+                    isOwnProfile ? (
+                      <button
+                        onClick={() => handlePin(t.id)}
+                        className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                          isPinned
+                            ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
+                            : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
+                        }`}
+                      >
+                        {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                        {isPinned ? "Unpin" : "Pin"}
+                      </button>
+                    ) : undefined
+                  }
                 />
-                {isOwnProfile && (
-                  <button
-                    onClick={() => handlePin(t.id)}
-                    className={`absolute top-3 right-10 flex items-center gap-1 text-xs px-2 py-1 rounded-full border transition-colors ${
-                      isPinned
-                        ? "bg-amber-400/20 text-amber-400 border-amber-400/40 hover:bg-amber-400/10"
-                        : "bg-white/5 text-gray-500 border-[var(--border)] hover:text-amber-400 hover:border-amber-400/40"
-                    }`}
-                  >
-                    {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-                    {isPinned ? "Unpin" : "Pin"}
-                  </button>
-                )}
               </div>
             );
               })}
