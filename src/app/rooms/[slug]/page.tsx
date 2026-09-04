@@ -403,6 +403,7 @@ function RoomPageInner() {
     if (res.ok) {
       const ch = await res.json();
       setChannels((c) => [...c, ch]);
+      setMessages([]);
       setActiveChannel(ch.id);
       setShowChat(true);
     } else {
@@ -420,6 +421,7 @@ function RoomPageInner() {
   const mobileChat = canParticipate && showChat;
 
   function openTopic(id: string) {
+    if (id !== activeChannel) setMessages([]); // avoid a 1-frame flash of the old topic's messages
     setActiveChannel(id);
     setShowChat(true);
   }
@@ -601,8 +603,8 @@ function RoomPageInner() {
 
           {/* Messages */}
           <div className={`${showChat ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0 min-h-0`}>
-            {activeChannel && <ChannelLive channelId={activeChannel} canBroadcast={isMod} />}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            {activeChannel && <ChannelLive key={activeChannel} channelId={activeChannel} canBroadcast={isMod} />}
+            <div key={activeChannel} ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && <p className="text-center text-gray-600 text-sm pt-8">No messages yet — say hi.</p>}
               {messages.map((m) => {
                 const mine = m.sender_id === userId;
