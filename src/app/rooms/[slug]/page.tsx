@@ -79,6 +79,11 @@ export default function RoomPage() {
   );
 }
 
+// Last-seen room shell (info + topic list + your membership) per slug, so
+// re-opening a room paints immediately while it revalidates.
+type RoomShell = { room: Room; channels: Channel[]; membership: Membership | null; canParticipate: boolean };
+const roomShellCache = new Map<string, RoomShell>();
+
 function RoomPageInner() {
   const { slug } = useParams<{ slug: string }>();
   const searchParams = useSearchParams();
@@ -86,17 +91,18 @@ function RoomPageInner() {
   const { userId, isLoaded } = useAuth();
   const [signedOut, setSignedOut] = useState(false);
 
-  const [room, setRoom] = useState<Room | null>(null);
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [membership, setMembership] = useState<Membership | null>(null);
-  const [canParticipate, setCanParticipate] = useState(false);
-  const [activeChannel, setActiveChannel] = useState<string | null>(null);
+  const cachedShell = roomShellCache.get(slug);
+  const [room, setRoom] = useState<Room | null>(cachedShell?.room ?? null);
+  const [channels, setChannels] = useState<Channel[]>(cachedShell?.channels ?? []);
+  const [membership, setMembership] = useState<Membership | null>(cachedShell?.membership ?? null);
+  const [canParticipate, setCanParticipate] = useState(cachedShell?.canParticipate ?? false);
+  const [activeChannel, setActiveChannel] = useState<string | null>(cachedShell?.channels?.[0]?.id ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [pendingApproval, setPendingApproval] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [pendingApproval, setPendingApproval] = useState(cachedShell?.membership?.status === "pending");
+  const [loading, setLoading] = useState(!cachedShell);
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
@@ -134,6 +140,12 @@ function RoomPageInner() {
     const res = await fetch(`/api/rooms/${slug}`);
     if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
+    roomShellCache.set(slug, {
+      room: data.room,
+      channels: data.channels,
+      membership: data.membership,
+      canParticipate: data.canParticipate,
+    });
     setRoom(data.room);
     setChannels(data.channels);
     setMembership(data.membership);

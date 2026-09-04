@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -13,12 +14,8 @@ interface Suggestion {
 }
 
 export default function SuggestedTraders() {
-  const [traders, setTraders] = useState<Suggestion[]>([]);
+  const { data: traders = [] } = useCachedFetch<Suggestion[]>("suggestions", "/api/suggestions");
   const [following, setFollowing] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    fetch("/api/suggestions").then((r) => r.ok ? r.json() : []).then(setTraders);
-  }, []);
 
   async function handleFollow(id: string, handle: string) {
     setFollowing((prev) => new Set(prev).add(id));

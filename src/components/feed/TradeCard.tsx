@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, BarChart2, ShieldCheck, NotebookPen, Check } from "lucide-react";
+import { Heart, MessageCircle, Share2, ShieldCheck, NotebookPen, Check } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState, type ReactNode } from "react";
@@ -12,7 +12,6 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
-import TradingViewChart from "@/components/ui/TradingViewChart";
 import EditTradeModal from "@/components/feed/EditTradeModal";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { isToday } from "@/lib/timeAgo";
@@ -49,7 +48,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [showChart, setShowChart] = useState(false);
 
   const [showJournal, setShowJournal] = useState(false);
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
@@ -262,11 +260,13 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <button onClick={() => setShowChart((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showChart ? "text-white" : "text-gray-500 hover:text-gray-300")}>
-          <BarChart2 className="w-4 h-4" />
-          Chart
+        <button
+          onClick={() => setShowComments(true)}
+          className="flex-1 min-w-0 text-left text-sm text-gray-500 bg-white/[0.04] border border-[var(--border)] rounded-full px-3.5 py-1.5 hover:bg-white/[0.07] transition-colors"
+        >
+          Comment
         </button>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" />
             <span className="hidden sm:inline">Share</span>
@@ -298,10 +298,6 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
             {journalSaved ? <><Check className="w-3 h-3" /> Saved!</> : savingJournal ? "Saving..." : "Save note"}
           </button>
         </div>
-      )}
-
-      {showChart && (
-        <TradingViewChart ticker={trade.ticker} />
       )}
 
       {showComments && (

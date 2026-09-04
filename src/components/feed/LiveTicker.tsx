@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { clsx } from "clsx";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 
 interface TickerItem {
   id: string;
@@ -11,17 +12,13 @@ interface TickerItem {
 }
 
 export default function LiveTicker() {
-  const [items, setItems] = useState<TickerItem[]>([]);
+  const { data: items = [], refetch } = useCachedFetch<TickerItem[]>("live-ticker", "/api/live-ticker");
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function load() {
-      fetch("/api/live-ticker").then((r) => r.ok ? r.json() : []).then(setItems);
-    }
-    load();
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(() => void refetch(), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refetch]);
 
   if (items.length === 0) return null;
 

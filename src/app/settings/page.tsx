@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { useCachedFetch, peekCache } from "@/lib/useCachedFetch";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Camera, ShieldCheck, Zap, Trash2, ChevronDown } from "lucide-react";
@@ -19,17 +20,18 @@ export default function SettingsPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [handle, setHandle] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [bio, setBio] = useState("");
-  const [brokerage, setBrokerage] = useState("");
-  const [tradingStyle, setTradingStyle] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [tiktok, setTiktok] = useState("");
-  const [discord, setDiscord] = useState("");
-  const [youtube, setYoutube] = useState("");
-  const [website, setWebsite] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState("");
+  const cachedMe = peekCache<Record<string, string | null>>("settings:me");
+  const [handle, setHandle] = useState(cachedMe?.handle ?? "");
+  const [fullName, setFullName] = useState(cachedMe?.full_name ?? "");
+  const [bio, setBio] = useState(cachedMe?.bio ?? "");
+  const [brokerage, setBrokerage] = useState(cachedMe?.brokerage ?? "");
+  const [tradingStyle, setTradingStyle] = useState(cachedMe?.trading_style ?? "");
+  const [instagram, setInstagram] = useState(cachedMe?.instagram ?? "");
+  const [tiktok, setTiktok] = useState(cachedMe?.tiktok ?? "");
+  const [discord, setDiscord] = useState(cachedMe?.discord ?? "");
+  const [youtube, setYoutube] = useState(cachedMe?.youtube ?? "");
+  const [website, setWebsite] = useState(cachedMe?.website ?? "");
+  const [avatarPreview, setAvatarPreview] = useState(cachedMe?.avatar_url ?? "");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
   const [tradovateModalOpen, setTradovateModalOpen] = useState(false);
@@ -40,7 +42,7 @@ export default function SettingsPage() {
   const [verifyRequest, setVerifyRequest] = useState<{ status: string; reason: string } | null>(null);
   const [verifyReason, setVerifyReason] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedMe);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState("");
@@ -63,27 +65,32 @@ export default function SettingsPage() {
     }
   }
 
+  const { data: me } = useCachedFetch<Record<string, string | null>>(
+    "settings:me",
+    userId ? "/api/profile/me" : null
+  );
+  const populatedRef = useRef(!!cachedMe);
+  useEffect(() => {
+    // Populate the form once, from the first payload we get. Background
+    // refreshes must not clobber whatever the user is currently editing.
+    if (!me || populatedRef.current) return;
+    populatedRef.current = true;
+    setHandle(me.handle ?? "");
+    setFullName(me.full_name ?? "");
+    setBio(me.bio ?? "");
+    setBrokerage(me.brokerage ?? "");
+    setTradingStyle(me.trading_style ?? "");
+    setAvatarPreview(me.avatar_url ?? "");
+    setInstagram(me.instagram ?? "");
+    setTiktok(me.tiktok ?? "");
+    setDiscord(me.discord ?? "");
+    setYoutube(me.youtube ?? "");
+    setWebsite(me.website ?? "");
+    setLoading(false);
+  }, [me]);
+
   useEffect(() => {
     if (!userId) return;
-    fetch("/api/profile/me")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d) {
-          setHandle(d.handle ?? "");
-          setFullName(d.full_name ?? "");
-          setBio(d.bio ?? "");
-          setBrokerage(d.brokerage ?? "");
-          setTradingStyle(d.trading_style ?? "");
-          setAvatarPreview(d.avatar_url ?? "");
-          setInstagram(d.instagram ?? "");
-          setTiktok(d.tiktok ?? "");
-          setDiscord(d.discord ?? "");
-          setYoutube(d.youtube ?? "");
-          setWebsite(d.website ?? "");
-
-        }
-        setLoading(false);
-      });
     fetch("/api/verify-request").then((r) => r.ok ? r.json() : null).then((d) => {
       if (d) { setVerifyRequest(d); setVerifyReason(d.reason ?? ""); }
     });
@@ -159,7 +166,7 @@ export default function SettingsPage() {
     setSaving(false);
   }
 
-  if (loading) {
+  if (loading && !me) {
     return (
       <div className="max-w-xl mx-auto pt-20 text-center">
         <p className="text-gray-500 text-sm">Loading...</p>
@@ -273,6 +280,7 @@ export default function SettingsPage() {
               <option>TradeStation</option>
               <option>NinjaTrader</option>
               <option>Tradovate</option>
+              <option>Rithmic</option>
               <option>Other</option>
             </select>
           </div>

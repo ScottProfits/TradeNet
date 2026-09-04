@@ -10,7 +10,7 @@ import VideoTab from "@/components/feed/VideoTab";
 import LiveTicker from "@/components/feed/LiveTicker";
 import MarketPulse from "@/components/feed/MarketPulse";
 import PullToRefresh from "@/components/ui/PullToRefresh";
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense, type Dispatch, type SetStateAction } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Plus, Users, Hash } from "lucide-react";
@@ -22,6 +22,17 @@ type RepostMeta = { repostedBy?: Reposter; repostId?: string; sortAt?: string };
 type FeedItem = (({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost)) & RepostMeta;
 
 const sortKey = (i: FeedItem) => i.sortAt ?? i.created_at;
+
+// The /api/reposts payload knows whether the viewer reposted each item;
+// fold that into the repost set so buttons render green without waiting on
+// the separate /api/repost?mine=1 call.
+function mergeMineFromReposts(
+  raw: Array<{ type?: string; id?: string; reposted_by_me?: boolean }>,
+  set: Dispatch<SetStateAction<Set<string>>>
+) {
+  const mine = raw.filter((r) => r.reposted_by_me && r.type && r.id).map((r) => `${r.type}:${r.id}`);
+  if (mine.length) set((prev) => new Set([...prev, ...mine]));
+}
 
 // A repost from /api/reposts keeps the original trade/post fields (incl. its
 // real created_at, shown on the card) but is ordered in the feed by when it
@@ -72,6 +83,27 @@ function FeedPageInner() {
         setMyReposts(new Set(rows.map((r) => `${r.target_type}:${r.target_id}`)));
       })
       .catch(() => {});
+  }, []);
+
+  // Keep the repost set + any repost cards in sync when the user toggles a
+  // repost anywhere on the feed.
+  useEffect(() => {
+    function onChange(e: Event) {
+      const { targetType, targetId, reposted } = (e as CustomEvent).detail as {
+        targetType: string;
+        targetId: string;
+        reposted: boolean;
+      };
+      const key = `${targetType}:${targetId}`;
+      setMyReposts((prev) => {
+        const next = new Set(prev);
+        if (reposted) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+    }
+    window.addEventListener("ryzr:repost-change", onChange);
+    return () => window.removeEventListener("ryzr:repost-change", onChange);
   }, []);
 
   // Cursor pagination — each "page" is a real, small network fetch (max 15
@@ -149,7 +181,9 @@ function FeedPageInner() {
       ]);
       const trades: RealTrade[] = tradesRes.ok ? await tradesRes.json() : [];
       const posts: RealPost[] = postsRes.ok ? await postsRes.json() : [];
-      const reposts: FeedItem[] = repostsRes.ok ? (await repostsRes.json()).map(repostToFeedItem) : [];
+      const rawReposts = repostsRes.ok ? await repostsRes.json() : [];
+      const reposts: FeedItem[] = rawReposts.map(repostToFeedItem);
+      mergeMineFromReposts(rawReposts, setMyReposts);
 
       const merged: FeedItem[] = [
         ...trades.map((t) => ({ ...t, type: "trade" as const })),
@@ -209,7 +243,9 @@ function FeedPageInner() {
       ]);
       if (!res.ok) return;
       const { trades, posts } = await res.json();
-      const reposts: FeedItem[] = repostsRes.ok ? (await repostsRes.json()).map(repostToFeedItem) : [];
+      const rawReposts = repostsRes.ok ? await repostsRes.json() : [];
+      const reposts: FeedItem[] = rawReposts.map(repostToFeedItem);
+      mergeMineFromReposts(rawReposts, setMyReposts);
       const merged: FeedItem[] = [
         ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
         ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
@@ -304,8 +340,7 @@ function FeedPageInner() {
 
   function renderItem(item: FeedItem) {
     const key = item.repostId ?? item.id;
-    const repostedByMe =
-      (item as { reposted_by_me?: boolean }).reposted_by_me || myReposts.has(`${item.type}:${item.id}`);
+    const repostedByMe = myReposts.has(`${item.type}:${item.id}`);
     if (item.type === "trade") {
       const { trade, trader } = realTradeToCardProps(item);
       return (

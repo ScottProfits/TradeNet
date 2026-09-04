@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 
 interface MarketStatus {
   isOpen: boolean;
@@ -32,21 +33,15 @@ function formatCountdown(minutes: number) {
 }
 
 export default function MarketPulse() {
-  const [data, setData] = useState<{
+  const { data, refetch } = useCachedFetch<{
     marketStatus: MarketStatus;
     todayEvents: CalendarEvent[];
-  } | null>(null);
+  }>("market:events", "/api/market-events");
 
   useEffect(() => {
-    function load() {
-      fetch("/api/market-events")
-        .then((r) => r.ok ? r.json() : null)
-        .then((d) => { if (d) setData(d); });
-    }
-    load();
-    const interval = setInterval(load, 60000);
+    const interval = setInterval(() => void refetch(), 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refetch]);
 
   if (!data) return null;
 

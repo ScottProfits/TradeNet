@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import TradeCard from "@/components/feed/TradeCard";
 import { Trade, Trader } from "@/types";
 import { TrendingUp } from "lucide-react";
@@ -29,14 +29,12 @@ interface RealTrade {
 
 export default function TickerPage() {
   const { ticker } = useParams<{ ticker: string }>();
-  const [trades, setTrades] = useState<RealTrade[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/search?q=${ticker}`)
-      .then((r) => r.ok ? r.json() : { results: [] })
-      .then((d) => { setTrades(d.results ?? []); setLoading(false); });
-  }, [ticker]);
+  const { data, loading: fetchLoading } = useCachedFetch<{ results: RealTrade[] }>(
+    `ticker:${ticker}`,
+    `/api/search?q=${ticker}`
+  );
+  const trades = data?.results ?? [];
+  const loading = fetchLoading && trades.length === 0;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

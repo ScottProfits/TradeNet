@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useCachedFetch, peekCache } from "@/lib/useCachedFetch";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, Heart, Share2, BarChart2, TrendingUp, TrendingDown } from "lucide-react";
@@ -52,23 +53,20 @@ export default function TradePage() {
   const { id } = useParams<{ id: string }>();
   const { userId, isSignedIn } = useAuth();
   const router = useRouter();
-  const [trade, setTrade] = useState<TradeDetail | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const cachedTrade = peekCache<TradeDetail>(`trade:${id}`);
+  const { data: fetchedTrade, loading: tradeLoading } = useCachedFetch<TradeDetail>(`trade:${id}`, `/api/trades/${id}`);
+  const trade = fetchedTrade ?? cachedTrade ?? null;
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [commentCount, setCommentCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(cachedTrade?.likes_count ?? 0);
+  const [commentCount, setCommentCount] = useState(cachedTrade?.comments_count ?? 0);
   const [showChart, setShowChart] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/trades/${id}`)
-      .then((r) => { if (r.status === 404) { setNotFound(true); return null; } return r.json(); })
-      .then((d) => {
-        if (!d) return;
-        setTrade(d);
-        setLikeCount(d.likes_count ?? 0);
-        setCommentCount(d.comments_count ?? 0);
-      });
-  }, [id]);
+    if (fetchedTrade) {
+      setLikeCount(fetchedTrade.likes_count ?? 0);
+      setCommentCount(fetchedTrade.comments_count ?? 0);
+    }
+  }, [fetchedTrade]);
 
   async function handleLike() {
     if (!isSignedIn || !trade) return;
@@ -94,7 +92,7 @@ export default function TradePage() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer,width=550,height=420");
   }
 
-  if (notFound) return (
+  if (!tradeLoading && !trade) return (
     <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
       <p className="text-gray-400">Trade not found.</p>
       <Link href="/" className="text-[var(--green)] hover:underline text-sm">Go to Ryzr</Link>

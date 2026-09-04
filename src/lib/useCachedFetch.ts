@@ -11,6 +11,10 @@ export function primeCache(key: string, value: unknown) {
   mem.set(key, value);
 }
 
+export function peekCache<T>(key: string): T | undefined {
+  return mem.get(key) as T | undefined;
+}
+
 export function useCachedFetch<T>(key: string, url: string | null) {
   const [data, setData] = useState<T | undefined>(() => mem.get(key) as T | undefined);
   const [loading, setLoading] = useState(() => !mem.has(key) && !!url);

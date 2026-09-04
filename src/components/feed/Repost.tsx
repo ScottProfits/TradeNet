@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { useAuth } from "@clerk/nextjs";
@@ -65,15 +65,20 @@ export function RepostButton({
   const [reposted, setReposted] = useState(initialReposted);
   const [n, setN] = useState(count);
   const [busy, setBusy] = useState(false);
+  // Once the user taps, their choice wins — a background data refresh must
+  // not flip the button back (that made an un-repost pop green again).
+  const touchedRef = useRef(false);
 
-  // Feed/profile learn "did I repost this" asynchronously — sync when it lands.
-  useEffect(() => { setReposted(initialReposted); }, [initialReposted]);
-  useEffect(() => { setN(count); }, [count]);
+  // Feed/profile learn "did I repost this" asynchronously — sync until the
+  // user has interacted.
+  useEffect(() => { if (!touchedRef.current) setReposted(initialReposted); }, [initialReposted]);
+  useEffect(() => { if (!touchedRef.current) setN(count); }, [count]);
 
   if (ownPost) return null;
 
   async function toggle() {
     if (!isSignedIn || busy) return;
+    touchedRef.current = true;
     const next = !reposted;
     setReposted(next);
     setN((c) => Math.max(0, c + (next ? 1 : -1)));
@@ -86,6 +91,10 @@ export function RepostButton({
     if (!res || !res.ok) {
       setReposted(!next);
       setN((c) => Math.max(0, c + (next ? -1 : 1)));
+    } else if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("ryzr:repost-change", { detail: { targetType, targetId, reposted: next } })
+      );
     }
     setBusy(false);
   }
