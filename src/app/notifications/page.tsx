@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, Suspense } from "react";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import { useSearchParams } from "next/navigation";
 import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone } from "lucide-react";
 import { RepostIcon } from "@/components/feed/Repost";
@@ -63,22 +64,21 @@ export default function NotificationsPage() {
 function NotificationsPageInner() {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
-  const [notifs, setNotifs] = useState<Notification[]>(isDemo ? demoNotifications : []);
-  const [loading, setLoading] = useState(!isDemo);
+  const { data, loading: fetchLoading, mutate } = useCachedFetch<Notification[]>(
+    "notifications:list",
+    isDemo ? null : "/api/notifications"
+  );
+  const notifs = isDemo ? demoNotifications : data ?? [];
+  const setNotifs = mutate;
+  const loading = isDemo ? false : fetchLoading;
 
   useEffect(() => {
-    if (isDemo) return;
-    fetch("/api/notifications")
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => {
-        setNotifs(data);
-        setLoading(false);
-        if (data.some((n: Notification) => !n.read)) {
-          fetch("/api/notifications", { method: "PATCH" });
-          setNotifs(data.map((n: Notification) => ({ ...n, read: true })));
-        }
-      });
-  }, [isDemo]);
+    if (isDemo || !data) return;
+    if (data.some((n) => !n.read)) {
+      fetch("/api/notifications", { method: "PATCH" });
+      mutate(data.map((n) => ({ ...n, read: true })));
+    }
+  }, [isDemo, data, mutate]);
 
   const grouped = notifs.reduce<Record<string, Notification[]>>((acc, n) => {
     const date = new Date(n.created_at);
@@ -98,7 +98,7 @@ function NotificationsPageInner() {
           <button
             onClick={() => {
               fetch("/api/notifications", { method: "PATCH" });
-              setNotifs((n) => n.map((x) => ({ ...x, read: true })));
+              setNotifs((n) => (n ?? []).map((x) => ({ ...x, read: true })));
             }}
             className="text-xs text-gray-500 hover:text-white transition-colors"
           >

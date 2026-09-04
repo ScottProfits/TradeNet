@@ -39,6 +39,10 @@ function isValidTab(t: string | null): t is "feed" | "video" | "explore" {
   return t === "feed" || t === "video" || t === "explore";
 }
 
+// Last-rendered feed, kept for the session so coming back to /feed paints
+// instantly instead of flashing skeletons while it refetches.
+const feedCache: { items: FeedItem[]; following: FeedItem[] } = { items: [], following: [] };
+
 export default function FeedPage() {
   return (
     <Suspense fallback={null}>
@@ -51,11 +55,15 @@ function FeedPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
-  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>(feedCache.items);
+  const [followingItems, setFollowingItems] = useState<FeedItem[]>(feedCache.following);
+  const [feedLoading, setFeedLoading] = useState(feedCache.items.length === 0);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [myReposts, setMyReposts] = useState<Set<string>>(new Set());
+
+  const demoMode = searchParams.get("demo") === "1";
+  useEffect(() => { if (!demoMode) feedCache.items = feedItems; }, [feedItems, demoMode]);
+  useEffect(() => { if (!demoMode) feedCache.following = followingItems; }, [followingItems, demoMode]);
 
   useEffect(() => {
     fetch("/api/repost?mine=1")

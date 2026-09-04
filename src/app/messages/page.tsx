@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { MessageSquare } from "lucide-react";
@@ -7,6 +7,7 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import BackButton from "@/components/ui/BackButton";
 import DeleteSheet from "@/components/ui/DeleteSheet";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 
 interface Conversation {
   id: string;
@@ -21,18 +22,12 @@ interface Conversation {
 export default function MessagesPage() {
   const { userId } = useAuth();
   const router = useRouter();
-  const [convos, setConvos] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: convosData, loading, mutate } = useCachedFetch<Conversation[]>("messages:list", "/api/messages");
+  const convos = convosData ?? [];
   const [confirmHide, setConfirmHide] = useState<Conversation | null>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    fetch("/api/messages")
-      .then((r) => r.ok ? r.json() : [])
-      .then((d) => { setConvos(d); setLoading(false); });
-  }, []);
 
   function startPress(c: Conversation, e: React.PointerEvent) {
     longPressed.current = false;
@@ -56,7 +51,7 @@ export default function MessagesPage() {
 
   async function hideConvo(c: Conversation) {
     setConfirmHide(null);
-    setConvos((list) => list.filter((x) => x.partner?.id !== c.partner?.id));
+    mutate((list) => (list ?? []).filter((x) => x.partner?.id !== c.partner?.id));
     await fetch("/api/messages/hide", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -64,7 +59,25 @@ export default function MessagesPage() {
     }).catch(() => {});
   }
 
-  if (loading) return <div className="max-w-xl mx-auto pt-20 text-center"><p className="text-gray-500 text-sm">Loading...</p></div>;
+  if (loading && convos.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto space-y-4">
+        <BackButton iconOnly className="text-gray-400 hover:text-white transition-colors" />
+        <h1 className="text-2xl font-bold text-white">Messages</h1>
+        <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-4">
+              <div className="w-11 h-11 rounded-full bg-white/5 animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-28 rounded bg-white/5 animate-pulse" />
+                <div className="h-3 w-40 rounded bg-white/5 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
