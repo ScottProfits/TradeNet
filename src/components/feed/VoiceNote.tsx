@@ -20,72 +20,71 @@ function bars(src: string, n: number) {
 }
 
 // Compact voice-note player — waveform scrubber, tiny controls.
+// MediaRecorder webm files report duration Infinity, so we treat the saved
+// `duration` (seconds) as the source of truth for length + end-of-clip.
 export default function VoiceNote({ src, duration = 0 }: { src: string; duration?: number }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [cur, setCur] = useState(0);
-  const [total, setTotal] = useState(duration);
+  const [metaDur, setMetaDur] = useState(0);
   const wave = useMemo(() => bars(src, 34), [src]);
+
+  // Best known length: a finite value from the file, else the saved seconds.
+  const total = (metaDur > 0 ? metaDur : 0) || (duration > 0 ? duration : 0);
+  const totalRef = useRef(total);
+  totalRef.current = total;
 
   useEffect(() => {
     const a = new Audio(src);
     a.preload = "metadata";
     audioRef.current = a;
-    const onTime = () => setCur(a.currentTime);
-    const setIfReal = () => { if (a.duration && isFinite(a.duration) && a.duration > 0) setTotal(a.duration); };
-    const onMeta = () => {
-      // MediaRecorder webm/opus files often report duration Infinity until the
-      // playhead is forced to the end — nudge it, then reset.
-      if (!isFinite(a.duration) || a.duration === 0) {
-        const fix = () => {
-          setIfReal();
-          a.currentTime = 0;
-          a.removeEventListener("timeupdate", fix);
-        };
-        a.addEventListener("timeupdate", fix);
-        try { a.currentTime = 1e7; } catch { /* ignore */ }
-      } else {
-        setIfReal();
-      }
+
+    const reset = () => { a.pause(); a.currentTime = 0; setCur(0); setPlaying(false); };
+    const onTime = () => {
+      const t = a.currentTime;
+      setCur(t);
+      const dur = totalRef.current;
+      // webm with a broken duration never fires "ended" — stop it ourselves.
+      if (dur > 0 && t >= dur - 0.05) reset();
+      else if (dur === 0 && t > 60) reset();
     };
-    const onEnd = () => { setPlaying(false); setCur(0); };
+    const onMeta = () => { if (a.duration && isFinite(a.duration) && a.duration > 0) setMetaDur(a.duration); };
+
     a.addEventListener("timeupdate", onTime);
+    a.addEventListener("durationchange", onMeta);
     a.addEventListener("loadedmetadata", onMeta);
-    a.addEventListener("durationchange", setIfReal);
-    a.addEventListener("ended", onEnd);
+    a.addEventListener("ended", reset);
     return () => {
       a.pause();
       a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("durationchange", onMeta);
       a.removeEventListener("loadedmetadata", onMeta);
-      a.removeEventListener("durationchange", setIfReal);
-      a.removeEventListener("ended", onEnd);
+      a.removeEventListener("ended", reset);
     };
   }, [src]);
 
   function toggle() {
     const a = audioRef.current;
     if (!a) return;
-    if (playing) { a.pause(); setPlaying(false); }
-    else { a.play().then(() => setPlaying(true)).catch(() => {}); }
+    if (playing) { a.pause(); setPlaying(false); return; }
+    if (total > 0 && a.currentTime >= total - 0.05) a.currentTime = 0;
+    a.play().then(() => setPlaying(true)).catch(() => {});
   }
 
   function seekTo(clientX: number, el: HTMLElement) {
     const a = audioRef.current;
-    const dur = total || duration;
-    if (!a || !dur) return;
+    if (!a || !total) return;
     const rect = el.getBoundingClientRect();
     const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    a.currentTime = pct * dur;
+    a.currentTime = pct * total;
     setCur(a.currentTime);
   }
 
-  const eff = total || duration || 0;
-  const progress = eff ? Math.min(1, cur / eff) : 0;
+  const progress = total ? Math.min(1, cur / total) : 0;
 
   return (
     <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.07] pl-1 pr-2.5 py-1 max-w-[210px]">
       <button
-        type="button"
         onClick={toggle}
         className="shrink-0 w-6 h-6 rounded-full bg-[var(--green)] text-black flex items-center justify-center"
         aria-label={playing ? "Pause" : "Play"}
@@ -112,7 +111,7 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
         })}
       </div>
 
-      <span className="shrink-0 text-[10px] text-gray-500 tabular-nums">{clock(playing || cur ? cur : eff)}</span>
+      <span className="shrink-0 text-[10px] text-gray-500 tabular-nums">{clock(playing || cur ? cur : total)}</span>
     </div>
   );
 }
