@@ -49,6 +49,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [commentFocus, setCommentFocus] = useState(false);
 
   const [showJournal, setShowJournal] = useState(false);
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
@@ -254,14 +255,14 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {likeCount}
         </button>
         <button
-          onClick={() => setShowComments((s) => !s)}
+          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); }}
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-gray-300")}
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <CommentPill onOpen={() => setShowComments(true)} />
+        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); }} />
         <div className="ml-auto flex items-center gap-3 shrink-0">
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" />
@@ -301,6 +302,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <p className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider mb-2">Trade Talk</p>
           <CommentSection
             tradeId={trade.id}
+            autoFocus={commentFocus}
             onCommentAdded={() => setCommentCount((c) => c + 1)}
             onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
             onCountLoaded={(n) => setCommentCount(n)}

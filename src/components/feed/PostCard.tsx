@@ -43,6 +43,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
+  const [commentFocus, setCommentFocus] = useState(false);
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -198,14 +199,14 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {likeCount}
         </button>
         <button
-          onClick={() => setShowComments((s) => !s)}
+          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); }}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-400 transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <CommentPill onOpen={() => setShowComments(true)} />
+        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); }} />
         <button onClick={handleShare} className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors shrink-0">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}
@@ -216,6 +217,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
       {showComments && (
         <CommentSection
           postId={post.id}
+          autoFocus={commentFocus}
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}

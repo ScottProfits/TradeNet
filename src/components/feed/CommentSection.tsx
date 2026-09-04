@@ -21,12 +21,13 @@ interface Comment {
   };
 }
 
-export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded }: {
+export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, autoFocus }: {
   tradeId?: string;
   postId?: string;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onCountLoaded?: (n: number) => void;
+  autoFocus?: boolean;
 }) {
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -57,6 +58,15 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
         }
       });
   }, [entityId, paramKey]);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    const t = setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [autoFocus]);
 
   const startReply = useCallback((commentId: string, handle: string, topLevelId: string) => {
     setReplyTo({ id: commentId, handle, topLevelId });

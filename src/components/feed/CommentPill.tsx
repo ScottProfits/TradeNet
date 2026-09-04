@@ -6,10 +6,10 @@ export default function CommentPill({ onOpen }: { onOpen: () => void }) {
     <button
       onClick={onOpen}
       aria-label="Add a comment"
-      className="shrink-0 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 transition-colors hover:border-white/15 hover:bg-white/[0.06]"
+      className="shrink-0 rounded-md border border-white/[0.08] bg-white/[0.03] px-5 py-[3px] transition-colors hover:border-white/15 hover:bg-white/[0.06]"
     >
       <span
-        className="text-[13px] italic text-gray-500 transition-colors hover:text-gray-300"
+        className="text-[12px] italic text-gray-500 transition-colors hover:text-gray-300"
         style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
       >
         Comment
