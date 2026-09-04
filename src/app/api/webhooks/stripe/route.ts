@@ -49,7 +49,11 @@ async function applySubscription(sub: Stripe.Subscription) {
     },
     { onConflict: "room_id,user_id" }
   );
-  if (!prev) await setMemberCount(roomId, 1);
+  if (!prev) {
+    await setMemberCount(roomId, 1);
+    const { notifyChannelJoin } = await import("@/lib/rooms");
+    void notifyChannelJoin(roomId, userId, "join");
+  }
 }
 
 export async function POST(req: Request) {

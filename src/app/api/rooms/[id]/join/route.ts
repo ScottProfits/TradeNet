@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getMembership } from "@/lib/rooms";
+import { getMembership, notifyChannelJoin } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
 // POST /api/rooms/:id/join — join a FREE room immediately. Paid rooms
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       { room_id: room.id, user_id: userId, role: "member", status: "pending" },
       { onConflict: "room_id,user_id" }
     );
+    void notifyChannelJoin(room.id, userId, "request");
     return Response.json({ status: "pending" });
   }
 
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     { room_id: room.id, user_id: userId, role: "member", status: "active" },
     { onConflict: "room_id,user_id" }
   );
+  void notifyChannelJoin(room.id, userId, "join");
 
   const { data: counts } = await supabaseAdmin.from("rooms").select("member_count").eq("id", room.id).single();
   await supabaseAdmin

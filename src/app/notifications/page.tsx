@@ -2,7 +2,7 @@
 import { useEffect, Suspense } from "react";
 import { useCachedFetch } from "@/lib/useCachedFetch";
 import { useSearchParams } from "next/navigation";
-import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone, DoorOpen } from "lucide-react";
 import { RepostIcon } from "@/components/feed/Repost";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -11,12 +11,14 @@ import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "message_like" | "explore" | "announcement" | "repost";
+  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "message_like" | "explore" | "announcement" | "repost" | "channel_join" | "channel_join_request";
   read: boolean;
   created_at: string;
   trade_id: string | null;
   post_id: string | null;
   comment_id: string | null;
+  room_id?: string | null;
+  room?: { name: string; slug: string } | null;
   actor: { handle: string; avatar_url: string; verified: boolean };
 }
 
@@ -35,6 +37,7 @@ function icon(type: string) {
   if (type === "announcement") return <Megaphone className="w-4 h-4 text-[var(--green)]" />;
   if (type === "reply") return <CornerDownRight className="w-4 h-4 text-blue-400" />;
   if (type === "repost") return <RepostIcon className="w-4 h-4 text-[var(--green)]" />;
+  if (type === "channel_join" || type === "channel_join_request") return <DoorOpen className="w-4 h-4 text-[var(--green)]" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
@@ -46,6 +49,8 @@ function message(n: Notification) {
   if (n.type === "follow") return "started following you";
   if (n.type === "explore") return "You're featured on Explore right now";
   if (n.type === "announcement") return "🎉 Tradovate is now live! Connect it in Settings for a Verified P&L badge — read/fill-only, no order placement.";
+  if (n.type === "channel_join") return `joined ${n.room?.name ? `“${n.room.name}”` : "your channel"}`;
+  if (n.type === "channel_join_request") return `asked to join ${n.room?.name ? `“${n.room.name}”` : "your channel"}`;
   if (n.type === "reply") return "replied to you";
   if (n.type === "repost" && !n.trade_id && n.post_id) return "reposted your post";
   if (n.type === "repost") return "reposted your trade";
@@ -145,6 +150,8 @@ function NotificationsPageInner() {
                       ? "/settings"
                       : isExplore
                       ? "/feed"
+                      : n.room?.slug
+                      ? `/rooms/${n.room.slug}${n.type === "channel_join_request" ? "/manage" : ""}`
                       : n.type === "message_like"
                       ? `/messages/${n.actor?.handle}`
                       : n.trade_id

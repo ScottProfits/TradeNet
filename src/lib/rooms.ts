@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPushToUser } from "@/lib/push";
 
 export interface Membership {
   role: "owner" | "mod" | "member";
@@ -69,6 +70,43 @@ export async function uniqueChannelSlug(
     if (!taken.has(s)) return s;
   }
   return `${base}-${Date.now().toString(36)}`;
+}
+
+/**
+ * Notify a channel owner that someone joined (or requested to join).
+ * `kind`: "join" for a completed join, "request" for an approval-gated one.
+ */
+export async function notifyChannelJoin(roomId: string, joinerId: string, kind: "join" | "request") {
+  const { data: room } = await supabaseAdmin
+    .from("rooms")
+    .select("owner_id, name, slug")
+    .eq("id", roomId)
+    .maybeSingle();
+  if (!room || room.owner_id === joinerId) return;
+
+  const { data: actor } = await supabaseAdmin
+    .from("profiles")
+    .select("handle")
+    .eq("id", joinerId)
+    .maybeSingle();
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: room.owner_id,
+    actor_id: joinerId,
+    type: kind === "request" ? "channel_join_request" : "channel_join",
+    room_id: roomId,
+  });
+
+  if (actor) {
+    void sendPushToUser(room.owner_id, {
+      title: kind === "request" ? "🚪 New join request" : "🎉 New member",
+      body:
+        kind === "request"
+          ? `@${actor.handle} wants to join ${room.name}`
+          : `@${actor.handle} joined ${room.name}`,
+      url: `/rooms/${room.slug}`,
+    });
+  }
 }
 
 /** True if either user has blocked the other. */
