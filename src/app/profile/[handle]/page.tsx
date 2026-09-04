@@ -739,11 +739,14 @@ function ProfilePageInner() {
             | ({ kind: "trade" } & Trade)
             | ({ kind: "post" } & RealPost)
             | ({ kind: "repost" } & RepostItem);
+          // Reposts keep the original post's created_at on the card, but are
+          // ordered in the list by when they were reposted (sortAt).
+          const sortAt = (i: HistoryItem) => (i.kind === "repost" ? i.repostedAt : i.created_at);
           const merged: HistoryItem[] = [
             ...trades.map((t) => ({ kind: "trade" as const, ...t })),
             ...posts.map((p) => ({ kind: "post" as const, ...p })),
-            ...reposts.map((r) => ({ kind: "repost" as const, ...r, created_at: r.repostedAt })),
-          ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            ...reposts.map((r) => ({ kind: "repost" as const, ...r })),
+          ].sort((a, b) => new Date(sortAt(b)).getTime() - new Date(sortAt(a)).getTime());
 
           const displayedItems = tradeHistoryTab === "videos" ? merged.filter((item) => isVideoUrl(item.image_url)) : merged;
 

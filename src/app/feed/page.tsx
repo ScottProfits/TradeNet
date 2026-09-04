@@ -18,18 +18,21 @@ import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 import { realTradeToCardProps, RealTrade, RealPost } from "@/lib/tradeCardProps";
 import type { Reposter } from "@/components/feed/Repost";
 
-type RepostMeta = { repostedBy?: Reposter; repostId?: string };
+type RepostMeta = { repostedBy?: Reposter; repostId?: string; sortAt?: string };
 type FeedItem = (({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost)) & RepostMeta;
 
-// A repost from /api/reposts carries the original trade/post fields plus a
-// reposter — surface it in the feed ordered by when it was reposted.
+const sortKey = (i: FeedItem) => i.sortAt ?? i.created_at;
+
+// A repost from /api/reposts keeps the original trade/post fields (incl. its
+// real created_at, shown on the card) but is ordered in the feed by when it
+// was reposted.
 function repostToFeedItem(r: {
   type: "trade" | "post";
   repostId: string;
   repostedBy: Reposter;
   repostedAt: string;
 } & Record<string, unknown>): FeedItem {
-  return { ...r, created_at: r.repostedAt } as unknown as FeedItem;
+  return { ...r, sortAt: r.repostedAt } as unknown as FeedItem;
 }
 
 function isValidTab(t: string | null): t is "feed" | "video" | "explore" {
@@ -144,7 +147,7 @@ function FeedPageInner() {
         ...trades.map((t) => ({ ...t, type: "trade" as const })),
         ...posts.map((p) => ({ ...p, type: "post" as const })),
         ...reposts,
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      ].sort((a, b) => new Date(sortKey(b)).getTime() - new Date(sortKey(a)).getTime());
 
       setFeedItems(merged);
       feedTradesCursorRef.current = oldestOf(trades);
@@ -173,7 +176,7 @@ function FeedPageInner() {
       const newItems: FeedItem[] = [
         ...trades.map((t) => ({ ...t, type: "trade" as const })),
         ...posts.map((p) => ({ ...p, type: "post" as const })),
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      ].sort((a, b) => new Date(sortKey(b)).getTime() - new Date(sortKey(a)).getTime());
 
       if (tradesRes) {
         feedTradesHasMoreRef.current = trades.length === PAGE_SIZE;
@@ -203,7 +206,7 @@ function FeedPageInner() {
         ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
         ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
         ...reposts,
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      ].sort((a, b) => new Date(sortKey(b)).getTime() - new Date(sortKey(a)).getTime());
       setFollowingItems(merged);
       followingTradesCursorRef.current = oldestOf(trades);
       followingPostsCursorRef.current = oldestOf(posts);
@@ -231,7 +234,7 @@ function FeedPageInner() {
         const newItems: FeedItem[] = [
           ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
           ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        ].sort((a, b) => new Date(sortKey(b)).getTime() - new Date(sortKey(a)).getTime());
 
         followingTradesHasMoreRef.current = trades.length === PAGE_SIZE;
         followingPostsHasMoreRef.current = posts.length === PAGE_SIZE;
