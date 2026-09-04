@@ -46,8 +46,9 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { content, image_url, image_urls } = await req.json();
-  if (!content?.trim()) return new Response("Content required", { status: 400 });
+  const { content, image_url, image_urls, audio_url, audio_duration } = await req.json();
+  const text = typeof content === "string" ? content.trim() : "";
+  if (!text && !audio_url) return new Response("Content required", { status: 400 });
   const urls: string[] = Array.isArray(image_urls) ? image_urls.filter(Boolean).slice(0, 3) : image_url ? [image_url] : [];
 
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", userId).single();
@@ -62,7 +63,14 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("posts")
-    .insert({ user_id: userId, content: content.trim(), image_url: urls[0] ?? null, image_urls: urls.length ? urls : null })
+    .insert({
+      user_id: userId,
+      content: text,
+      image_url: urls[0] ?? null,
+      image_urls: urls.length ? urls : null,
+      audio_url: audio_url ?? null,
+      audio_duration: typeof audio_duration === "number" ? Math.round(audio_duration) : null,
+    })
     .select()
     .single();
 

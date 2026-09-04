@@ -6,6 +6,7 @@ import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
 import ExpandableVideo from "@/components/feed/ExpandableVideo";
+import VoiceNote from "@/components/feed/VoiceNote";
 import ImageGallery from "@/components/feed/ImageGallery";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import CommentSection from "@/components/feed/CommentSection";
@@ -28,6 +29,8 @@ interface RealPost {
   comments_count?: number;
   reposts_count?: number;
   liked_by_me?: boolean;
+  audio_url?: string | null;
+  audio_duration?: number | null;
   created_at: string;
   profiles: {
     id: string;
@@ -43,8 +46,8 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
-  const [commentFocus, setCommentFocus] = useState(false);
-  const [voiceStart, setVoiceStart] = useState(false);
+  const [focusNonce, setFocusNonce] = useState(0);
+  const [voiceNonce, setVoiceNonce] = useState(0);
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -158,9 +161,11 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
             </button>
           </div>
         </div>
-      ) : (
+      ) : content ? (
         <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
-      )}
+      ) : null}
+
+      {post.audio_url && <VoiceNote src={post.audio_url} duration={post.audio_duration ?? 0} />}
 
       {/* Image/Video gallery — up to 3 */}
       {(() => {
@@ -200,16 +205,16 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {likeCount}
         </button>
         <button
-          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); setVoiceStart(false); }}
+          onClick={() => { setShowComments((s) => !s); setFocusNonce((n) => n + 1); }}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-400 transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); setVoiceStart(false); }} />
+        <CommentPill onOpen={() => { setShowComments(true); setFocusNonce((n) => n + 1); }} />
         <button
-          onClick={() => { setShowComments(true); setCommentFocus(false); setVoiceStart(true); }}
+          onClick={() => { setShowComments(true); setVoiceNonce((n) => n + 1); }}
           className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[2px] text-[12px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
           aria-label="Voice comment"
         >
@@ -225,8 +230,8 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
       {showComments && (
         <CommentSection
           postId={post.id}
-          autoFocus={commentFocus}
-          autoRecord={voiceStart}
+          focusText={focusNonce}
+          startVoice={voiceNonce}
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}

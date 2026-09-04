@@ -22,6 +22,8 @@ export interface RealTrade {
   journal_note: string | null;
   created_at: string;
   source?: string | null;
+  audio_url?: string | null;
+  audio_duration?: number | null;
   profiles: { id: string; handle: string; avatar_url: string; brokerage: string; verified: boolean };
 }
 
@@ -51,6 +53,8 @@ export function realTradeToCardProps(rt: RealTrade): { trade: Trade; trader: Tra
     time: timeAgo(rt.created_at),
     createdAt: rt.created_at,
     source: rt.source ?? null,
+    audioUrl: rt.audio_url ?? null,
+    audioDuration: rt.audio_duration ?? null,
     pnl: rt.pnl, pnlPct: rt.pnl_percent, notes: rt.caption ?? "",
     likes: rt.likes_count, comments: rt.comments_count,
   };

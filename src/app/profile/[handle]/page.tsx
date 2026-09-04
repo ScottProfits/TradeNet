@@ -822,6 +822,8 @@ function ProfilePageInner() {
               time: timeAgo(t.created_at),
               createdAt: t.created_at,
               source: t.source ?? null,
+              audioUrl: (t as { audio_url?: string | null }).audio_url ?? null,
+              audioDuration: (t as { audio_duration?: number | null }).audio_duration ?? null,
               pnl: t.pnl,
               pnlPct: t.pnl_percent,
               notes: t.caption ?? "",

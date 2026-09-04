@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { ticker, direction, entry, exit, caption, strategy, image_url, pnl_sign } = body;
+  const { ticker, direction, entry, exit, caption, strategy, image_url, pnl_sign, audio_url, audio_duration } = body;
 
   if (!ticker || !direction || !entry || !exit) {
     return new Response("Missing required fields", { status: 400 });
@@ -92,6 +92,8 @@ export async function POST(req: NextRequest) {
       caption,
       strategy: strategy ?? null,
       image_url: image_url ?? null,
+      audio_url: audio_url ?? null,
+      audio_duration: typeof audio_duration === "number" ? Math.round(audio_duration) : null,
     })
     .select()
     .single();

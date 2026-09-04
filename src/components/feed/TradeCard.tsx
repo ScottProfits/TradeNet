@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ExpandableImage from "@/components/feed/ExpandableImage";
 import ExpandableVideo from "@/components/feed/ExpandableVideo";
+import VoiceNote from "@/components/feed/VoiceNote";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
 import CommentPill from "@/components/feed/CommentPill";
@@ -49,8 +50,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [commentFocus, setCommentFocus] = useState(false);
-  const [voiceStart, setVoiceStart] = useState(false);
+  const [focusNonce, setFocusNonce] = useState(0);
+  const [voiceNonce, setVoiceNonce] = useState(0);
 
   const [showJournal, setShowJournal] = useState(false);
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
@@ -209,6 +210,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </div>
       )}
 
+      {trade.audioUrl && <VoiceNote src={trade.audioUrl} duration={trade.audioDuration ?? 0} />}
+
       {localImageUrl && (
         <div className="rounded-lg overflow-hidden border border-[var(--border)]">
           {isVideoUrl(localImageUrl) ? (
@@ -256,16 +259,16 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {likeCount}
         </button>
         <button
-          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); setVoiceStart(false); }}
+          onClick={() => { setShowComments((s) => !s); setFocusNonce((n) => n + 1); }}
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-gray-300")}
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); setVoiceStart(false); }} />
+        <CommentPill onOpen={() => { setShowComments(true); setFocusNonce((n) => n + 1); }} />
         <button
-          onClick={() => { setShowComments(true); setCommentFocus(false); setVoiceStart(true); }}
+          onClick={() => { setShowComments(true); setVoiceNonce((n) => n + 1); }}
           className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[2px] text-[12px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
           aria-label="Voice comment"
         >
@@ -310,8 +313,8 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <p className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider mb-2">Trade Talk</p>
           <CommentSection
             tradeId={trade.id}
-            autoFocus={commentFocus}
-            autoRecord={voiceStart}
+            focusText={focusNonce}
+            startVoice={voiceNonce}
             onCommentAdded={() => setCommentCount((c) => c + 1)}
             onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
             onCountLoaded={(n) => setCommentCount(n)}

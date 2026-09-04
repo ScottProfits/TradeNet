@@ -8,6 +8,7 @@ import DeleteSheet from "@/components/ui/DeleteSheet";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VoiceNote from "@/components/feed/VoiceNote";
 import { supabase } from "@/lib/supabase";
+import { extFor, voiceRecordingSupported } from "@/lib/voice";
 
 interface Comment {
   id: string;
@@ -24,39 +25,20 @@ interface Comment {
   };
 }
 
-function extFor(mime: string) {
-  if (mime.includes("mp4")) return "mp4";
-  if (mime.includes("webm")) return "webm";
-  if (mime.includes("ogg")) return "ogg";
-  return "m4a";
-}
-
 function fmtClock(s: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-// The native app (Capacitor) handles the mic prompt itself — once, via iOS.
-// A plain iOS home-screen web view (standalone Safari PWA) crashes on
-// MediaRecorder, so block voice there; Safari tabs are fine.
-function voiceRecordingSupported() {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") return false;
-  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-  if (cap?.isNativePlatform?.()) return true;
-  const nav = navigator as Navigator & { standalone?: boolean };
-  const standalone = nav.standalone === true || window.matchMedia?.("(display-mode: standalone)")?.matches === true;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  return !(standalone && isIOS);
-}
-
-export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, autoFocus, autoRecord }: {
+export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, focusText, startVoice }: {
   tradeId?: string;
   postId?: string;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onCountLoaded?: (n: number) => void;
-  autoFocus?: boolean;
-  autoRecord?: boolean;
+  // Nonces — bump to trigger: focusText focuses the composer (and leaves
+  // voice mode), startVoice opens the voice recorder.
+  focusText?: number;
+  startVoice?: number;
 }) {
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -154,8 +136,9 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
 
   // "Voice" opens the recorder in an idle state — the user hits record.
   useEffect(() => {
-    if (autoRecord) setVoiceMode(true);
-  }, [autoRecord]);
+    if (startVoice) { discardClip(); setVoiceMode(true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startVoice]);
 
   // Release the mic only when the thread unmounts.
   useEffect(() => {
@@ -189,13 +172,15 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   }, [entityId, paramKey]);
 
   useEffect(() => {
-    if (!autoFocus) return;
+    if (!focusText) return;
+    exitVoice();
     const t = setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 80);
     return () => clearTimeout(t);
-  }, [autoFocus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusText]);
 
   const startReply = useCallback((commentId: string, handle: string, topLevelId: string) => {
     setReplyTo({ id: commentId, handle, topLevelId });

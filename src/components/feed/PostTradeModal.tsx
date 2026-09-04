@@ -6,6 +6,8 @@ import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
+import VoiceRecorder, { type VoiceClip } from "@/components/feed/VoiceRecorder";
+import { extFor } from "@/lib/voice";
 
 // Blob URLs don't support the "#t=" media-fragment seek that works on real
 // network URLs, and iOS WebKit won't render a first frame on its own — so we
@@ -48,6 +50,21 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   const { userId } = useAuth();
   const [tab, setTab] = useState<"trade" | "post">("trade");
   const [postContent, setPostContent] = useState("");
+  const [tradeVoice, setTradeVoice] = useState<VoiceClip | null>(null);
+  const [postVoice, setPostVoice] = useState<VoiceClip | null>(null);
+
+  async function uploadVoice(clip: VoiceClip | null) {
+    if (!clip || !userId) return { audio_url: null as string | null, audio_duration: null as number | null };
+    const path = `${userId}/voice-${Date.now()}.${extFor(clip.blob.type)}`;
+    const { error } = await supabase.storage
+      .from("trade-images")
+      .upload(path, clip.blob, { contentType: clip.blob.type || "audio/webm" });
+    if (error) throw new Error("Voice upload failed");
+    return {
+      audio_url: supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl,
+      audio_duration: clip.seconds,
+    };
+  }
   const [ticker, setTicker] = useState(prefill?.ticker ?? "");
   const [tickerName, setTickerName] = useState(prefill?.ticker ?? "");
   const [tickerResults, setTickerResults] = useState<{ symbol: string; fullName: string; name: string; exchange: string; type: string }[]>([]);
@@ -159,10 +176,11 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
 
   async function handlePostSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!postContent.trim()) return;
+    if (!postContent.trim() && !postVoice) return;
     setError("");
     setSubmitting(true);
     try {
+      const { audio_url, audio_duration } = await uploadVoice(postVoice);
       const image_urls: string[] = [];
       if (userId) {
         for (const m of postMedia) {
@@ -177,7 +195,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postContent, image_urls }),
+        body: JSON.stringify({ content: postContent, image_urls, audio_url, audio_duration }),
       });
       if (!res.ok) { setError(await res.text()); } else { onPosted(); onClose(); }
     } catch { setError("Something went wrong."); }
@@ -190,6 +208,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     setSubmitting(true);
 
     try {
+      const { audio_url, audio_duration } = await uploadVoice(tradeVoice);
       let image_url: string | null = null;
 
       if (media && userId) {
@@ -212,7 +231,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       const res = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, direction, entry, exit, shares: String(effectiveShares), caption, strategy, image_url, pnl_sign: pnlSign }),
+        body: JSON.stringify({ ticker, direction, entry, exit, shares: String(effectiveShares), caption, strategy, image_url, pnl_sign: pnlSign, audio_url, audio_duration }),
       });
 
       if (!res.ok) {
@@ -289,6 +308,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               maxLength={500}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
             />
+            <VoiceRecorder clip={postVoice} onChange={setPostVoice} />
             <input ref={postFileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handlePostMediaPick} />
             {postMedia.length > 0 && (
               <div className={clsx("grid gap-2", postMedia.length > 1 ? "grid-cols-3" : "grid-cols-1")}>
@@ -319,7 +339,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
             {error && <p className="text-[var(--red)] text-sm">{error}</p>}
             <button
               type="submit"
-              disabled={submitting || !postContent.trim()}
+              disabled={submitting || (!postContent.trim() && !postVoice)}
               className="w-full py-3 rounded-2xl transition-all duration-300 disabled:opacity-40"
               style={{
                 background: "linear-gradient(135deg, rgba(0,200,150,0.25) 0%, rgba(0,168,126,0.15) 100%)",
@@ -544,6 +564,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               maxLength={100}
               className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
             />
+            <div className="mt-2">
+              <VoiceRecorder clip={tradeVoice} onChange={setTradeVoice} label="Add a voice note to this trade" />
+            </div>
           </div>
 
           {/* Media upload — photo or video */}

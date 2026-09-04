@@ -27,6 +27,8 @@ export interface Trade {
   notes: string;
   likes: number;
   comments: number;
+  audioUrl?: string | null;
+  audioDuration?: number | null;
 }
 
 export interface Strategy {

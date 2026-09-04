@@ -8,6 +8,7 @@ import Link from "next/link";
 import { clsx } from "clsx";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import VoiceNote from "@/components/feed/VoiceNote";
 import CommentSection from "@/components/feed/CommentSection";
 import TradingViewChart from "@/components/ui/TradingViewChart";
 
@@ -22,6 +23,8 @@ interface TradeDetail {
   shares: number;
   caption: string;
   image_url: string | null;
+  audio_url?: string | null;
+  audio_duration?: number | null;
   strategy: string | null;
   source: string | null;
   likes_count: number;
@@ -142,6 +145,8 @@ export default function TradePage() {
         </div>
 
         {trade.caption && <p className="text-sm text-gray-300 leading-relaxed">{trade.caption}</p>}
+
+        {trade.audio_url && <VoiceNote src={trade.audio_url} duration={trade.audio_duration ?? 0} />}
 
         {trade.source === "rithmic" && (
           <div className="flex items-center gap-2.5 opacity-60">
