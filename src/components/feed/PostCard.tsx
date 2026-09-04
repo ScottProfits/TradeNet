@@ -46,15 +46,11 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
-  const [openMode, setOpenMode] = useState<"text" | "voice" | null>(null);
-  const [focusNonce, setFocusNonce] = useState(0);
-  const [voiceNonce, setVoiceNonce] = useState(0);
+  const [openAs, setOpenAs] = useState<{ mode: "text" | "voice"; n: number } | null>(null);
   const toggleComments = (mode: "text" | "voice") => {
-    if (showComments && openMode === mode) { setShowComments(false); setOpenMode(null); return; }
+    if (showComments && openAs?.mode === mode) { setShowComments(false); setOpenAs(null); return; }
     setShowComments(true);
-    setOpenMode(mode);
-    if (mode === "text") setFocusNonce((n) => n + 1);
-    else setVoiceNonce((n) => n + 1);
+    setOpenAs((prev) => ({ mode, n: (prev?.n ?? 0) + 1 }));
   };
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -220,12 +216,12 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <CommentPill onOpen={() => toggleComments("text")} active={showComments && openMode === "text"} />
+        <CommentPill onOpen={() => toggleComments("text")} active={showComments && openAs?.mode === "text"} />
         <button
           onClick={() => toggleComments("voice")}
           className={clsx(
             "shrink-0 flex items-center gap-1 rounded-md border px-2 py-[2px] text-[12px] transition-colors",
-            showComments && openMode === "voice"
+            showComments && openAs?.mode === "voice"
               ? "border-[var(--green)]/50 text-[var(--green)] bg-[var(--green)]/10"
               : "border-white/[0.08] bg-white/[0.03] text-gray-500 hover:text-gray-300 hover:border-white/15"
           )}
@@ -243,8 +239,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
       {showComments && (
         <CommentSection
           postId={post.id}
-          focusText={focusNonce}
-          startVoice={voiceNonce}
+          openAs={openAs ?? undefined}
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}

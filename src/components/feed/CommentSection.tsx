@@ -29,16 +29,15 @@ function fmtClock(s: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, focusText, startVoice }: {
+export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, openAs }: {
   tradeId?: string;
   postId?: string;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onCountLoaded?: (n: number) => void;
-  // Nonces — bump to trigger: focusText focuses the composer (and leaves
-  // voice mode), startVoice opens the voice recorder.
-  focusText?: number;
-  startVoice?: number;
+  // How the thread was opened. `n` bumps so re-opening the same mode still
+  // re-triggers. Deterministic — no stale state on close/reopen.
+  openAs?: { mode: "text" | "voice"; n: number };
 }) {
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -134,11 +133,30 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     setVoiceMode(false);
   }, [stopRecording, discardClip, releaseStream]);
 
-  // "Voice" opens the recorder in an idle state — the user hits record.
+  // Match the composer to how the thread was opened (voice recorder vs text
+  // box). Runs on open and whenever the user re-taps a header button.
   useEffect(() => {
-    if (startVoice) { discardClip(); setVoiceMode(true); }
+    if (!openAs) return;
+    if (openAs.mode === "voice") {
+      discardClip();
+      setVoiceMode(true);
+      return;
+    }
+    // text: leave voice mode, then focus the composer (retry — the input
+    // isn't in the DOM on the first frame and iOS is fussy about timing).
+    exitVoice();
+    let tries = 0;
+    const id = setInterval(() => {
+      const el = inputRef.current;
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ block: "center" });
+      }
+      if (el || ++tries > 6) clearInterval(id);
+    }, 40);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startVoice]);
+  }, [openAs?.n]);
 
   // Release the mic only when the thread unmounts.
   useEffect(() => {
@@ -170,24 +188,6 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
         }
       });
   }, [entityId, paramKey]);
-
-  useEffect(() => {
-    if (!focusText) return;
-    exitVoice();
-    // Try a few times — the composer input may not be in the DOM on the very
-    // first frame, and iOS is fussy about programmatic focus timing.
-    let tries = 0;
-    const id = setInterval(() => {
-      const el = inputRef.current;
-      if (el) {
-        el.focus({ preventScroll: true });
-        el.scrollIntoView({ block: "center" });
-      }
-      if (el || ++tries > 6) clearInterval(id);
-    }, 40);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusText]);
 
   const startReply = useCallback((commentId: string, handle: string, topLevelId: string) => {
     setReplyTo({ id: commentId, handle, topLevelId });

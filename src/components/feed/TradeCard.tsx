@@ -50,15 +50,11 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [liking, setLiking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [openMode, setOpenMode] = useState<"text" | "voice" | null>(null);
-  const [focusNonce, setFocusNonce] = useState(0);
-  const [voiceNonce, setVoiceNonce] = useState(0);
+  const [openAs, setOpenAs] = useState<{ mode: "text" | "voice"; n: number } | null>(null);
   const toggleComments = (mode: "text" | "voice") => {
-    if (showComments && openMode === mode) { setShowComments(false); setOpenMode(null); return; }
+    if (showComments && openAs?.mode === mode) { setShowComments(false); setOpenAs(null); return; }
     setShowComments(true);
-    setOpenMode(mode);
-    if (mode === "text") setFocusNonce((n) => n + 1);
-    else setVoiceNonce((n) => n + 1);
+    setOpenAs((prev) => ({ mode, n: (prev?.n ?? 0) + 1 }));
   };
 
   const [showJournal, setShowJournal] = useState(false);
@@ -274,12 +270,12 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <CommentPill onOpen={() => toggleComments("text")} active={showComments && openMode === "text"} />
+        <CommentPill onOpen={() => toggleComments("text")} active={showComments && openAs?.mode === "text"} />
         <button
           onClick={() => toggleComments("voice")}
           className={clsx(
             "shrink-0 flex items-center gap-1 rounded-md border px-2 py-[2px] text-[12px] transition-colors",
-            showComments && openMode === "voice"
+            showComments && openAs?.mode === "voice"
               ? "border-[var(--green)]/50 text-[var(--green)] bg-[var(--green)]/10"
               : "border-white/[0.08] bg-white/[0.03] text-gray-500 hover:text-gray-300 hover:border-white/15"
           )}
@@ -326,8 +322,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <p className="text-xs font-semibold text-[var(--green)] uppercase tracking-wider mb-2">Trade Talk</p>
           <CommentSection
             tradeId={trade.id}
-            focusText={focusNonce}
-            startVoice={voiceNonce}
+            openAs={openAs ?? undefined}
             onCommentAdded={() => setCommentCount((c) => c + 1)}
             onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
             onCountLoaded={(n) => setCommentCount(n)}
