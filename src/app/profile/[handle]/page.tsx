@@ -169,6 +169,7 @@ function ProfilePageInner() {
     | ({ type: "trade"; repostId: string; repostedBy: Reposter; repostedAt: string } & RealTrade)
     | ({ type: "post"; repostId: string; repostedBy: Reposter; repostedAt: string } & RealPost);
   const [reposts, setReposts] = useState<RepostItem[]>([]);
+  const [myReposts, setMyReposts] = useState<Set<string>>(new Set());
   // Cursor pagination for trade/post history — same reasoning as the feed
   // (src/app/feed/page.tsx): keep each page small so the DOM/image count
   // doesn't overwhelm WebKit's tile compositor. Trades and posts get their
@@ -229,6 +230,16 @@ function ProfilePageInner() {
       .then((d: RepostItem[]) => setReposts(Array.isArray(d) ? d : []))
       .catch(() => {});
   }, [handle, isDemo]);
+
+  useEffect(() => {
+    if (isDemo) return;
+    fetch("/api/repost?mine=1")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: { target_type: string; target_id: string }[]) => {
+        setMyReposts(new Set(rows.map((x) => `${x.target_type}:${x.target_id}`)));
+      })
+      .catch(() => {});
+  }, [isDemo]);
 
   const loadMoreHistory = useCallback(async () => {
     if (isDemo || historyLoadingMoreRef.current) return;
@@ -758,8 +769,9 @@ function ProfilePageInner() {
           })
           .map((item) => {
             if (item.kind === "repost") {
+              const mine = myReposts.has(`${item.type}:${item.id}`);
               if (item.type === "post") {
-                return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} />;
+                return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} repostedByMe={mine} />;
               }
               const { trade, trader } = realTradeToCardProps(item);
               return (
@@ -776,12 +788,13 @@ function ProfilePageInner() {
                   exit={item.exit}
                   rawShares={item.shares ?? 0}
                   repostedBy={item.repostedBy}
+                  repostedByMe={mine}
                   repostCount={item.reposts_count ?? 0}
                 />
               );
             }
             if (item.kind === "post") {
-              return <PostCard key={item.id} post={item} />;
+              return <PostCard key={item.id} post={item} repostedByMe={myReposts.has(`post:${item.id}`)} />;
             }
             const t = item;
             const isPinned = t.id === pinnedTradeId;
@@ -825,6 +838,8 @@ function ProfilePageInner() {
                   avatarUrl={profile.avatar_url ?? undefined}
                   strategy={(t as { strategy?: string }).strategy ?? undefined}
                   likedByMe={(t as { liked_by_me?: boolean }).liked_by_me}
+                  repostedByMe={myReposts.has(`trade:${t.id}`)}
+                  repostCount={(t as { reposts_count?: number }).reposts_count ?? 0}
                 />
                 {isOwnProfile && (
                   <button
