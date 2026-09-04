@@ -10,6 +10,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import ExpandableImage from "@/components/feed/ExpandableImage";
 import ExpandableVideo from "@/components/feed/ExpandableVideo";
+import ChannelLive from "@/components/rooms/ChannelLive";
 import { timeAgo } from "@/lib/timeAgo";
 import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
@@ -600,6 +601,7 @@ function RoomPageInner() {
 
           {/* Messages */}
           <div className={`${showChat ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0 min-h-0`}>
+            {activeChannel && <ChannelLive channelId={activeChannel} canBroadcast={isMod} />}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && <p className="text-center text-gray-600 text-sm pt-8">No messages yet — say hi.</p>}
               {messages.map((m) => {
