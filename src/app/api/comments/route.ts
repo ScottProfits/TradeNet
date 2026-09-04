@@ -23,6 +23,13 @@ export async function DELETE(req: NextRequest) {
   if (!error && comment.trade_id) {
     await supabaseAdmin.rpc("decrement_comments", { trade_id_input: comment.trade_id });
   }
+  if (!error && comment.post_id) {
+    const { data: post } = await supabase.from("posts").select("comments_count").eq("id", comment.post_id).single();
+    await supabaseAdmin
+      .from("posts")
+      .update({ comments_count: Math.max(0, (post?.comments_count ?? 1) - 1) })
+      .eq("id", comment.post_id);
+  }
 
   return new Response("OK", { status: 200 });
 }

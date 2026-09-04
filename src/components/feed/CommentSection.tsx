@@ -36,6 +36,17 @@ function fmtClock(s: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+// iOS home-screen (standalone) web views crash on MediaRecorder — gate voice
+// there until it's the real App Store build. Safari tabs are fine.
+function voiceRecordingSupported() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") return false;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  const standalone = nav.standalone === true || window.matchMedia?.("(display-mode: standalone)")?.matches === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  return !(standalone && isIOS);
+}
+
 export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, autoFocus, autoRecord }: {
   tradeId?: string;
   postId?: string;
@@ -73,6 +84,10 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
 
   const startRecording = useCallback(async () => {
     setRecError("");
+    if (!voiceRecordingSupported()) {
+      setRecError("Voice recording works in the Safari browser — open ryzr.app in Safari. (Coming to the app in the next update.)");
+      return;
+    }
     if (clip) { URL.revokeObjectURL(clip.url); setClip(null); }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -413,6 +428,15 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
                 <span className={liked ? "text-pink-400" : "text-gray-600"}>{likeCount}</span>
               )}
             </button>
+            {isOwner && (
+              <button
+                onClick={() => setShowDelete(true)}
+                aria-label="Delete"
+                className="text-gray-600 hover:text-[var(--red)] transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
         {c.audio_url && (
