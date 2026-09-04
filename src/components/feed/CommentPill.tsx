@@ -1,14 +1,16 @@
 "use client";
+import { Keyboard } from "lucide-react";
 
-// Slim faux-input that opens the comment thread. Shared by trade + post cards.
+// Opens the comment thread + focuses the text box. Sits next to the Voice
+// button and matches its style.
 export default function CommentPill({ onOpen }: { onOpen: () => void }) {
   return (
     <button
       onClick={onOpen}
-      aria-label="Comment"
-      className="flex-1 min-w-0 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-[2px] text-center leading-none transition-colors hover:border-white/15 hover:bg-white/[0.06]"
+      aria-label="Write a comment"
+      className="shrink-0 flex items-center rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[3px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
     >
-      <span className="text-[12px] text-gray-500 transition-colors hover:text-gray-300">Comment</span>
+      <Keyboard className="w-4 h-4" />
     </button>
   );
 }
