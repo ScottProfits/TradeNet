@@ -296,7 +296,8 @@ function FeedPageInner() {
 
   function renderItem(item: FeedItem) {
     const key = item.repostId ?? item.id;
-    const repostedByMe = myReposts.has(`${item.type}:${item.id}`);
+    const repostedByMe =
+      (item as { reposted_by_me?: boolean }).reposted_by_me || myReposts.has(`${item.type}:${item.id}`);
     if (item.type === "trade") {
       const { trade, trader } = realTradeToCardProps(item);
       return (

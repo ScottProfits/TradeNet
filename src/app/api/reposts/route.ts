@@ -70,6 +70,20 @@ export async function GET(req: NextRequest) {
     likedPostIds = new Set((pl ?? []).map((l) => l.post_id));
   }
 
+  // Which of these targets the viewer has themselves reposted.
+  const myTradeReposts = new Set<string>();
+  const myPostReposts = new Set<string>();
+  if (userId) {
+    const { data: mine } = await supabaseAdmin
+      .from("reposts")
+      .select("target_type, target_id")
+      .eq("user_id", userId);
+    for (const m of mine ?? []) {
+      if (m.target_type === "trade") myTradeReposts.add(m.target_id);
+      else myPostReposts.add(m.target_id);
+    }
+  }
+
   const reposterMap = Object.fromEntries((reposters ?? []).map((p) => [p.id, p]));
   const tradeMap = Object.fromEntries((trades ?? []).map((t) => [t.id, t]));
   const postMap = Object.fromEntries((posts ?? []).map((p) => [p.id, p]));
@@ -88,6 +102,7 @@ export async function GET(req: NextRequest) {
           repostedAt: r.created_at,
           ...t,
           liked_by_me: likedTradeIds.has(t.id),
+          reposted_by_me: myTradeReposts.has(t.id),
         };
       }
       const p = postMap[r.target_id];
@@ -100,6 +115,7 @@ export async function GET(req: NextRequest) {
         ...p,
         profiles: postAuthorMap[p.user_id] ?? null,
         liked_by_me: likedPostIds.has(p.id),
+        reposted_by_me: myPostReposts.has(p.id),
       };
     })
     .filter(Boolean);

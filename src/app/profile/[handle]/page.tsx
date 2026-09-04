@@ -772,7 +772,8 @@ function ProfilePageInner() {
           })
           .map((item) => {
             if (item.kind === "repost") {
-              const mine = myReposts.has(`${item.type}:${item.id}`);
+              const mine =
+                (item as { reposted_by_me?: boolean }).reposted_by_me || myReposts.has(`${item.type}:${item.id}`);
               if (item.type === "post") {
                 return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} repostedByMe={mine} />;
               }
