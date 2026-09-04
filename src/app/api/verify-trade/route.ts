@@ -1,5 +1,4 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { renewTradovateToken, fetchTradovateFillsWithSession } from "@/lib/tradovate/client";
 import { NextRequest } from "next/server";
@@ -14,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!tradeId) return new Response("Missing tradeId", { status: 400 });
 
   const [{ data: trade }, { data: conn }] = await Promise.all([
-    supabase.from("trades").select("id, user_id, ticker, source, created_at, trade_date").eq("id", tradeId).single(),
+    supabaseAdmin.from("trades").select("id, user_id, ticker, source, created_at").eq("id", tradeId).maybeSingle(),
     supabaseAdmin
       .from("broker_connections")
       .select("access_token, token_expiry, account_id, needs_reconnect")
@@ -26,8 +25,8 @@ export async function POST(req: NextRequest) {
   if (!trade) return new Response("Trade not found", { status: 404 });
   if (trade.user_id !== userId) return new Response("Forbidden", { status: 403 });
 
-  // Trades pulled straight from Tradovate are already broker-confirmed.
-  if (trade.source === "tradovate") {
+  // Trades pulled straight from a connected broker are already confirmed.
+  if (trade.source === "tradovate" || trade.source === "rithmic") {
     await supabaseAdmin.from("trades").update({ verified_pnl: true }).eq("id", tradeId);
     return Response.json({ verified: true });
   }
@@ -52,7 +51,7 @@ export async function POST(req: NextRequest) {
     const fills = await fetchTradovateFillsWithSession(token, conn.account_id, "live");
 
     const tickerSymbol = trade.ticker.replace("$", "").toUpperCase();
-    const tradeDay = (trade.trade_date ?? trade.created_at ?? "").slice(0, 10);
+    const tradeDay = (trade.created_at ?? "").slice(0, 10);
     const match = fills.find((f) => {
       const symMatch = f.symbol?.toUpperCase().startsWith(tickerSymbol);
       const dayMatch = !tradeDay || f.fillDate === tradeDay;
