@@ -4,6 +4,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
+async function bumpCount(column: "followers_count" | "following_count", profileId: string, delta: number) {
+  const { data } = await supabaseAdmin.from("profiles").select(column).eq("id", profileId).single();
+  const current = (data as Record<string, number> | null)?.[column] ?? 0;
+  await supabaseAdmin
+    .from("profiles")
+    .update({ [column]: Math.max(0, current + delta) })
+    .eq("id", profileId);
+}
+
 async function ensureProfile(userId: string) {
   const { data } = await supabase.from("profiles").select("id").eq("id", userId).single();
   if (data) return;
@@ -30,13 +39,20 @@ export async function POST(req: NextRequest) {
 
   if (!target) return new Response("User not found", { status: 404 });
 
-  const { error } = await supabaseAdmin.from("follows").insert({
-    follower_id: userId,
-    following_id: target.id,
-  });
+  const { data: inserted, error } = await supabaseAdmin
+    .from("follows")
+    .insert({ follower_id: userId, following_id: target.id })
+    .select("follower_id")
+    .maybeSingle();
 
   if (error && error.code !== "23505") {
     return new Response(error.message, { status: 500 });
+  }
+
+  // Keep the denormalized counters in sync — only on a genuinely new row.
+  if (inserted) {
+    await bumpCount("followers_count", target.id, 1);
+    await bumpCount("following_count", userId, 1);
   }
 
   if (target.id !== userId) {
@@ -68,10 +84,16 @@ export async function DELETE(req: NextRequest) {
 
   if (!target) return new Response("User not found", { status: 404 });
 
-  await supabaseAdmin.from("follows").delete().match({
-    follower_id: userId,
-    following_id: target.id,
-  });
+  const { data: removed } = await supabaseAdmin
+    .from("follows")
+    .delete()
+    .match({ follower_id: userId, following_id: target.id })
+    .select("follower_id");
+
+  if (removed && removed.length) {
+    await bumpCount("followers_count", target.id, -1);
+    await bumpCount("following_count", userId, -1);
+  }
 
   return new Response("OK", { status: 200 });
 }
