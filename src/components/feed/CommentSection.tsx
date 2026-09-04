@@ -58,8 +58,10 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   // ---- voice comment recorder ----
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [voiceMode, setVoiceMode] = useState(false);
   const [clip, setClip] = useState<{ blob: Blob; url: string; seconds: number } | null>(null);
   const [recError, setRecError] = useState("");
+  const MAX_SECONDS = 25;
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const startedAtRef = useRef(0);
@@ -84,7 +86,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
         stream.getTracks().forEach((t) => t.stop());
         if (tickRef.current) clearInterval(tickRef.current);
         setRecording(false);
-        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const seconds = Math.min(MAX_SECONDS, Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)));
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
         setClip({ blob, url: URL.createObjectURL(blob), seconds });
       };
@@ -96,8 +98,8 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
       tickRef.current = setInterval(() => {
         const s = Math.round((Date.now() - startedAtRef.current) / 1000);
         setElapsed(s);
-        if (s >= 120) stopRecording(); // 2-min cap
-      }, 250);
+        if (s >= MAX_SECONDS) stopRecording();
+      }, 200);
     } catch {
       setRecError("Mic access denied.");
     }
@@ -109,8 +111,15 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     setElapsed(0);
   }, [clip]);
 
+  const exitVoice = useCallback(() => {
+    stopRecording();
+    discardClip();
+    setVoiceMode(false);
+  }, [stopRecording, discardClip]);
+
+  // "Voice" opens the recorder in an idle state — the user hits record.
   useEffect(() => {
-    if (autoRecord) void startRecording();
+    if (autoRecord) setVoiceMode(true);
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
       if (mediaRef.current?.state === "recording") mediaRef.current.stop();
@@ -186,7 +195,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId, replyToCommentId, audioUrl, audioDuration }),
+      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: audioUrl ? "" : text, parentId, replyToCommentId, audioUrl, audioDuration }),
     });
     if (res.ok) {
       const comment = await res.json();
@@ -196,6 +205,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
       setText("");
       setReplyTo(null);
       discardClip();
+      setVoiceMode(false);
       onCommentAdded?.();
     }
     setPosting(false);
@@ -278,21 +288,17 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
           )}
           {recError && <p className="text-xs text-[var(--red)]">{recError}</p>}
           {recording ? (
-            <div className="flex items-center gap-2 bg-[var(--bg)] border border-[var(--red)]/40 rounded-xl px-3 py-2">
-              <span className="w-2 h-2 rounded-full bg-[var(--red)] animate-pulse" />
-              <span className="text-sm text-white tabular-nums">{fmtClock(elapsed)}</span>
-              <span className="text-xs text-gray-500">Recording…</span>
-              <button
-                onClick={() => { stopRecording(); discardClip(); }}
-                type="button"
-                className="ml-auto text-xs text-gray-500 hover:text-white"
-              >
-                Cancel
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-full border border-[var(--red)]/40 bg-[var(--red)]/5 px-3 py-1.5">
+                <Mic className="w-3.5 h-3.5 text-[var(--red)] animate-pulse" />
+                <span className="text-[13px] text-white tabular-nums">{fmtClock(elapsed)}</span>
+                <span className="text-[11px] text-gray-600">/ 0:25</span>
+              </div>
+              <button type="button" onClick={exitVoice} className="text-xs text-gray-500 hover:text-white">Cancel</button>
               <button
                 onClick={stopRecording}
                 type="button"
-                className="p-1.5 bg-[var(--red)] text-white rounded-lg"
+                className="ml-auto shrink-0 w-9 h-9 rounded-full bg-[var(--red)] text-white flex items-center justify-center"
                 aria-label="Stop recording"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
@@ -313,6 +319,21 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
                 <Send className="w-4 h-4" />
               </button>
             </div>
+          ) : voiceMode ? (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={startRecording}
+                className="shrink-0 w-10 h-10 rounded-full bg-[var(--red)] text-white flex items-center justify-center active:scale-95 transition-transform"
+                aria-label="Start recording"
+              >
+                <Mic className="w-5 h-5" />
+              </button>
+              <span className="text-[13px] text-gray-500">
+                Tap to record {replyTo ? `a reply to @${replyTo.handle}` : "a voice comment"} · 25s max
+              </span>
+              <button type="button" onClick={exitVoice} className="ml-auto text-xs text-gray-500 hover:text-white">Cancel</button>
+            </div>
           ) : (
             <form onSubmit={handlePost} className="flex gap-2">
               <input
@@ -323,16 +344,14 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
                 maxLength={280}
                 className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
               />
-              {!text.trim() && (
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="p-2 bg-[var(--bg)] border border-[var(--border)] text-gray-400 rounded-xl hover:text-white hover:border-[var(--green)] transition-colors"
-                  aria-label="Record a voice comment"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setVoiceMode(true)}
+                className="p-2 bg-[var(--bg)] border border-[var(--border)] text-gray-400 rounded-xl hover:text-white hover:border-[var(--green)] transition-colors"
+                aria-label={replyTo ? "Voice reply" : "Record a voice comment"}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
               <button
                 type="submit"
                 disabled={posting || !text.trim()}
