@@ -174,11 +174,18 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   useEffect(() => {
     if (!focusText) return;
     exitVoice();
-    const t = setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 80);
-    return () => clearTimeout(t);
+    // Try a few times — the composer input may not be in the DOM on the very
+    // first frame, and iOS is fussy about programmatic focus timing.
+    let tries = 0;
+    const id = setInterval(() => {
+      const el = inputRef.current;
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ block: "center" });
+      }
+      if (el || ++tries > 6) clearInterval(id);
+    }, 40);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusText]);
 

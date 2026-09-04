@@ -46,8 +46,16 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
+  const [openMode, setOpenMode] = useState<"text" | "voice" | null>(null);
   const [focusNonce, setFocusNonce] = useState(0);
   const [voiceNonce, setVoiceNonce] = useState(0);
+  const toggleComments = (mode: "text" | "voice") => {
+    if (showComments && openMode === mode) { setShowComments(false); setOpenMode(null); return; }
+    setShowComments(true);
+    setOpenMode(mode);
+    if (mode === "text") setFocusNonce((n) => n + 1);
+    else setVoiceNonce((n) => n + 1);
+  };
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -205,17 +213,22 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {likeCount}
         </button>
         <button
-          onClick={() => { setShowComments((s) => !s); setFocusNonce((n) => n + 1); }}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-400 transition-colors"
+          onClick={() => toggleComments("text")}
+          className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-blue-400")}
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <CommentPill onOpen={() => { setShowComments(true); setFocusNonce((n) => n + 1); }} />
+        <CommentPill onOpen={() => toggleComments("text")} active={showComments && openMode === "text"} />
         <button
-          onClick={() => { setShowComments(true); setVoiceNonce((n) => n + 1); }}
-          className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[2px] text-[12px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
+          onClick={() => toggleComments("voice")}
+          className={clsx(
+            "shrink-0 flex items-center gap-1 rounded-md border px-2 py-[2px] text-[12px] transition-colors",
+            showComments && openMode === "voice"
+              ? "border-[var(--green)]/50 text-[var(--green)] bg-[var(--green)]/10"
+              : "border-white/[0.08] bg-white/[0.03] text-gray-500 hover:text-gray-300 hover:border-white/15"
+          )}
           aria-label="Voice comment"
         >
           <Mic className="w-3.5 h-3.5" /> Voice
