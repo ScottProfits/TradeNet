@@ -26,6 +26,7 @@ export default function VoiceRecorder({
   label?: string;
 }) {
   const [recording, setRecording] = useState(false);
+  const [armed, setArmed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
   const mediaRef = useRef<MediaRecorder | null>(null);
@@ -86,6 +87,7 @@ export default function VoiceRecorder({
     if (clip) URL.revokeObjectURL(clip.url);
     onChange(null);
     setElapsed(0);
+    setArmed(false);
     releaseStream();
   }, [clip, onChange, stop, releaseStream]);
 
@@ -125,10 +127,23 @@ export default function VoiceRecorder({
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+      ) : armed ? (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={start}
+            className="shrink-0 w-10 h-10 rounded-full bg-[var(--red)] text-white flex items-center justify-center active:scale-95 transition-transform"
+            aria-label="Start recording"
+          >
+            <Mic className="w-5 h-5" />
+          </button>
+          <span className="text-[13px] text-gray-500">Tap to record · 25s max</span>
+          <button type="button" onClick={() => setArmed(false)} className="ml-auto text-xs text-gray-500 hover:text-white">Cancel</button>
+        </div>
       ) : (
         <button
           type="button"
-          onClick={start}
+          onClick={() => { setError(""); setArmed(true); }}
           className="flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[13px] text-gray-400 hover:text-white hover:border-[var(--green)]/40 transition-colors"
         >
           <Mic className="w-4 h-4" /> {label} <span className="text-gray-600">· 25s</span>

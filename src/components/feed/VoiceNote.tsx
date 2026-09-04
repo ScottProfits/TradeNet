@@ -85,6 +85,7 @@ export default function VoiceNote({ src, duration = 0 }: { src: string; duration
   return (
     <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.07] pl-1 pr-2.5 py-1 max-w-[210px]">
       <button
+        type="button"
         onClick={toggle}
         className="shrink-0 w-6 h-6 rounded-full bg-[var(--green)] text-black flex items-center justify-center"
         aria-label={playing ? "Pause" : "Play"}

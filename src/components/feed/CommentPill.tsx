@@ -6,7 +6,7 @@ export default function CommentPill({ onOpen }: { onOpen: () => void }) {
     <button
       onClick={onOpen}
       aria-label="Comment"
-      className="flex-1 min-w-0 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-[2px] text-left leading-none transition-colors hover:border-white/15 hover:bg-white/[0.06]"
+      className="flex-1 min-w-0 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-[2px] text-center leading-none transition-colors hover:border-white/15 hover:bg-white/[0.06]"
     >
       <span className="text-[12px] text-gray-500 transition-colors hover:text-gray-300">Comment</span>
     </button>
