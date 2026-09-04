@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 type TargetType = "trade" | "post";
@@ -51,7 +52,34 @@ export async function POST(req: NextRequest) {
     .select("target_id");
 
   if (error) return new Response(error.message, { status: 500 });
-  if (inserted && inserted.length) await bumpRepostCount(table, parsed.targetId, 1);
+
+  if (inserted && inserted.length) {
+    await bumpRepostCount(table, parsed.targetId, 1);
+
+    const { data: actor } = await supabaseAdmin
+      .from("profiles")
+      .select("handle")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: target.user_id,
+      type: "repost",
+      actor_id: userId,
+      ...(parsed.targetType === "trade"
+        ? { trade_id: parsed.targetId }
+        : { post_id: parsed.targetId }),
+    });
+
+    if (actor) {
+      void sendPushToUser(target.user_id, {
+        title: "🔁 New repost",
+        body: `@${actor.handle} reposted your ${parsed.targetType}`,
+        url: parsed.targetType === "trade" ? `/trade/${parsed.targetId}` : `/feed`,
+      });
+    }
+  }
+
   return Response.json({ reposted: true });
 }
 
