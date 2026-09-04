@@ -122,3 +122,28 @@ export async function POST(req: NextRequest) {
 
   return Response.json({ ...data, sender: senderProfile }, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const { messageId } = await req.json();
+  if (!messageId) return new Response("Missing messageId", { status: 400 });
+
+  // Only the sender can delete their own message, and it's removed for
+  // both sides of the conversation.
+  const { data: msg } = await supabaseAdmin
+    .from("messages")
+    .select("id, sender_id")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (!msg) return new Response("Not found", { status: 404 });
+  if (msg.sender_id !== userId) return new Response("Forbidden", { status: 403 });
+
+  await supabaseAdmin.from("message_likes").delete().eq("message_id", messageId);
+  const { error } = await supabaseAdmin.from("messages").delete().eq("id", messageId);
+  if (error) return new Response(error.message, { status: 500 });
+
+  return Response.json({ deleted: true });
+}

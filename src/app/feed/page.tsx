@@ -16,8 +16,21 @@ import Link from "next/link";
 import { Plus, Users, Hash } from "lucide-react";
 import { useNavVisibility } from "@/contexts/NavVisibilityContext";
 import { realTradeToCardProps, RealTrade, RealPost } from "@/lib/tradeCardProps";
+import type { Reposter } from "@/components/feed/Repost";
 
-type FeedItem = ({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost);
+type RepostMeta = { repostedBy?: Reposter; repostId?: string };
+type FeedItem = (({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost)) & RepostMeta;
+
+// A repost from /api/reposts carries the original trade/post fields plus a
+// reposter — surface it in the feed ordered by when it was reposted.
+function repostToFeedItem(r: {
+  type: "trade" | "post";
+  repostId: string;
+  repostedBy: Reposter;
+  repostedAt: string;
+} & Record<string, unknown>): FeedItem {
+  return { ...r, created_at: r.repostedAt } as unknown as FeedItem;
+}
 
 function isValidTab(t: string | null): t is "feed" | "video" | "explore" {
   return t === "feed" || t === "video" || t === "explore";
@@ -39,6 +52,16 @@ function FeedPageInner() {
   const [followingItems, setFollowingItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [myReposts, setMyReposts] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/repost?mine=1")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: { target_type: string; target_id: string }[]) => {
+        setMyReposts(new Set(rows.map((r) => `${r.target_type}:${r.target_id}`)));
+      })
+      .catch(() => {});
+  }, []);
 
   // Cursor pagination — each "page" is a real, small network fetch (max 15
   // trades + 15 posts) instead of slicing an already-fully-fetched array,
@@ -108,16 +131,19 @@ function FeedPageInner() {
       return;
     }
     try {
-      const [tradesRes, postsRes] = await Promise.all([
+      const [tradesRes, postsRes, repostsRes] = await Promise.all([
         fetch("/api/trades"),
         fetch("/api/posts"),
+        fetch("/api/reposts"),
       ]);
       const trades: RealTrade[] = tradesRes.ok ? await tradesRes.json() : [];
       const posts: RealPost[] = postsRes.ok ? await postsRes.json() : [];
+      const reposts: FeedItem[] = repostsRes.ok ? (await repostsRes.json()).map(repostToFeedItem) : [];
 
       const merged: FeedItem[] = [
         ...trades.map((t) => ({ ...t, type: "trade" as const })),
         ...posts.map((p) => ({ ...p, type: "post" as const })),
+        ...reposts,
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFeedItems(merged);
@@ -166,12 +192,17 @@ function FeedPageInner() {
 
   const loadFollowing = useCallback(async () => {
     try {
-      const res = await fetch("/api/following-feed");
+      const [res, repostsRes] = await Promise.all([
+        fetch("/api/following-feed"),
+        fetch("/api/reposts?following=1"),
+      ]);
       if (!res.ok) return;
       const { trades, posts } = await res.json();
+      const reposts: FeedItem[] = repostsRes.ok ? (await repostsRes.json()).map(repostToFeedItem) : [];
       const merged: FeedItem[] = [
         ...trades.map((t: RealTrade) => ({ ...t, type: "trade" as const })),
         ...posts.map((p: RealPost) => ({ ...p, type: "post" as const })),
+        ...reposts,
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setFollowingItems(merged);
       followingTradesCursorRef.current = oldestOf(trades);
@@ -260,6 +291,55 @@ function FeedPageInner() {
     setDeletedIds((s) => new Set(s).add(id));
   }
 
+  function renderItem(item: FeedItem) {
+    const key = item.repostId ?? item.id;
+    const repostedByMe = myReposts.has(`${item.type}:${item.id}`);
+    if (item.type === "trade") {
+      const { trade, trader } = realTradeToCardProps(item);
+      return (
+        <TradeCard
+          key={key}
+          trade={trade}
+          trader={trader}
+          imageUrl={item.image_url ?? undefined}
+          avatarUrl={item.profiles?.avatar_url ?? undefined}
+          strategy={item.strategy ?? undefined}
+          likedByMe={item.liked_by_me}
+          verifiedPnl={item.verified_pnl}
+          journalNote={item.journal_note ?? undefined}
+          entry={item.entry}
+          exit={item.exit}
+          rawShares={item.shares ?? 0}
+          onDelete={handleDelete}
+          repostedBy={item.repostedBy ?? null}
+          repostedByMe={repostedByMe}
+        />
+      );
+    }
+    return (
+      <PostCard
+        key={key}
+        post={item}
+        onDelete={handleDelete}
+        repostedBy={item.repostedBy ?? null}
+        repostedByMe={repostedByMe}
+      />
+    );
+  }
+
+  const followingPill = (
+    <button
+      onClick={() => setFollowingOnly((v) => !v)}
+      className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-colors"
+      style={followingOnly
+        ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
+        : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
+    >
+      <Users className="w-2.5 h-2.5" />
+      Following only
+    </button>
+  );
+
   const channelsPill = (
     <Link
       href="/rooms"
@@ -334,24 +414,18 @@ function FeedPageInner() {
 
         {tab === "video" && (
           <>
-            <div className="flex justify-end mb-2">{channelsPill}</div>
-            <VideoTab />
+            <div className="flex items-center justify-between mb-2">
+              {followingPill}
+              {channelsPill}
+            </div>
+            <VideoTab followingOnly={followingOnly} />
           </>
         )}
 
         {tab === "feed" && (
           <>
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setFollowingOnly((v) => !v)}
-                className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-colors"
-                style={followingOnly
-                  ? { background: "rgba(0,200,150,0.15)", borderColor: "rgba(0,200,150,0.4)", color: "#00C896" }
-                  : { background: "transparent", borderColor: "var(--border)", color: "rgba(255,255,255,0.5)" }}
-              >
-                <Users className="w-2.5 h-2.5" />
-                Following only
-              </button>
+              {followingPill}
               {channelsPill}
             </div>
 
@@ -359,13 +433,7 @@ function FeedPageInner() {
               followingItems.length === 0
                 ? <div className="glass-card rounded-2xl p-8 text-center"><p className="text-gray-500 text-sm">Follow some traders to see their posts here.</p></div>
                 : <>
-                    {followingItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                      if (item.type === "trade") {
-                        const { trade, trader } = realTradeToCardProps(item);
-                        return <TradeCard key={item.id} trade={trade} trader={trader} imageUrl={item.image_url ?? undefined} avatarUrl={item.profiles?.avatar_url ?? undefined} strategy={item.strategy ?? undefined} likedByMe={item.liked_by_me} verifiedPnl={item.verified_pnl} journalNote={item.journal_note ?? undefined} entry={item.entry} exit={item.exit} rawShares={item.shares ?? 0} onDelete={handleDelete} />;
-                      }
-                      return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-                    })}
+                    {followingItems.filter((item) => !deletedIds.has(item.id)).map(renderItem)}
                     <div ref={sentinelRef} />
                   </>
             ) : feedLoading ? (
@@ -376,29 +444,7 @@ function FeedPageInner() {
               </>
             ) : (
               <>
-                {feedItems.filter((item) => !deletedIds.has(item.id)).map((item) => {
-                  if (item.type === "trade") {
-                    const { trade, trader } = realTradeToCardProps(item);
-                    return (
-                      <TradeCard
-                        key={item.id}
-                        trade={trade}
-                        trader={trader}
-                        imageUrl={item.image_url ?? undefined}
-                        avatarUrl={item.profiles?.avatar_url ?? undefined}
-                        strategy={item.strategy ?? undefined}
-                        likedByMe={item.liked_by_me}
-                        verifiedPnl={item.verified_pnl}
-                        journalNote={item.journal_note ?? undefined}
-                        entry={item.entry}
-                        exit={item.exit}
-                        rawShares={item.shares ?? 0}
-                        onDelete={handleDelete}
-                      />
-                    );
-                  }
-                  return <PostCard key={item.id} post={item} onDelete={handleDelete} />;
-                })}
+                {feedItems.filter((item) => !deletedIds.has(item.id)).map(renderItem)}
                 <div ref={sentinelRef} />
               </>
             )}

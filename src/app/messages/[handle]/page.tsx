@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Send, Heart, ImagePlus, Video, X } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
+import DeleteSheet from "@/components/ui/DeleteSheet";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -59,6 +60,27 @@ function ChatPageInner() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const stickToBottom = useRef(true);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function startPress(id: string, mine: boolean) {
+    if (!mine || isDemo) return;
+    cancelPress();
+    pressTimer.current = setTimeout(() => setConfirmDelete(id), 500);
+  }
+  function cancelPress() {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+  }
+  async function deleteMessage(id: string) {
+    setConfirmDelete(null);
+    setMessages((msgs) => msgs.filter((x) => x.id !== id));
+    if (lastMessageIdRef.current === id) lastMessageIdRef.current = null;
+    await fetch("/api/messages", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: id }),
+    }).catch(() => {});
+  }
 
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -245,6 +267,11 @@ function ChatPageInner() {
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               <div
                 className="group relative max-w-[75%] rounded-2xl px-4 py-2.5 transition-transform active:scale-[0.98]"
+                onPointerDown={() => startPress(m.id, mine)}
+                onPointerUp={cancelPress}
+                onPointerLeave={cancelPress}
+                onPointerCancel={cancelPress}
+                onContextMenu={(e) => { if (mine && !isDemo) e.preventDefault(); }}
                 style={
                   mine
                     ? {
@@ -300,6 +327,14 @@ function ChatPageInner() {
         })}
         <div ref={bottomRef} />
       </div>
+
+      {confirmDelete && (
+        <DeleteSheet
+          label="message"
+          onConfirm={() => deleteMessage(confirmDelete)}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
 
       {/* Input */}
       <div className="glass-card rounded-b-2xl px-4 py-3 flex-shrink-0 space-y-2">

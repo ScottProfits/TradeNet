@@ -10,7 +10,8 @@ import JournalSection from "@/components/profile/JournalSection";
 import { useRouter } from "next/navigation";
 import TradeCard from "@/components/feed/TradeCard";
 import PostCard from "@/components/feed/PostCard";
-import { RealPost } from "@/lib/tradeCardProps";
+import { RealPost, realTradeToCardProps, type RealTrade } from "@/lib/tradeCardProps";
+import type { Reposter } from "@/components/feed/Repost";
 import { Trade as TradeCardTrade, Trader } from "@/types";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -164,6 +165,10 @@ function ProfilePageInner() {
   const [pinnedTradeId, setPinnedTradeId] = useState<string | null>(isDemo ? demoProfileData.profile.pinned_trade_id : null);
   const [tradeVisibility, setTradeVisibility] = useState<Record<string, boolean>>({});
   const [tradeHistoryTab, setTradeHistoryTab] = useState<"history" | "videos">("history");
+  type RepostItem =
+    | ({ type: "trade"; repostId: string; repostedBy: Reposter; repostedAt: string } & RealTrade)
+    | ({ type: "post"; repostId: string; repostedBy: Reposter; repostedAt: string } & RealPost);
+  const [reposts, setReposts] = useState<RepostItem[]>([]);
   // Cursor pagination for trade/post history — same reasoning as the feed
   // (src/app/feed/page.tsx): keep each page small so the DOM/image count
   // doesn't overwhelm WebKit's tile compositor. Trades and posts get their
@@ -215,6 +220,14 @@ function ProfilePageInner() {
         historyTradesHasMoreRef.current = d.trades.length === HISTORY_PAGE_SIZE;
         historyPostsHasMoreRef.current = d.posts.length === HISTORY_PAGE_SIZE;
       });
+  }, [handle, isDemo]);
+
+  useEffect(() => {
+    if (isDemo) return;
+    fetch(`/api/reposts?handle=${handle}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: RepostItem[]) => setReposts(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, [handle, isDemo]);
 
   const loadMoreHistory = useCallback(async () => {
@@ -807,6 +820,35 @@ function ProfilePageInner() {
           );
         })()}
       </div>
+
+      {/* Reposts — shown to everyone on the history tab */}
+      {tradeHistoryTab === "history" && reposts.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-white">Reposts ({reposts.length})</h2>
+          {reposts.map((item) => {
+            if (item.type === "post") {
+              return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} />;
+            }
+            const { trade, trader } = realTradeToCardProps(item);
+            return (
+              <TradeCard
+                key={item.repostId}
+                trade={trade}
+                trader={trader}
+                imageUrl={item.image_url ?? undefined}
+                avatarUrl={item.profiles?.avatar_url ?? undefined}
+                strategy={item.strategy ?? undefined}
+                likedByMe={item.liked_by_me}
+                verifiedPnl={item.verified_pnl}
+                entry={item.entry}
+                exit={item.exit}
+                rawShares={item.shares ?? 0}
+                repostedBy={item.repostedBy}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Liked posts — only visible to profile owner */}
       {isOwnProfile && (

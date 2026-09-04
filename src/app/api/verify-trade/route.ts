@@ -1,7 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { renewTradovateToken, fetchTradovateFillsWithSession } from "@/lib/tradovate/client";
 import { NextRequest } from "next/server";
+
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -10,48 +13,60 @@ export async function POST(req: NextRequest) {
   const { tradeId } = await req.json();
   if (!tradeId) return new Response("Missing tradeId", { status: 400 });
 
-  // Get trade + user's Alpaca keys
-  const [{ data: trade }, { data: profile }] = await Promise.all([
-    supabase.from("trades").select("id, user_id, ticker, pnl, entry, exit, created_at").eq("id", tradeId).single(),
-    supabaseAdmin.from("profiles").select("alpaca_key, alpaca_secret").eq("id", userId).single(),
+  const [{ data: trade }, { data: conn }] = await Promise.all([
+    supabase.from("trades").select("id, user_id, ticker, source, created_at, trade_date").eq("id", tradeId).single(),
+    supabaseAdmin
+      .from("broker_connections")
+      .select("access_token, token_expiry, account_id, needs_reconnect")
+      .eq("user_id", userId)
+      .eq("broker", "tradovate")
+      .maybeSingle(),
   ]);
 
   if (!trade) return new Response("Trade not found", { status: 404 });
   if (trade.user_id !== userId) return new Response("Forbidden", { status: 403 });
-  if (!profile?.alpaca_key || !profile?.alpaca_secret) return new Response("No Alpaca keys connected", { status: 400 });
 
-  // Query Alpaca for closed positions / orders around trade date
-  const tradeDate = new Date(trade.created_at);
-  const after = new Date(tradeDate); after.setDate(after.getDate() - 1);
-  const until = new Date(tradeDate); until.setDate(until.getDate() + 1);
+  // Trades pulled straight from Tradovate are already broker-confirmed.
+  if (trade.source === "tradovate") {
+    await supabaseAdmin.from("trades").update({ verified_pnl: true }).eq("id", tradeId);
+    return Response.json({ verified: true });
+  }
+
+  if (!conn || !conn.access_token || !conn.account_id || conn.needs_reconnect) {
+    return new Response("No Tradovate account connected — connect Tradovate in Settings to verify trades.", { status: 400 });
+  }
 
   try {
-    const alpacaBase = "https://paper-api.alpaca.markets"; // works for both paper & live key lookup
-    const headers = {
-      "APCA-API-KEY-ID": profile.alpaca_key,
-      "APCA-API-SECRET-KEY": profile.alpaca_secret,
-    };
+    let token = conn.access_token as string;
+    const expiresAt = conn.token_expiry ? new Date(conn.token_expiry).getTime() : 0;
+    if (expiresAt < Date.now() + 60 * 60 * 1000) {
+      const renewed = await renewTradovateToken(token, "live");
+      token = renewed.accessToken;
+      await supabaseAdmin
+        .from("broker_connections")
+        .update({ access_token: renewed.accessToken, token_expiry: renewed.expirationTime })
+        .eq("user_id", userId)
+        .eq("broker", "tradovate");
+    }
 
-    const res = await fetch(
-      `${alpacaBase}/v2/account/activities?activity_type=FILL&after=${after.toISOString()}&until=${until.toISOString()}`,
-      { headers }
-    );
+    const fills = await fetchTradovateFillsWithSession(token, conn.account_id, "live");
 
-    if (!res.ok) return new Response("Alpaca API error — check your keys", { status: 400 });
-
-    const activities: { symbol: string; price: string; qty: string; side: string }[] = await res.json();
-
-    // Look for a fill matching the ticker
     const tickerSymbol = trade.ticker.replace("$", "").toUpperCase();
-    const match = activities.find((a) => a.symbol?.toUpperCase() === tickerSymbol);
+    const tradeDay = (trade.trade_date ?? trade.created_at ?? "").slice(0, 10);
+    const match = fills.find((f) => {
+      const symMatch = f.symbol?.toUpperCase().startsWith(tickerSymbol);
+      const dayMatch = !tradeDay || f.fillDate === tradeDay;
+      return symMatch && dayMatch;
+    });
 
-    if (!match) return new Response("No matching trade found in Alpaca for this ticker on that date", { status: 404 });
+    if (!match) {
+      return new Response("No matching fill found in Tradovate for this ticker on that date.", { status: 404 });
+    }
 
-    // Mark trade as verified
     await supabaseAdmin.from("trades").update({ verified_pnl: true }).eq("id", tradeId);
-
     return Response.json({ verified: true });
-  } catch {
-    return new Response("Failed to contact Alpaca", { status: 500 });
+  } catch (err) {
+    console.error("Tradovate verify failed:", err);
+    return new Response("Couldn't reach Tradovate — try reconnecting in Settings.", { status: 502 });
   }
 }

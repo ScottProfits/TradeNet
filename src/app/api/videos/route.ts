@@ -1,27 +1,42 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { NextRequest } from "next/server";
 
 function isVideo(url: string | null): boolean {
   return !!url && /\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(url);
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
+  const followingOnly = req.nextUrl.searchParams.get("following") === "1";
 
-  const [{ data: trades }, { data: posts }] = await Promise.all([
-    supabase
-      .from("trades")
-      .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
-      .not("image_url", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("posts")
-      .select("*")
-      .not("image_url", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(100),
-  ]);
+  // "Following only" scopes videos to accounts the viewer follows; the
+  // default (off) shows everyone so people can discover new traders.
+  let followingIds: string[] | null = null;
+  if (followingOnly && userId) {
+    const { data: follows } = await supabase.from("follows").select("following_id").eq("follower_id", userId);
+    followingIds = (follows ?? []).map((f) => f.following_id);
+    if (followingIds.length === 0) return Response.json([]);
+  }
+
+  let tradesQuery = supabase
+    .from("trades")
+    .select(`*, profiles!trades_user_id_fkey (id, handle, avatar_url, brokerage, verified)`)
+    .not("image_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  let postsQuery = supabase
+    .from("posts")
+    .select("*")
+    .not("image_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (followingIds) {
+    tradesQuery = tradesQuery.in("user_id", followingIds);
+    postsQuery = postsQuery.in("user_id", followingIds);
+  }
+
+  const [{ data: trades }, { data: posts }] = await Promise.all([tradesQuery, postsQuery]);
 
   const videoTrades = (trades ?? []).filter((t) => isVideo(t.image_url));
   const videoPosts = (posts ?? []).filter((p) => isVideo(p.image_url));

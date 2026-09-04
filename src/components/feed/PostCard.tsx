@@ -15,6 +15,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 import { clsx } from "clsx";
 import { timeAgo } from "@/lib/timeAgo";
 import { getLikeOverride, setLikeOverride, clearLikeOverride } from "@/lib/likeCache";
+import { RepostBanner, RepostButton, type Reposter } from "@/components/feed/Repost";
 
 interface RealPost {
   id: string;
@@ -34,7 +35,7 @@ interface RealPost {
   } | null;
 }
 
-export default function PostCard({ post, onDelete, autoPlayVideo = false }: { post: RealPost; onDelete?: (id: string) => void; autoPlayVideo?: boolean }) {
+export default function PostCard({ post, onDelete, autoPlayVideo = false, repostedBy, repostedByMe }: { post: RealPost; onDelete?: (id: string) => void; autoPlayVideo?: boolean; repostedBy?: Reposter | null; repostedByMe?: boolean }) {
   const { isSignedIn, userId } = useAuth();
   const [liked, setLiked] = useState(getLikeOverride(post.id) ?? post.liked_by_me ?? false);
   const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
@@ -106,6 +107,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
     <div
       className="glass-card rounded-2xl p-3 sm:p-4 space-y-3"
     >
+      {repostedBy && <RepostBanner by={repostedBy} />}
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href={`/profile/${profile?.handle}`} className="shrink-0">
@@ -200,7 +202,8 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false }: { po
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
-        <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} ownPost={isOwner} />
+        <button onClick={handleShare} className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}
         </button>

@@ -87,9 +87,9 @@ function EarningsInner() {
 
         {status && !status.connected && (
           <>
-            <p className="text-sm text-white font-semibold">Get paid for your rooms</p>
+            <p className="text-sm text-white font-semibold">Get paid for your channels</p>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Connect a Stripe account to charge a monthly membership for rooms you own. Takes about 2 minutes — you&apos;ll
+              Connect a Stripe account to charge a monthly membership for channels you own. Takes about 2 minutes — you&apos;ll
               need your bank details and ID. Ryzr keeps a 4.5% platform fee.
             </p>
             <button
@@ -104,7 +104,7 @@ function EarningsInner() {
       </div>
 
       <p className="text-xs text-gray-600 leading-relaxed">
-        Memberships are sold only on the web. The iOS app shows room content to existing members but doesn&apos;t sell
+        Memberships are sold only on the web. The iOS app shows channel content to existing members but doesn&apos;t sell
         subscriptions.
       </p>
     </div>

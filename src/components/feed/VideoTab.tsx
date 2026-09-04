@@ -9,7 +9,7 @@ import { demoVideoItems } from "@/lib/demoData";
 
 type VideoItem = ({ type: "trade" } & RealTrade) | ({ type: "post" } & RealPost);
 
-export default function VideoTab() {
+export default function VideoTab({ followingOnly = false }: { followingOnly?: boolean }) {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
   const [items, setItems] = useState<VideoItem[]>(isDemo ? (demoVideoItems as VideoItem[]) : []);
@@ -20,12 +20,12 @@ export default function VideoTab() {
     if (isDemo) { setItems(demoVideoItems as VideoItem[]); setLoading(false); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/videos");
+      const res = await fetch(followingOnly ? "/api/videos?following=1" : "/api/videos");
       if (res.ok) setItems(await res.json());
     } finally {
       setLoading(false);
     }
-  }, [isDemo]);
+  }, [isDemo, followingOnly]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -50,7 +50,11 @@ export default function VideoTab() {
       <div className="glass-card rounded-2xl p-8 text-center">
         <Video className="w-8 h-8 text-gray-600 mx-auto mb-3" />
         <p className="text-gray-400 font-medium">No videos yet</p>
-        <p className="text-gray-600 text-sm mt-1">Post a video talking through a trade, your stats, or a recap.</p>
+        <p className="text-gray-600 text-sm mt-1">
+          {followingOnly
+            ? "Nobody you follow has posted a video. Turn off “Following only” to discover other traders."
+            : "Post a video talking through a trade, your stats, or a recap."}
+        </p>
       </div>
     );
   }
