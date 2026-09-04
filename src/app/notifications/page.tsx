@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone, Repeat2 } from "lucide-react";
+import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone } from "lucide-react";
+import { RepostIcon } from "@/components/feed/Repost";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -32,7 +33,7 @@ function icon(type: string) {
   if (type === "explore") return <Star className="w-4 h-4 text-yellow-400 fill-current" />;
   if (type === "announcement") return <Megaphone className="w-4 h-4 text-[var(--green)]" />;
   if (type === "reply") return <CornerDownRight className="w-4 h-4 text-blue-400" />;
-  if (type === "repost") return <Repeat2 className="w-4 h-4 text-[var(--green)]" />;
+  if (type === "repost") return <RepostIcon className="w-4 h-4 text-[var(--green)]" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 

@@ -10,25 +10,22 @@ export interface Reposter {
   verified?: boolean;
 }
 
-// Ryzr's own repost mark — a rounded "relay" loop, distinct from the
-// generic retweet chevrons.
+// Ryzr's repost mark — a cyclone: a spiral winding outward into an
+// arrowhead. (Easy to revert to a plain retweet glyph if it doesn't land.)
 export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M7 7h8.5a3.5 3.5 0 0 1 3.5 3.5v1"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      />
-      <path d="M9.6 4.2 6.4 7l3.2 2.8" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
-      <path
-        d="M17 17H8.5A3.5 3.5 0 0 1 5 13.5v-1"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      />
-      <path d="M14.4 19.8 17.6 17l-3.2-2.8" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 12.4a0.6 0.6 0 1 1 0.7-0.6c0 1.6-1.5 2.9-3.2 2.9-2.2 0-4-1.9-4-4.2 0-2.9 2.4-5.2 5.3-5.2 3.6 0 6.5 3 6.5 6.7" />
+      <path d="M14.7 10.8 17.3 12l1-2.7" />
     </svg>
   );
 }
