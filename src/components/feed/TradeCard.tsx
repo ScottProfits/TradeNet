@@ -10,6 +10,7 @@ import ExpandableImage from "@/components/feed/ExpandableImage";
 import ExpandableVideo from "@/components/feed/ExpandableVideo";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import CommentSection from "@/components/feed/CommentSection";
+import CommentPill from "@/components/feed/CommentPill";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
 import EditTradeModal from "@/components/feed/EditTradeModal";
@@ -260,12 +261,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <button
-          onClick={() => setShowComments(true)}
-          className="flex-1 min-w-0 text-left text-sm text-gray-500 bg-white/[0.04] border border-[var(--border)] rounded-full px-3.5 py-1.5 hover:bg-white/[0.07] transition-colors"
-        >
-          Comment
-        </button>
+        <CommentPill onOpen={() => setShowComments(true)} />
         <div className="flex items-center gap-3 shrink-0">
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" />

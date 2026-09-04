@@ -9,6 +9,7 @@ import ExpandableVideo from "@/components/feed/ExpandableVideo";
 import ImageGallery from "@/components/feed/ImageGallery";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import CommentSection from "@/components/feed/CommentSection";
+import CommentPill from "@/components/feed/CommentPill";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import DotsMenu from "@/components/ui/DotsMenu";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -204,7 +205,8 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <button onClick={handleShare} className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        <CommentPill onOpen={() => setShowComments(true)} />
+        <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors shrink-0">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}
         </button>
