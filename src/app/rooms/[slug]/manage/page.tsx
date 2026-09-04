@@ -518,17 +518,30 @@ export default function ManageRoomPage() {
               <div className="flex gap-2 text-xs">
                 {isOwner && m.status === "active" && (
                   <button
-                    onClick={() => updateMember(m.user_id, { role: m.role === "mod" ? "member" : "mod" })}
+                    onClick={() => {
+                      if (m.role === "mod") { updateMember(m.user_id, { role: "member" }); return; }
+                      if (confirm(`Are you sure you want to make @${m.profile?.handle} a mod?`)) updateMember(m.user_id, { role: "mod" });
+                    }}
                     className="text-gray-400 hover:text-white"
                   >
                     {m.role === "mod" ? "Remove mod" : "Make mod"}
                   </button>
                 )}
                 {m.status !== "banned" && (
-                  <button onClick={() => removeMember(m.user_id)} className="text-gray-400 hover:text-white">Kick</button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to kick @${m.profile?.handle} from your channel?`)) removeMember(m.user_id);
+                    }}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    Kick
+                  </button>
                 )}
                 <button
-                  onClick={() => updateMember(m.user_id, { status: m.status === "banned" ? "active" : "banned" })}
+                  onClick={() => {
+                    if (m.status === "banned") { updateMember(m.user_id, { status: "active" }); return; }
+                    if (confirm(`Are you sure you want to ban @${m.profile?.handle} from your channel?`)) updateMember(m.user_id, { status: "banned" });
+                  }}
                   className={m.status === "banned" ? "text-gray-400 hover:text-white" : "text-red-400 hover:text-red-300"}
                 >
                   {m.status === "banned" ? "Unban" : "Ban"}
