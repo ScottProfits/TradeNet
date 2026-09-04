@@ -73,6 +73,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   const [recError, setRecError] = useState("");
   const MAX_SECONDS = 25;
   const mediaRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const startedAtRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -89,7 +90,12 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     }
     if (clip) { URL.revokeObjectURL(clip.url); setClip(null); }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Acquire the mic once and reuse the stream for every recording in this
+      // thread — re-requesting is what re-triggers the permission prompt.
+      if (!streamRef.current || !streamRef.current.getAudioTracks().some((t) => t.readyState === "live")) {
+        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      const stream = streamRef.current;
       const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find(
         (m) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)
       );
@@ -97,7 +103,6 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
       mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
         if (tickRef.current) clearInterval(tickRef.current);
         setRecording(false);
         const seconds = Math.min(MAX_SECONDS, Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)));
@@ -119,6 +124,11 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
     }
   }, [clip, stopRecording]);
 
+  const releaseStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
   const discardClip = useCallback(() => {
     if (clip) URL.revokeObjectURL(clip.url);
     setClip(null);
@@ -128,18 +138,25 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   const exitVoice = useCallback(() => {
     stopRecording();
     discardClip();
+    releaseStream();
     setVoiceMode(false);
-  }, [stopRecording, discardClip]);
+  }, [stopRecording, discardClip, releaseStream]);
 
   // "Voice" opens the recorder in an idle state — the user hits record.
   useEffect(() => {
     if (autoRecord) setVoiceMode(true);
+  }, [autoRecord]);
+
+  // Release the mic only when the thread unmounts.
+  useEffect(() => {
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
       if (mediaRef.current?.state === "recording") mediaRef.current.stop();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRecord]);
+  }, []);
 
   const entityId = tradeId ?? postId ?? "";
   const paramKey = tradeId ? "tradeId" : "postId";
@@ -219,6 +236,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
       setText("");
       setReplyTo(null);
       discardClip();
+      releaseStream();
       setVoiceMode(false);
       onCommentAdded?.();
     }
