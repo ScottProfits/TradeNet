@@ -1,5 +1,5 @@
 "use client";
-import { Heart, Share2, MessageCircle, Check, X } from "lucide-react";
+import { Heart, Share2, MessageCircle, Check, X, Mic } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
@@ -44,6 +44,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
   const [commentFocus, setCommentFocus] = useState(false);
+  const [voiceStart, setVoiceStart] = useState(false);
   const [shared, setShared] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -190,7 +191,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
       })()}
 
       {/* Actions */}
-      <div className="flex items-center gap-4 pt-1">
+      <div className="flex items-center gap-2.5 pt-1">
         <button
           onClick={handleLike}
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", liked ? "text-pink-400" : "text-gray-500 hover:text-pink-400")}
@@ -199,14 +200,21 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           {likeCount}
         </button>
         <button
-          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); }}
+          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); setVoiceStart(false); }}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-400 transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
-        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); }} />
+        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); setVoiceStart(false); }} />
+        <button
+          onClick={() => { setShowComments(true); setCommentFocus(false); setVoiceStart(true); }}
+          className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[2px] text-[12px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
+          aria-label="Voice comment"
+        >
+          <Mic className="w-3.5 h-3.5" /> Voice
+        </button>
         <button onClick={handleShare} className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors shrink-0">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}
@@ -218,6 +226,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
         <CommentSection
           postId={post.id}
           autoFocus={commentFocus}
+          autoRecord={voiceStart}
           onCommentAdded={() => setCommentCount((c) => c + 1)}
           onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
           onCountLoaded={(n) => setCommentCount(n)}

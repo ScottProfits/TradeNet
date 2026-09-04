@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MessageCircle, Share2, ShieldCheck, NotebookPen, Check } from "lucide-react";
+import { Heart, MessageCircle, Share2, ShieldCheck, NotebookPen, Check, Mic } from "lucide-react";
 import { Trade, Trader } from "@/types";
 import { clsx } from "clsx";
 import { useState, type ReactNode } from "react";
@@ -50,6 +50,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
   const [deleting, setDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentFocus, setCommentFocus] = useState(false);
+  const [voiceStart, setVoiceStart] = useState(false);
 
   const [showJournal, setShowJournal] = useState(false);
   const [journalNote, setJournalNote] = useState(initialJournal ?? "");
@@ -242,7 +243,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </div>
       )}
 
-      <div className="flex items-center gap-4 pt-1">
+      <div className="flex items-center gap-2.5 pt-1">
         <button
           onClick={handleLike}
           disabled={liking}
@@ -255,14 +256,21 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           {likeCount}
         </button>
         <button
-          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); }}
+          onClick={() => { setShowComments((s) => !s); setCommentFocus(false); setVoiceStart(false); }}
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", showComments ? "text-white" : "text-gray-500 hover:text-gray-300")}
         >
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
-        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); }} />
+        <CommentPill onOpen={() => { setShowComments(true); setCommentFocus(true); setVoiceStart(false); }} />
+        <button
+          onClick={() => { setShowComments(true); setCommentFocus(false); setVoiceStart(true); }}
+          className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-[2px] text-[12px] text-gray-500 hover:text-gray-300 hover:border-white/15 transition-colors"
+          aria-label="Voice comment"
+        >
+          <Mic className="w-3.5 h-3.5" /> Voice
+        </button>
         <div className="ml-auto flex items-center gap-3 shrink-0">
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" />
@@ -303,6 +311,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <CommentSection
             tradeId={trade.id}
             autoFocus={commentFocus}
+            autoRecord={voiceStart}
             onCommentAdded={() => setCommentCount((c) => c + 1)}
             onCommentDeleted={() => setCommentCount((c) => Math.max(0, c - 1))}
             onCountLoaded={(n) => setCommentCount(n)}

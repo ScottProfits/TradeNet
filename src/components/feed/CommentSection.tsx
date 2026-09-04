@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Send, CornerDownRight, Heart } from "lucide-react";
+import { Send, CornerDownRight, Heart, Mic, Square, Trash2 } from "lucide-react";
 import Link from "next/link";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import SafeAvatar from "@/components/ui/SafeAvatar";
+import VoiceNote from "@/components/feed/VoiceNote";
 import { useLongPress } from "@/hooks/useLongPress";
+import { supabase } from "@/lib/supabase";
 
 interface Comment {
   id: string;
@@ -14,6 +16,8 @@ interface Comment {
   created_at: string;
   user_id: string;
   parent_id: string | null;
+  audio_url?: string | null;
+  audio_duration?: number | null;
   profiles: {
     handle: string;
     avatar_url: string;
@@ -21,13 +25,25 @@ interface Comment {
   };
 }
 
-export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, autoFocus }: {
+function extFor(mime: string) {
+  if (mime.includes("mp4")) return "mp4";
+  if (mime.includes("webm")) return "webm";
+  if (mime.includes("ogg")) return "ogg";
+  return "m4a";
+}
+
+function fmtClock(s: number) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+export default function CommentSection({ tradeId, postId, onCommentAdded, onCommentDeleted, onCountLoaded, autoFocus, autoRecord }: {
   tradeId?: string;
   postId?: string;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onCountLoaded?: (n: number) => void;
   autoFocus?: boolean;
+  autoRecord?: boolean;
 }) {
   const { isSignedIn, userId } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -38,6 +54,69 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // ---- voice comment recorder ----
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [clip, setClip] = useState<{ blob: Blob; url: string; seconds: number } | null>(null);
+  const [recError, setRecError] = useState("");
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const startedAtRef = useRef(0);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRef.current?.state === "recording") mediaRef.current.stop();
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    setRecError("");
+    if (clip) { URL.revokeObjectURL(clip.url); setClip(null); }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find(
+        (m) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)
+      );
+      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (tickRef.current) clearInterval(tickRef.current);
+        setRecording(false);
+        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        setClip({ blob, url: URL.createObjectURL(blob), seconds });
+      };
+      mediaRef.current = mr;
+      startedAtRef.current = Date.now();
+      setElapsed(0);
+      mr.start();
+      setRecording(true);
+      tickRef.current = setInterval(() => {
+        const s = Math.round((Date.now() - startedAtRef.current) / 1000);
+        setElapsed(s);
+        if (s >= 120) stopRecording(); // 2-min cap
+      }, 250);
+    } catch {
+      setRecError("Mic access denied.");
+    }
+  }, [clip, stopRecording]);
+
+  const discardClip = useCallback(() => {
+    if (clip) URL.revokeObjectURL(clip.url);
+    setClip(null);
+    setElapsed(0);
+  }, [clip]);
+
+  useEffect(() => {
+    if (autoRecord) void startRecording();
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (mediaRef.current?.state === "recording") mediaRef.current.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRecord]);
 
   const entityId = tradeId ?? postId ?? "";
   const paramKey = tradeId ? "tradeId" : "postId";
@@ -81,17 +160,33 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
 
   async function handlePost(e: React.FormEvent) {
     e.preventDefault();
-    if (!text.trim() || posting) return;
+    if ((!text.trim() && !clip) || posting) return;
     setPosting(true);
-    // Always attach reply to the top-level comment so all replies stay flat under
-    // it for display, but notify whoever's specific comment/reply was actually
-    // replied to — those can differ when replying to a nested reply.
+
+    let audioUrl: string | null = null;
+    let audioDuration: number | null = null;
+    if (clip && userId) {
+      const ext = extFor(clip.blob.type);
+      const path = `${userId}/voice-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("trade-images")
+        .upload(path, clip.blob, { contentType: clip.blob.type || "audio/webm" });
+      if (!upErr) {
+        audioUrl = supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl;
+        audioDuration = clip.seconds;
+      } else {
+        setRecError("Upload failed — try again.");
+        setPosting(false);
+        return;
+      }
+    }
+
     const parentId = replyTo?.topLevelId ?? null;
     const replyToCommentId = replyTo?.id ?? null;
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId, replyToCommentId }),
+      body: JSON.stringify({ tradeId: tradeId ?? null, postId: postId ?? null, content: text, parentId, replyToCommentId, audioUrl, audioDuration }),
     });
     if (res.ok) {
       const comment = await res.json();
@@ -100,6 +195,7 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
       setLikedMap((prev) => ({ ...prev, [comment.id]: false }));
       setText("");
       setReplyTo(null);
+      discardClip();
       onCommentAdded?.();
     }
     setPosting(false);
@@ -180,23 +276,72 @@ export default function CommentSection({ tradeId, postId, onCommentAdded, onComm
               <button onClick={cancelReply} className="text-gray-600 hover:text-white ml-auto">Cancel</button>
             </div>
           )}
-          <form onSubmit={handlePost} className="flex gap-2">
-            <input
-              ref={inputRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={replyTo ? `Reply to @${replyTo.handle}...` : "Add a comment..."}
-              maxLength={280}
-              className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
-            />
-            <button
-              type="submit"
-              disabled={posting || !text.trim()}
-              className="p-2 bg-[var(--green)] text-black rounded-xl hover:bg-[var(--green)]/90 transition-colors disabled:opacity-40"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
+          {recError && <p className="text-xs text-[var(--red)]">{recError}</p>}
+          {recording ? (
+            <div className="flex items-center gap-2 bg-[var(--bg)] border border-[var(--red)]/40 rounded-xl px-3 py-2">
+              <span className="w-2 h-2 rounded-full bg-[var(--red)] animate-pulse" />
+              <span className="text-sm text-white tabular-nums">{fmtClock(elapsed)}</span>
+              <span className="text-xs text-gray-500">Recording…</span>
+              <button
+                onClick={() => { stopRecording(); discardClip(); }}
+                type="button"
+                className="ml-auto text-xs text-gray-500 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={stopRecording}
+                type="button"
+                className="p-1.5 bg-[var(--red)] text-white rounded-lg"
+                aria-label="Stop recording"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+              </button>
+            </div>
+          ) : clip ? (
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={discardClip} className="p-2 text-gray-500 hover:text-[var(--red)]" aria-label="Delete recording">
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <div className="flex-1"><VoiceNote src={clip.url} duration={clip.seconds} /></div>
+              <button
+                type="button"
+                onClick={handlePost}
+                disabled={posting}
+                className="p-2 bg-[var(--green)] text-black rounded-xl hover:bg-[var(--green)]/90 transition-colors disabled:opacity-40"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handlePost} className="flex gap-2">
+              <input
+                ref={inputRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={replyTo ? `Reply to @${replyTo.handle}...` : "Add a comment..."}
+                maxLength={280}
+                className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+              />
+              {!text.trim() && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="p-2 bg-[var(--bg)] border border-[var(--border)] text-gray-400 rounded-xl hover:text-white hover:border-[var(--green)] transition-colors"
+                  aria-label="Record a voice comment"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={posting || !text.trim()}
+                className="p-2 bg-[var(--green)] text-black rounded-xl hover:bg-[var(--green)]/90 transition-colors disabled:opacity-40"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          )}
         </div>
       )}
     </div>
@@ -251,7 +396,12 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
             </button>
           </div>
         </div>
-        <p className="text-sm text-gray-300">{c.content}</p>
+        {c.audio_url && (
+          <div className="mt-1 mb-0.5">
+            <VoiceNote src={c.audio_url} duration={c.audio_duration ?? 0} />
+          </div>
+        )}
+        {c.content && <p className="text-sm text-gray-300">{c.content}</p>}
       </div>
       {showDelete && (
         <DeleteSheet

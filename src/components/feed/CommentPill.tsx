@@ -12,7 +12,7 @@ export default function CommentPill({ onOpen }: { onOpen: () => void }) {
         className="text-[12px] italic text-gray-500 transition-colors hover:text-gray-300"
         style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
       >
-        Comment
+        Share thoughts
       </span>
     </button>
   );

@@ -49,8 +49,9 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { tradeId, postId, content, parentId, replyToCommentId } = await req.json();
-  if (!content?.trim()) return new Response("Empty comment", { status: 400 });
+  const { tradeId, postId, content, parentId, replyToCommentId, audioUrl, audioDuration } = await req.json();
+  const text: string = typeof content === "string" ? content.trim() : "";
+  if (!text && !audioUrl) return new Response("Empty comment", { status: 400 });
   // Which comment/reply to notify — may differ from parentId (the top-level
   // comment used purely for flat-thread display grouping) when replying to
   // a nested reply rather than the top-level comment itself.
@@ -72,8 +73,10 @@ export async function POST(req: NextRequest) {
       user_id: userId,
       trade_id: tradeId ?? null,
       post_id: postId ?? null,
-      content: content.trim(),
+      content: text,
       parent_id: parentId ?? null,
+      audio_url: audioUrl ?? null,
+      audio_duration: typeof audioDuration === "number" ? Math.round(audioDuration) : null,
     })
     .select(`*, profiles!comments_user_id_fkey (handle, avatar_url, verified)`)
     .single();
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
       supabase.from("profiles").select("handle").eq("id", userId).single(),
       supabase.from("trades").select("ticker, pnl").eq("id", tradeId).single(),
     ]);
-    const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
+    const snippet = text ? text.slice(0, 60) + (text.length > 60 ? "…" : "") : "🎤 Voice comment";
 
     // Notify trade owner of comment (unless they wrote it)
     if (trade && trade.user_id !== userId) {
@@ -121,7 +124,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Notify @mentioned users in the comment content
-    const mentions = content.match(/@([a-zA-Z0-9_]+)/g) ?? [];
+    const mentions = text.match(/@([a-zA-Z0-9_]+)/g) ?? [];
     if (mentions.length > 0) {
       const handles = mentions.map((m: string) => m.slice(1).toLowerCase());
       const { data: mentionedProfiles } = await supabase
@@ -151,7 +154,7 @@ export async function POST(req: NextRequest) {
       supabase.from("profiles").select("handle").eq("id", userId).single(),
       notifyTargetId ? supabase.from("comments").select("user_id").eq("id", notifyTargetId).single() : Promise.resolve({ data: null }),
     ]);
-    const snippet = content.trim().slice(0, 60) + (content.trim().length > 60 ? "…" : "");
+    const snippet = text ? text.slice(0, 60) + (text.length > 60 ? "…" : "") : "🎤 Voice comment";
     const notifiedPostIds = new Set<string>([userId]);
 
     // Notify post owner
@@ -169,7 +172,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Notify @mentioned users
-    const mentions = content.match(/@([a-zA-Z0-9_]+)/g) ?? [];
+    const mentions = text.match(/@([a-zA-Z0-9_]+)/g) ?? [];
     if (mentions.length > 0) {
       const handles = mentions.map((m: string) => m.slice(1).toLowerCase());
       const { data: mentionedProfiles } = await supabase.from("profiles").select("id, handle").in("handle", handles);
