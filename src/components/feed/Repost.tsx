@@ -27,8 +27,10 @@ export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d={REPOST_ARM} />
-      <path d={REPOST_ARM} transform="rotate(180 12 12)" />
+      <g transform="translate(12 12) scale(1.22) translate(-12 -12)">
+        <path d={REPOST_ARM} />
+        <path d={REPOST_ARM} transform="rotate(180 12 12)" />
+      </g>
     </svg>
   );
 }
@@ -40,7 +42,7 @@ export function RepostBanner({ by }: { by: Reposter }) {
       href={`/profile/${by.handle}`}
       className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors pl-1"
     >
-      <RepostIcon className="w-3.5 h-3.5" />
+      <RepostIcon className="w-4 h-4" />
       @{by.handle} reposted
     </Link>
   );
@@ -98,7 +100,7 @@ export function RepostButton({
         reposted ? "text-[var(--green)]" : "text-gray-500 hover:text-[var(--green)]"
       )}
     >
-      <RepostIcon className="w-4 h-4" />
+      <RepostIcon className="w-[18px] h-[18px]" />
       {n > 0 && <span>{n}</span>}
       <span className="hidden sm:inline">{reposted ? "Reposted" : "Repost"}</span>
     </button>
