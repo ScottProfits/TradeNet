@@ -7,7 +7,6 @@ import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import DeleteSheet from "@/components/ui/DeleteSheet";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VoiceNote from "@/components/feed/VoiceNote";
-import { useLongPress } from "@/hooks/useLongPress";
 import { supabase } from "@/lib/supabase";
 
 interface Comment {
@@ -394,14 +393,38 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
 }) {
   const [showDelete, setShowDelete] = useState(false);
   const isOwner = c.user_id === userId;
-  const longPress = useLongPress(() => { if (isOwner) setShowDelete(true); }, 2000);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
+
+  function startPress(e: React.PointerEvent) {
+    if (!isOwner) return;
+    cancelPress();
+    pressOrigin.current = { x: e.clientX, y: e.clientY };
+    pressTimer.current = setTimeout(() => setShowDelete(true), 550);
+  }
+  function movePress(e: React.PointerEvent) {
+    if (!pressOrigin.current) return;
+    if (Math.abs(e.clientX - pressOrigin.current.x) > 12 || Math.abs(e.clientY - pressOrigin.current.y) > 12) cancelPress();
+  }
+  function cancelPress() {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+    pressOrigin.current = null;
+  }
 
   return (
     <div className="flex gap-2.5 group select-none">
       <Link href={`/profile/${c.profiles?.handle}`} className="shrink-0">
         <SafeAvatar src={c.profiles?.avatar_url} alt={c.profiles?.handle ?? ""} initials={c.profiles?.handle ?? "?"} className="w-7 h-7 text-xs" />
       </Link>
-      <div className="flex-1 bg-[var(--bg)] rounded-xl px-3 py-2" {...longPress}>
+      <div
+        className={`flex-1 bg-[var(--bg)] rounded-xl px-3 py-2 ${isOwner ? "[-webkit-touch-callout:none]" : ""}`}
+        onPointerDown={startPress}
+        onPointerMove={movePress}
+        onPointerUp={cancelPress}
+        onPointerLeave={cancelPress}
+        onPointerCancel={cancelPress}
+        onContextMenu={(e) => { if (isOwner) e.preventDefault(); }}
+      >
         <div className="flex items-center justify-between mb-0.5">
           <div className="flex items-center gap-1.5">
             <Link href={`/profile/${c.profiles?.handle}`} className="text-xs font-semibold text-white hover:text-[var(--green)] transition-colors">
@@ -428,15 +451,6 @@ function CommentRow({ c, userId, liked, likeCount, onDelete, onReply, onLike, is
                 <span className={liked ? "text-pink-400" : "text-gray-600"}>{likeCount}</span>
               )}
             </button>
-            {isOwner && (
-              <button
-                onClick={() => setShowDelete(true)}
-                aria-label="Delete"
-                className="text-gray-600 hover:text-[var(--red)] transition-colors"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
           </div>
         </div>
         {c.audio_url && (
