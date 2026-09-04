@@ -262,7 +262,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
         </button>
         <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
         <CommentPill onOpen={() => setShowComments(true)} />
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="ml-auto flex items-center gap-3 shrink-0">
           <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1d9bf0] transition-colors">
             <Share2 className="w-4 h-4" />
             <span className="hidden sm:inline">Share</span>
