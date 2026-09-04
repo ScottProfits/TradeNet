@@ -134,6 +134,10 @@ export default function ProfilePage() {
   );
 }
 
+// Keep the last-seen profile per handle so revisiting paints instantly
+// while the fresh copy loads in the background.
+const profileCache = new Map<string, ProfileData>();
+
 function ProfilePageInner() {
   const { handle } = useParams<{ handle: string }>();
   const searchParams = useSearchParams();
@@ -148,7 +152,9 @@ function ProfilePageInner() {
   const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<ProfileData | null>(isDemo ? (demoProfileData as unknown as ProfileData) : null);
+  const [data, setData] = useState<ProfileData | null>(
+    isDemo ? (demoProfileData as unknown as ProfileData) : profileCache.get(handle) ?? null
+  );
   const [notFound, setNotFound] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -201,6 +207,10 @@ function ProfilePageInner() {
 
   useEffect(() => {
     if (isDemo) return;
+    // Handle changed — swap to that profile's cached copy (or nothing) so we
+    // never show the previous person's data while the new one loads.
+    setData(profileCache.get(handle) ?? null);
+    setNotFound(false);
     fetch(`/api/profile/${handle}`)
       .then((r) => {
         if (r.status === 404) { setNotFound(true); return null; }
@@ -209,6 +219,7 @@ function ProfilePageInner() {
       .then((d) => {
         if (!d) return;
         setData(d);
+        profileCache.set(handle, d);
         setFollowerCount(d.followersCount);
         setFollowing(d.isFollowing ?? false);
         setPinnedTradeId(d.profile.pinned_trade_id ?? null);

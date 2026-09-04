@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, Suspense } from "react";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import { useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 import Link from "next/link";
@@ -58,19 +59,13 @@ function LeaderboardPageInner() {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
   const [period, setPeriod] = useState("today");
-  const [data, setData] = useState<LeaderEntry[]>(isDemo ? demoLeaderboard : []);
-  const [loading, setLoading] = useState(!isDemo);
-
-  const load = useCallback(async () => {
-    if (isDemo) { setData(demoLeaderboard); setLoading(false); return; }
-    setLoading(true);
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const res = await fetch(`/api/leaderboard?period=${period}&tz=${encodeURIComponent(tz)}`);
-    if (res.ok) setData(await res.json());
-    setLoading(false);
-  }, [period, isDemo]);
-
-  useEffect(() => { load(); }, [load]);
+  const tz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
+  const { data: fetched, loading: fetchLoading } = useCachedFetch<LeaderEntry[]>(
+    `leaderboard:${period}`,
+    isDemo ? null : `/api/leaderboard?period=${period}&tz=${encodeURIComponent(tz)}`
+  );
+  const data = isDemo ? demoLeaderboard : fetched ?? [];
+  const loading = isDemo ? false : fetchLoading;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

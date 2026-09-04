@@ -13,10 +13,13 @@ export function primeCache(key: string, value: unknown) {
 
 export function useCachedFetch<T>(key: string, url: string | null) {
   const [data, setData] = useState<T | undefined>(() => mem.get(key) as T | undefined);
-  const [loading, setLoading] = useState(() => !mem.has(key));
+  const [loading, setLoading] = useState(() => !mem.has(key) && !!url);
 
   const refetch = useCallback(async () => {
-    if (!url) return;
+    if (!url) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(url);
       if (res.ok) {
@@ -29,6 +32,13 @@ export function useCachedFetch<T>(key: string, url: string | null) {
     } finally {
       setLoading(false);
     }
+  }, [key, url]);
+
+  // When the key changes (e.g. a period filter), swap to that key's cached
+  // value immediately and only show loading if it has none.
+  useEffect(() => {
+    setData(mem.get(key) as T | undefined);
+    setLoading(!mem.has(key) && !!url);
   }, [key, url]);
 
   useEffect(() => {

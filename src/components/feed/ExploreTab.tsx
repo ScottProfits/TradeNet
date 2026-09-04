@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, Users, Flame, Zap, Star, ChevronRight, UserPlus, ArrowUpRight, Trophy, Hash, Lock } from "lucide-react";
@@ -65,21 +65,15 @@ function SkeletonList({ rows = 3 }: { rows?: number }) {
 export default function ExploreTab() {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
-  const [data, setData] = useState<ExploreData | null>(isDemo ? demoExplore : null);
-  const [loading, setLoading] = useState(!isDemo);
-  const [channels, setChannels] = useState<PopularChannel[]>([]);
-
-  useEffect(() => {
-    if (isDemo) { setData(demoExplore); setLoading(false); return; }
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    fetch(`/api/explore?tz=${encodeURIComponent(tz)}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setData(d); setLoading(false); });
-    fetch("/api/rooms")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rooms: PopularChannel[]) => setChannels(Array.isArray(rooms) ? rooms.slice(0, 6) : []))
-      .catch(() => {});
-  }, [isDemo]);
+  const tz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
+  const { data: fetched, loading: fetchLoading } = useCachedFetch<ExploreData>(
+    "explore:main",
+    isDemo ? null : `/api/explore?tz=${encodeURIComponent(tz)}`
+  );
+  const { data: roomsData } = useCachedFetch<PopularChannel[]>("explore:rooms", isDemo ? null : "/api/rooms");
+  const data = isDemo ? demoExplore : fetched ?? null;
+  const loading = isDemo ? false : fetchLoading;
+  const channels = (roomsData ?? []).slice(0, 6);
 
   function priceLabel(cents: number | null) {
     if (!cents || cents <= 0) return "Free";

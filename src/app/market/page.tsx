@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Clock, AlertTriangle, Newspaper } from "lucide-react";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 
 interface CalendarEvent {
   date: string;
@@ -71,16 +71,12 @@ function formatDate(dateStr: string) {
 }
 
 export default function MarketPage() {
-  const [data, setData] = useState<{
+  const { data } = useCachedFetch<{
     marketStatus: MarketStatus;
     upcomingEvents: CalendarEvent[];
     todayEvents: CalendarEvent[];
     news: NewsItem[];
-  } | null>(null);
-
-  useEffect(() => {
-    fetch("/api/market-events").then((r) => r.ok ? r.json() : null).then(setData);
-  }, []);
+  }>("market:events", "/api/market-events");
 
   if (!data) {
     return (

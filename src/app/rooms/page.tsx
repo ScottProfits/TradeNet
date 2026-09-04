@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
+import { useCachedFetch } from "@/lib/useCachedFetch";
 import { Users, Plus, Lock, Compass, ChevronRight } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -26,20 +26,14 @@ function priceLabel(cents: number | null) {
 
 export default function RoomsPage() {
   const { userId } = useAuth();
-  const [discover, setDiscover] = useState<Room[]>([]);
-  const [mine, setMine] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/rooms").then((r) => (r.ok ? r.json() : [])),
-      userId ? fetch("/api/rooms?mine=1").then((r) => (r.ok ? r.json() : [])) : Promise.resolve([]),
-    ]).then(([d, m]) => {
-      setDiscover(d);
-      setMine(m);
-      setLoading(false);
-    });
-  }, [userId]);
+  const { data: discoverData, loading: discoverLoading } = useCachedFetch<Room[]>("rooms:discover", "/api/rooms");
+  const { data: mineData, loading: mineLoading } = useCachedFetch<Room[]>(
+    "rooms:mine",
+    userId ? "/api/rooms?mine=1" : null
+  );
+  const discover = discoverData ?? [];
+  const mine = mineData ?? [];
+  const loading = (discoverLoading || mineLoading) && discover.length === 0 && mine.length === 0;
 
   const mineIds = new Set(mine.map((r) => r.id));
   const browse = discover.filter((r) => !mineIds.has(r.id));
