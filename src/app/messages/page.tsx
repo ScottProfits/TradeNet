@@ -26,6 +26,7 @@ export default function MessagesPage() {
   const [confirmHide, setConfirmHide] = useState<Conversation | null>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/messages")
@@ -33,16 +34,24 @@ export default function MessagesPage() {
       .then((d) => { setConvos(d); setLoading(false); });
   }, []);
 
-  function startPress(c: Conversation) {
+  function startPress(c: Conversation, e: React.PointerEvent) {
     longPressed.current = false;
     cancelPress();
+    pressOrigin.current = { x: e.clientX, y: e.clientY };
     pressTimer.current = setTimeout(() => {
       longPressed.current = true;
       setConfirmHide(c);
-    }, 500);
+    }, 700);
+  }
+  function maybeCancelPress(e: React.PointerEvent) {
+    if (!pressOrigin.current) return;
+    const dx = Math.abs(e.clientX - pressOrigin.current.x);
+    const dy = Math.abs(e.clientY - pressOrigin.current.y);
+    if (dx > 12 || dy > 12) cancelPress();
   }
   function cancelPress() {
     if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+    pressOrigin.current = null;
   }
 
   async function hideConvo(c: Conversation) {
@@ -80,12 +89,13 @@ export default function MessagesPage() {
               key={c.id}
               type="button"
               onClick={() => { if (!longPressed.current && partner?.handle) router.push(`/messages/${partner.handle}`); }}
-              onPointerDown={() => startPress(c)}
+              onPointerDown={(e) => startPress(c, e)}
               onPointerUp={cancelPress}
+              onPointerMove={maybeCancelPress}
               onPointerLeave={cancelPress}
               onPointerCancel={cancelPress}
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full text-left flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0"
+              className="w-full text-left flex items-center gap-3 p-4 hover:bg-[var(--bg)] transition-colors border-b border-[var(--border)] last:border-0 select-none [-webkit-touch-callout:none]"
             >
               <SafeAvatar src={partner?.avatar_url} alt={partner?.handle ?? ""} initials={partner?.handle ?? "?"} className="w-11 h-11" />
               <div className="flex-1 min-w-0">
@@ -106,7 +116,7 @@ export default function MessagesPage() {
 
       {confirmHide && (
         <DeleteSheet
-          label="conversation for you (the other person keeps their copy)"
+          label="conversation just for you (they keep their copy)"
           onConfirm={() => hideConvo(confirmHide)}
           onCancel={() => setConfirmHide(null)}
         />

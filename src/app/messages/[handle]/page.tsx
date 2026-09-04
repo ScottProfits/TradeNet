@@ -62,14 +62,24 @@ function ChatPageInner() {
   const stickToBottom = useRef(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
 
-  function startPress(id: string, mine: boolean) {
+  function startPress(id: string, mine: boolean, e: React.PointerEvent) {
     if (!mine || isDemo) return;
     cancelPress();
-    pressTimer.current = setTimeout(() => setConfirmDelete(id), 500);
+    pressOrigin.current = { x: e.clientX, y: e.clientY };
+    // Long hold (700ms) so a normal tap or a scroll never triggers it.
+    pressTimer.current = setTimeout(() => setConfirmDelete(id), 700);
+  }
+  function maybeCancelPress(e: React.PointerEvent) {
+    if (!pressOrigin.current) return;
+    const dx = Math.abs(e.clientX - pressOrigin.current.x);
+    const dy = Math.abs(e.clientY - pressOrigin.current.y);
+    if (dx > 12 || dy > 12) cancelPress();
   }
   function cancelPress() {
     if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+    pressOrigin.current = null;
   }
   async function deleteMessage(id: string) {
     setConfirmDelete(null);
@@ -266,9 +276,10 @@ function ChatPageInner() {
           return (
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               <div
-                className="group relative max-w-[75%] rounded-2xl px-4 py-2.5 transition-transform active:scale-[0.98]"
-                onPointerDown={() => startPress(m.id, mine)}
+                className={`group relative max-w-[75%] rounded-2xl px-4 py-2.5 transition-transform active:scale-[0.98] ${mine && !isDemo ? "select-none [-webkit-touch-callout:none] [-webkit-user-select:none]" : ""}`}
+                onPointerDown={(e) => startPress(m.id, mine, e)}
                 onPointerUp={cancelPress}
+                onPointerMove={maybeCancelPress}
                 onPointerLeave={cancelPress}
                 onPointerCancel={cancelPress}
                 onContextMenu={(e) => { if (mine && !isDemo) e.preventDefault(); }}

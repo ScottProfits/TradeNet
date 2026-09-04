@@ -35,9 +35,10 @@ interface TradeCardProps {
   autoPlayVideo?: boolean;
   repostedBy?: Reposter | null;
   repostedByMe?: boolean;
+  repostCount?: number;
 }
 
-export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false, repostedBy, repostedByMe }: TradeCardProps) {
+export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy: initialStrategy, likedByMe, verifiedPnl, journalNote: initialJournal, entry = 0, exit = 0, rawShares = 0, onDelete, autoPlayVideo = false, repostedBy, repostedByMe, repostCount = 0 }: TradeCardProps) {
   const { isSignedIn, userId } = useAuth();
   const [avatarFailed, setAvatarFailed] = useState(false);
   const likeCacheKey = `trade:${trade.id}`;
@@ -265,7 +266,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
-        <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} ownPost={isOwner} />
+        <RepostButton targetType="trade" targetId={trade.id} initialReposted={repostedByMe} count={repostCount} ownPost={isOwner} />
         <button onClick={() => setShowChart((s) => !s)} className={clsx("flex items-center gap-1.5 text-sm transition-colors", showChart ? "text-white" : "text-gray-500 hover:text-gray-300")}>
           <BarChart2 className="w-4 h-4" />
           Chart

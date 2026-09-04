@@ -313,6 +313,7 @@ function FeedPageInner() {
           onDelete={handleDelete}
           repostedBy={item.repostedBy ?? null}
           repostedByMe={repostedByMe}
+          repostCount={item.reposts_count ?? 0}
         />
       );
     }

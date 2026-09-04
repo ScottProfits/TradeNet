@@ -24,7 +24,7 @@ export default function DeleteSheet({
       onClick={ready ? onCancel : undefined}
     >
       <div
-        className="solid-menu rounded-t-2xl w-full max-w-lg p-5"
+        className="solid-menu rounded-t-2xl w-full max-w-lg p-5 select-none [-webkit-touch-callout:none]"
         style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -14,6 +14,7 @@ export interface RealTrade {
   caption: string;
   likes_count: number;
   comments_count: number;
+  reposts_count?: number;
   image_url: string | null;
   strategy: string | null;
   liked_by_me: boolean;

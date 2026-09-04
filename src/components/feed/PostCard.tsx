@@ -25,6 +25,7 @@ interface RealPost {
   image_urls?: string[] | null;
   likes_count: number;
   comments_count?: number;
+  reposts_count?: number;
   liked_by_me?: boolean;
   created_at: string;
   profiles: {
@@ -202,7 +203,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           <MessageCircle className="w-4 h-4" />
           {commentCount}
         </button>
-        <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} ownPost={isOwner} />
+        <RepostButton targetType="post" targetId={post.id} initialReposted={repostedByMe} count={post.reposts_count ?? 0} ownPost={isOwner} />
         <button onClick={handleShare} className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
           <Share2 className="w-4 h-4" />
           {shared ? "Copied!" : "Share"}

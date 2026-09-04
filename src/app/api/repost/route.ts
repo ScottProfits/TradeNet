@@ -42,15 +42,23 @@ export async function POST(req: NextRequest) {
   if (!target) return new Response("Not found", { status: 404 });
   if (target.user_id === userId) return new Response("You can't repost your own post", { status: 400 });
 
-  const { error } = await supabaseAdmin
+  const { data: inserted, error } = await supabaseAdmin
     .from("reposts")
     .upsert(
       { user_id: userId, target_type: parsed.targetType, target_id: parsed.targetId },
       { onConflict: "user_id,target_type,target_id", ignoreDuplicates: true }
-    );
+    )
+    .select("target_id");
 
   if (error) return new Response(error.message, { status: 500 });
+  if (inserted && inserted.length) await bumpRepostCount(table, parsed.targetId, 1);
   return Response.json({ reposted: true });
+}
+
+async function bumpRepostCount(table: "trades" | "posts", id: string, delta: number) {
+  const { data } = await supabaseAdmin.from(table).select("reposts_count").eq("id", id).maybeSingle();
+  const current = (data as { reposts_count?: number } | null)?.reposts_count ?? 0;
+  await supabaseAdmin.from(table).update({ reposts_count: Math.max(0, current + delta) }).eq("id", id);
 }
 
 export async function DELETE(req: NextRequest) {
@@ -60,10 +68,14 @@ export async function DELETE(req: NextRequest) {
   const parsed = parseBody(await req.json().catch(() => ({})));
   if (!parsed) return new Response("Bad request", { status: 400 });
 
-  await supabaseAdmin
+  const { data: removed } = await supabaseAdmin
     .from("reposts")
     .delete()
-    .match({ user_id: userId, target_type: parsed.targetType, target_id: parsed.targetId });
+    .match({ user_id: userId, target_type: parsed.targetType, target_id: parsed.targetId })
+    .select("target_id");
 
+  if (removed && removed.length) {
+    await bumpRepostCount(parsed.targetType === "trade" ? "trades" : "posts", parsed.targetId, -1);
+  }
   return Response.json({ reposted: false });
 }

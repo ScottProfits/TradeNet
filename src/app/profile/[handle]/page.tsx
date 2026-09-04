@@ -724,10 +724,14 @@ function ProfilePageInner() {
         </div>
 
         {(() => {
-          type HistoryItem = ({ kind: "trade" } & Trade) | ({ kind: "post" } & RealPost);
+          type HistoryItem =
+            | ({ kind: "trade" } & Trade)
+            | ({ kind: "post" } & RealPost)
+            | ({ kind: "repost" } & RepostItem);
           const merged: HistoryItem[] = [
             ...trades.map((t) => ({ kind: "trade" as const, ...t })),
             ...posts.map((p) => ({ kind: "post" as const, ...p })),
+            ...reposts.map((r) => ({ kind: "repost" as const, ...r, created_at: r.repostedAt })),
           ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
           const displayedItems = tradeHistoryTab === "videos" ? merged.filter((item) => isVideoUrl(item.image_url)) : merged;
@@ -753,6 +757,29 @@ function ProfilePageInner() {
             return 0;
           })
           .map((item) => {
+            if (item.kind === "repost") {
+              if (item.type === "post") {
+                return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} />;
+              }
+              const { trade, trader } = realTradeToCardProps(item);
+              return (
+                <TradeCard
+                  key={item.repostId}
+                  trade={trade}
+                  trader={trader}
+                  imageUrl={item.image_url ?? undefined}
+                  avatarUrl={item.profiles?.avatar_url ?? undefined}
+                  strategy={item.strategy ?? undefined}
+                  likedByMe={item.liked_by_me}
+                  verifiedPnl={item.verified_pnl}
+                  entry={item.entry}
+                  exit={item.exit}
+                  rawShares={item.shares ?? 0}
+                  repostedBy={item.repostedBy}
+                  repostCount={item.reposts_count ?? 0}
+                />
+              );
+            }
             if (item.kind === "post") {
               return <PostCard key={item.id} post={item} />;
             }
@@ -820,35 +847,6 @@ function ProfilePageInner() {
           );
         })()}
       </div>
-
-      {/* Reposts — shown to everyone on the history tab */}
-      {tradeHistoryTab === "history" && reposts.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="font-semibold text-white">Reposts ({reposts.length})</h2>
-          {reposts.map((item) => {
-            if (item.type === "post") {
-              return <PostCard key={item.repostId} post={item} repostedBy={item.repostedBy} />;
-            }
-            const { trade, trader } = realTradeToCardProps(item);
-            return (
-              <TradeCard
-                key={item.repostId}
-                trade={trade}
-                trader={trader}
-                imageUrl={item.image_url ?? undefined}
-                avatarUrl={item.profiles?.avatar_url ?? undefined}
-                strategy={item.strategy ?? undefined}
-                likedByMe={item.liked_by_me}
-                verifiedPnl={item.verified_pnl}
-                entry={item.entry}
-                exit={item.exit}
-                rawShares={item.shares ?? 0}
-                repostedBy={item.repostedBy}
-              />
-            );
-          })}
-        </div>
-      )}
 
       {/* Liked posts — only visible to profile owner */}
       {isOwnProfile && (
