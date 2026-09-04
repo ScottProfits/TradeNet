@@ -10,8 +10,11 @@ export interface Reposter {
   verified?: boolean;
 }
 
-// Ryzr's repost mark — a clean spiral. Minimal on purpose.
-// (Trivial to swap: it's the only place the glyph is defined.)
+// Ryzr's repost mark — two interlocking spiral arms (an S of arrows).
+// One arm is drawn; the other is it rotated 180°. Only place it's defined.
+const REPOST_ARM =
+  "M10.56 12.90L10.38 12.89L10.21 12.85L10.05 12.79L9.89 12.72L9.74 12.63L9.59 12.52L9.45 12.40L9.31 12.26L9.19 12.11L9.07 11.95L8.97 11.77L8.88 11.58L8.80 11.38L8.73 11.17L8.68 10.95L8.64 10.72L8.62 10.48L8.62 10.24L8.64 10.00L8.67 9.74L8.72 9.49L8.79 9.24L8.88 8.98L8.98 8.73L9.11 8.48L9.26 8.24L9.42 8.00L9.61 7.76L9.81 7.54L10.03 7.32L10.27 7.12L10.52 6.93L10.79 6.75L11.08 6.59L11.38 6.45L11.70 6.32L12.03 6.21L12.37 6.12L12.72 6.05L13.08 6.00L13.44 5.97L13.82 5.97L14.20 5.99L14.58 6.03L14.97 6.10L15.35 6.20M13.19 4.27L15.35 6.20L12.59 7.09";
+
 export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg
@@ -24,7 +27,8 @@ export function RepostIcon({ className = "w-4 h-4" }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M12 11.5L12.2 11.3L12.6 11.2L13 11.4L13.4 11.7L13.7 12.2L13.7 12.8L13.5 13.5L13.1 14.1L12.3 14.6L11.4 14.8L10.4 14.7L9.4 14.1L8.6 13.2L8.2 12.1L8.1 10.7L8.6 9.4L9.5 8.2L10.8 7.4L12.4 7L14.1 7.2L15.7 8L17.1 9.4L17.9 11.1L18.1 13.2L17.6 15.2L16.3 17L14.5 18.4L12.3 19.1L9.9 19L7.5 18.1" />
+      <path d={REPOST_ARM} />
+      <path d={REPOST_ARM} transform="rotate(180 12 12)" />
     </svg>
   );
 }
