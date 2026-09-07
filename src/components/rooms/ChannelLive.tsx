@@ -28,6 +28,7 @@ export default function ChannelLive({
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
   const [showPlayBtn, setShowPlayBtn] = useState(false); // only for a deliberate pause
+  const [expanded, setExpanded] = useState(false);
   const [preview, setPreview] = useState(false); // broadcaster's own feed peek
   const [micOn, setMicOn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export default function ChannelLive({
     setStatus({ live: false });
     setSecondsLeft(null);
     setErr(null);
+    setExpanded(false);
     return () => {
       if (broadcastRef.current) {
         broadcastRef.current.stop();
@@ -229,43 +231,24 @@ export default function ChannelLive({
   }
 
   // A live stream should just keep playing. Only an explicit user pause
-  // (togglePlay) stops it — any other pause (fullscreen exit, tab switch,
-  // re-render) gets auto-resumed silently (no play-button flash).
+  // (togglePlay) stops it — any other pause gets auto-resumed silently.
   useEffect(() => {
     const v = videoRef.current;
     if (!v || iAmLive) return;
     const onPlay = () => setShowPlayBtn(false);
-    const onPause = () => {
-      if (!userPausedRef.current) v.play().catch(() => {});
-    };
-    const onFsEnd = () => {
-      if (!userPausedRef.current) setTimeout(() => v.play().catch(() => {}), 60);
-    };
+    const onPause = () => { if (!userPausedRef.current) v.play().catch(() => {}); };
     const onVisible = () => {
       if (document.visibilityState === "visible" && !userPausedRef.current) v.play().catch(() => {});
     };
     v.addEventListener("play", onPlay);
     v.addEventListener("pause", onPause);
-    v.addEventListener("webkitendfullscreen", onFsEnd);
-    v.addEventListener("webkitpresentationmodechanged", onFsEnd);
-    document.addEventListener("fullscreenchange", onFsEnd);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
-      v.removeEventListener("webkitendfullscreen", onFsEnd);
-      v.removeEventListener("webkitpresentationmodechanged", onFsEnd);
-      document.removeEventListener("fullscreenchange", onFsEnd);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [showPlayer, iAmLive]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function goFullscreen() {
-    const el = wrapRef.current;
-    const v = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
-    if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari — native player
-    else if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
-  }
 
   if (!showPlayer && !(canBroadcast && isDesktop)) {
     return err ? <p className="px-4 py-2 text-xs text-[var(--red)] border-b border-[var(--border)]">{err}</p> : null;
@@ -307,15 +290,32 @@ export default function ChannelLive({
   return (
     <div className="border-b border-[var(--border)] bg-black/40">
       {showPlayer && (
-        <div ref={wrapRef} className="relative bg-black">
+        <div
+          ref={wrapRef}
+          className={
+            expanded
+              ? "fixed inset-0 z-[60] bg-black flex items-center justify-center"
+              : "relative bg-black"
+          }
+        >
           <video
             ref={videoRef}
             playsInline
             autoPlay
             muted={muted}
             onClick={togglePlay}
-            className="w-full max-h-[46vh] bg-black object-contain"
+            className={`w-full bg-black object-contain ${expanded ? "max-h-full" : "max-h-[46vh]"}`}
           />
+
+          {expanded && (
+            <button
+              onClick={() => setExpanded(false)}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center"
+              aria-label="Exit fullscreen"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
 
           {/* tap-to-play — only after a deliberate pause */}
           {showPlayBtn && (
@@ -349,7 +349,7 @@ export default function ChannelLive({
               <button onClick={toggleMute} className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label={muted ? "Unmute" : "Mute"}>
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
-              <button onClick={goFullscreen} className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Fullscreen">
+              <button onClick={() => setExpanded((e) => !e)} className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Fullscreen">
                 <Maximize2 className="w-3.5 h-3.5" />
               </button>
             </div>
