@@ -3,10 +3,15 @@
 // does getDisplayMedia + RTCPeerConnection wiring.
 
 // Screen-share is a static-ish trading screen: cap it hard for cost + clarity.
-const SCREEN_CONSTRAINTS: DisplayMediaStreamOptions = {
+// `surfaceSwitching: include` lets the broadcaster change what they're sharing
+// without dropping the track (so the stream doesn't end on a switch).
+const SCREEN_CONSTRAINTS = {
   video: { frameRate: { ideal: 15, max: 15 } },
-  audio: true, // tab/system audio when the browser + OS allow it
-};
+  audio: true,
+  surfaceSwitching: "include",
+  selfBrowserSurface: "include",
+  systemAudio: "include",
+} as DisplayMediaStreamOptions;
 
 export interface Broadcast {
   pc: RTCPeerConnection;

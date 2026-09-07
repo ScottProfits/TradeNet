@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Radio, X, Loader2, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
 
 interface LiveStatus {
@@ -27,6 +27,7 @@ export default function ChannelLive({
   const [starting, setStarting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
+  const [paused, setPaused] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -35,6 +36,8 @@ export default function ChannelLive({
   const watchingIdRef = useRef<string | null>(null);
 
   const isDesktop = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
+  const iAmLive = !!broadcastRef.current;
+  const showPlayer = iAmLive || (status.live && !status.isBroadcaster);
 
   const poll = useCallback(async () => {
     try {
@@ -157,15 +160,39 @@ export default function ChannelLive({
     if (!v.muted) v.play().catch(() => {});
   }
 
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  }
+
+  // Keep the play/pause UI in sync with the element, and resume after the
+  // viewer exits fullscreen (Safari leaves it paused).
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onPlay = () => setPaused(false);
+    const onPause = () => setPaused(true);
+    const onFsEnd = () => { setTimeout(() => v.play().catch(() => {}), 50); };
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    v.addEventListener("webkitendfullscreen", onFsEnd);
+    document.addEventListener("fullscreenchange", onFsEnd);
+    return () => {
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+      v.removeEventListener("webkitendfullscreen", onFsEnd);
+      document.removeEventListener("fullscreenchange", onFsEnd);
+    };
+  }, [showPlayer]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function goFullscreen() {
     const el = wrapRef.current;
     const v = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
-    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
-    else if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari
+    if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari — native player
+    else if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
   }
-
-  const iAmLive = !!broadcastRef.current;
-  const showPlayer = iAmLive || (status.live && !status.isBroadcaster);
 
   if (!showPlayer && !(canBroadcast && isDesktop)) {
     return err ? <p className="px-4 py-2 text-xs text-[var(--red)] border-b border-[var(--border)]">{err}</p> : null;
@@ -180,10 +207,24 @@ export default function ChannelLive({
             playsInline
             autoPlay
             muted={muted}
+            onClick={iAmLive ? undefined : togglePlay}
             className="w-full max-h-[46vh] bg-black object-contain"
           />
 
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white">
+          {/* tap-to-play — always reachable for viewers, e.g. after fullscreen */}
+          {!iAmLive && paused && (
+            <button
+              onClick={togglePlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/40"
+              aria-label="Play"
+            >
+              <span className="w-14 h-14 rounded-full bg-white/90 text-black flex items-center justify-center">
+                <Play className="w-6 h-6 fill-current translate-x-0.5" />
+              </span>
+            </button>
+          )}
+
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
           </div>
 
