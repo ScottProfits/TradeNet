@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useCachedFetch } from "@/lib/useCachedFetch";
 import { Users, Plus, Lock, Compass, ChevronRight } from "lucide-react";
@@ -35,6 +36,19 @@ export default function RoomsPage() {
   const mine = mineData ?? [];
   const loading = (discoverLoading || mineLoading) && discover.length === 0 && mine.length === 0;
 
+  const [liveRooms, setLiveRooms] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!userId) return;
+    const load = () =>
+      fetch("/api/rooms/live")
+        .then((r) => (r.ok ? r.json() : { live: [] }))
+        .then((d) => setLiveRooms(new Set(d.live ?? [])))
+        .catch(() => {});
+    load();
+    const t = setInterval(load, 12000);
+    return () => clearInterval(t);
+  }, [userId]);
+
   const mineIds = new Set(mine.map((r) => r.id));
   const browse = discover.filter((r) => !mineIds.has(r.id));
 
@@ -66,7 +80,7 @@ export default function RoomsPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 px-1">Your channels</h2>
           <div className="space-y-2.5">
             {mine.map((r) => (
-              <RoomCard key={r.id} room={r} />
+              <RoomCard key={r.id} room={r} live={liveRooms.has(r.id)} />
             ))}
           </div>
         </section>
@@ -86,7 +100,7 @@ export default function RoomsPage() {
           ) : (
             <div className="space-y-2.5">
               {browse.map((r) => (
-                <RoomCard key={r.id} room={r} showOwner />
+                <RoomCard key={r.id} room={r} showOwner live={liveRooms.has(r.id)} />
               ))}
             </div>
           )}
@@ -96,7 +110,7 @@ export default function RoomsPage() {
   );
 }
 
-function RoomCard({ room, showOwner }: { room: Room; showOwner?: boolean }) {
+function RoomCard({ room, showOwner, live }: { room: Room; showOwner?: boolean; live?: boolean }) {
   const paid = !!room.price_cents && room.price_cents > 0;
   return (
     <Link
@@ -112,6 +126,11 @@ function RoomCard({ room, showOwner }: { room: Room; showOwner?: boolean }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="font-semibold text-[15px] text-white truncate">{room.name}</span>
+          {live && (
+            <span className="flex items-center gap-1 text-[9px] font-bold text-red-500 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+            </span>
+          )}
           {paid && <Lock className="w-3 h-3 text-[var(--green)] shrink-0" />}
           {room.visibility === "unlisted" && (
             <span className="text-[9px] font-semibold uppercase tracking-wide text-[var(--green)] border border-[var(--green)]/30 rounded px-1 py-px shrink-0">

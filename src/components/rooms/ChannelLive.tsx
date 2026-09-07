@@ -27,7 +27,7 @@ export default function ChannelLive({
   const [starting, setStarting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
-  const [paused, setPaused] = useState(false);
+  const [showPlayBtn, setShowPlayBtn] = useState(false); // only for a deliberate pause
   const [preview, setPreview] = useState(false); // broadcaster's own feed peek
   const [micOn, setMicOn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -224,20 +224,19 @@ export default function ChannelLive({
   function togglePlay() {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) { userPausedRef.current = false; v.play().catch(() => {}); }
-    else { userPausedRef.current = true; v.pause(); }
+    if (v.paused) { userPausedRef.current = false; setShowPlayBtn(false); v.play().catch(() => {}); }
+    else { userPausedRef.current = true; setShowPlayBtn(true); v.pause(); }
   }
 
   // A live stream should just keep playing. Only an explicit user pause
   // (togglePlay) stops it — any other pause (fullscreen exit, tab switch,
-  // re-render) gets auto-resumed.
+  // re-render) gets auto-resumed silently (no play-button flash).
   useEffect(() => {
     const v = videoRef.current;
     if (!v || iAmLive) return;
-    const onPlay = () => setPaused(false);
+    const onPlay = () => setShowPlayBtn(false);
     const onPause = () => {
-      setPaused(true);
-      if (!userPausedRef.current) setTimeout(() => v.play().catch(() => {}), 60);
+      if (!userPausedRef.current) v.play().catch(() => {});
     };
     const onFsEnd = () => {
       if (!userPausedRef.current) setTimeout(() => v.play().catch(() => {}), 60);
@@ -318,8 +317,8 @@ export default function ChannelLive({
             className="w-full max-h-[46vh] bg-black object-contain"
           />
 
-          {/* tap-to-play — always reachable for viewers, e.g. after fullscreen */}
-          {paused && (
+          {/* tap-to-play — only after a deliberate pause */}
+          {showPlayBtn && (
             <button
               onClick={togglePlay}
               className="absolute inset-0 flex items-center justify-center bg-black/40"
