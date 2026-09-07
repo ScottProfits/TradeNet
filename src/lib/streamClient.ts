@@ -37,6 +37,17 @@ export async function startBroadcast(
   opts: { title?: string; withMic?: boolean },
   onEnded?: () => void
 ): Promise<Broadcast> {
+  // Ask for the mic FIRST — while the user is still looking at this tab.
+  // (If we did it after the screen picker, the OS prompt would be hidden
+  // behind the screen the broadcaster just started sharing.)
+  let micTrack: MediaStreamTrack | undefined;
+  if (opts.withMic) {
+    try {
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micTrack = mic.getAudioTracks()[0];
+    } catch {}
+  }
+
   const display = await navigator.mediaDevices.getDisplayMedia(SCREEN_CONSTRAINTS);
   const videoTrack = display.getVideoTracks()[0];
   // Sharpness over smoothness for text/charts.
@@ -45,13 +56,8 @@ export async function startBroadcast(
   } catch {}
 
   const outbound = new MediaStream([videoTrack]);
-  let micTrack: MediaStreamTrack | undefined;
-  if (opts.withMic) {
-    try {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micTrack = mic.getAudioTracks()[0];
-      if (micTrack) outbound.addTrack(micTrack);
-    } catch {}
+  if (micTrack) {
+    outbound.addTrack(micTrack);
   } else {
     const sysAudio = display.getAudioTracks()[0];
     if (sysAudio) outbound.addTrack(sysAudio);
