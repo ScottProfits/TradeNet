@@ -402,13 +402,11 @@ export default function ChannelLive({
             </div>
           )}
 
-          {/* Expanded = pure video: only the X stays. Everything else
-              (LIVE tag, title, handle, fullscreen toggle) is hidden. */}
-          {!expanded && (
-            <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-            </div>
-          )}
+          {/* Expanded = near-pure video: LIVE tag + X stay, everything else
+              (title, handle, fullscreen toggle) is hidden. */}
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+          </div>
 
           {!expanded && status.title && (
             <div className="absolute bottom-2 left-2 text-xs text-white/90 bg-black/50 px-2 py-0.5 rounded max-w-[60%] truncate">
