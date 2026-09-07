@@ -47,6 +47,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .maybeSingle();
   if (existing) return new Response("This channel is already live", { status: 409 });
 
+  // One live stream per broadcaster — can't stream to multiple topics at once.
+  const { data: mineLive } = await supabaseAdmin
+    .from("channel_streams")
+    .select("id, last_seen_at")
+    .eq("broadcaster_id", userId)
+    .eq("status", "live");
+  const stillLive = (mineLive ?? []).find(
+    (s) => Date.now() - new Date(s.last_seen_at).getTime() < 45_000
+  );
+  if (stillLive) {
+    return new Response("You're already live in another topic. End that stream first.", { status: 409 });
+  }
+  // Any stale rows of ours — close them so this start isn't blocked.
+  if ((mineLive ?? []).length) {
+    await supabaseAdmin
+      .from("channel_streams")
+      .update({ status: "ended", ended_at: new Date().toISOString() })
+      .eq("broadcaster_id", userId)
+      .eq("status", "live");
+  }
+
   const sessionId = await newSession();
   const mids = [videoMid, ...(audioMid ? [audioMid] : [])];
   const pushed = await pushTracks(sessionId, offer, mids);
