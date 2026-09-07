@@ -219,6 +219,7 @@ export default function ChannelLive({
       });
       broadcastRef.current = b;
       setStarting(false);
+      setPreview(true); // show what's being streamed first; broadcaster can Hide it
       await poll(); // flips to the broadcaster view; the effect below attaches the stream
     } catch (e) {
       const name = (e as { name?: string })?.name;
