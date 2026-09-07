@@ -11,7 +11,7 @@ import { demoNotifications } from "@/lib/demoData";
 
 interface Notification {
   id: string;
-  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "message_like" | "explore" | "announcement" | "repost" | "channel_join" | "channel_join_request";
+  type: "follow" | "like" | "comment" | "reply" | "comment_like" | "message_like" | "explore" | "announcement" | "repost" | "channel_join" | "channel_join_request" | "channel_live";
   read: boolean;
   created_at: string;
   trade_id: string | null;
@@ -38,6 +38,7 @@ function icon(type: string) {
   if (type === "reply") return <CornerDownRight className="w-4 h-4 text-blue-400" />;
   if (type === "repost") return <RepostIcon className="w-4 h-4 text-[var(--green)]" />;
   if (type === "channel_join" || type === "channel_join_request") return <DoorOpen className="w-4 h-4 text-[var(--green)]" />;
+  if (type === "channel_live") return <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />;
   return <MessageCircle className="w-4 h-4 text-blue-400" />;
 }
 
@@ -49,6 +50,7 @@ function message(n: Notification) {
   if (n.type === "follow") return "started following you";
   if (n.type === "explore") return "You're featured on Explore right now";
   if (n.type === "announcement") return "🎉 Tradovate is now live! Connect it in Settings for a Verified P&L badge — read/fill-only, no order placement.";
+  if (n.type === "channel_live") return `is live in ${n.room?.name ? `“${n.room.name}”` : "a channel"}`;
   if (n.type === "channel_join") return `joined ${n.room?.name ? `“${n.room.name}”` : "your channel"}`;
   if (n.type === "channel_join_request") return `asked to join ${n.room?.name ? `“${n.room.name}”` : "your channel"}`;
   if (n.type === "reply") return "replied to you";

@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Radio, X, Loader2, Users } from "lucide-react";
+import { Radio, X, Loader2, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
-import { errorMessage } from "@/lib/apiError";
 
 interface LiveStatus {
   live: boolean;
@@ -27,7 +26,10 @@ export default function ChannelLive({
   const [status, setStatus] = useState<LiveStatus>({ live: false });
   const [starting, setStarting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [muted, setMuted] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewerPcRef = useRef<RTCPeerConnection | null>(null);
   const watchingIdRef = useRef<string | null>(null);
@@ -42,10 +44,12 @@ export default function ChannelLive({
     } catch {}
   }, [channelId]);
 
-  // Reset everything when the topic changes.
+  // Single persistent instance — reset everything whenever the topic changes,
+  // and hard-teardown on unmount.
   useEffect(() => {
     setStatus({ live: false });
     setSecondsLeft(null);
+    setErr(null);
     return () => {
       broadcastRef.current?.stop();
       broadcastRef.current = null;
@@ -84,16 +88,21 @@ export default function ChannelLive({
     if (status.isBroadcaster || broadcastRef.current) return;
     if (status.live && status.streamId && watchingIdRef.current !== status.streamId) {
       watchingIdRef.current = status.streamId;
+      setErr(null);
       watchStream(status.streamId)
         .then(({ pc, stream }) => {
           viewerPcRef.current = pc;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(() => {});
+          const v = videoRef.current;
+          if (v) {
+            v.srcObject = stream;
+            v.muted = true;
+            setMuted(true);
+            v.play().catch(() => {});
           }
         })
         .catch(() => {
           watchingIdRef.current = null;
+          setErr("Couldn't connect to the stream.");
         });
     }
     if (!status.live && watchingIdRef.current) {
@@ -105,20 +114,27 @@ export default function ChannelLive({
   }, [status.live, status.streamId, status.isBroadcaster]);
 
   async function goLive() {
+    setErr(null);
     const title = prompt("Stream title (optional)") ?? undefined;
     const withMic = confirm("Include your microphone? (Cancel = screen audio only)");
     setStarting(true);
     try {
       const b = await startBroadcast(channelId, { title, withMic });
       broadcastRef.current = b;
-      if (videoRef.current) {
-        videoRef.current.srcObject = b.stream;
-        videoRef.current.muted = true;
-        videoRef.current.play().catch(() => {});
+      const v = videoRef.current;
+      if (v) {
+        v.srcObject = b.stream;
+        v.muted = true;
+        v.play().catch(() => {});
       }
       await poll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Could not start the stream");
+      const name = (e as { name?: string })?.name;
+      if (name === "NotAllowedError" || name === "NotReadableError") {
+        setErr("Screen share was blocked or cancelled — tap Go live and pick a window.");
+      } else {
+        setErr(e instanceof Error ? e.message : "Could not start the stream.");
+      }
     }
     setStarting(false);
   }
@@ -133,52 +149,80 @@ export default function ChannelLive({
     if (auto) alert("Your daily streaming time is up. Stream ended.");
   }
 
+  function toggleMute() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+    if (!v.muted) v.play().catch(() => {});
+  }
+
+  function goFullscreen() {
+    const el = wrapRef.current;
+    const v = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen(); // iOS Safari
+  }
+
   const iAmLive = !!broadcastRef.current;
   const showPlayer = iAmLive || (status.live && !status.isBroadcaster);
 
-  // Nothing to show
-  if (!showPlayer && !(canBroadcast && isDesktop && !status.live)) return null;
+  if (!showPlayer && !(canBroadcast && isDesktop)) {
+    return err ? <p className="px-4 py-2 text-xs text-[var(--red)] border-b border-[var(--border)]">{err}</p> : null;
+  }
 
   return (
     <div className="border-b border-[var(--border)] bg-black/40">
       {showPlayer && (
-        <div className="relative">
+        <div ref={wrapRef} className="relative bg-black">
           <video
             ref={videoRef}
             playsInline
-            controls={!iAmLive}
-            className="w-full max-h-[42vh] bg-black object-contain"
+            autoPlay
+            muted={muted}
+            className="w-full max-h-[46vh] bg-black object-contain"
           />
+
           <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
           </div>
+
           {status.title && (
-            <div className="absolute bottom-2 left-2 text-xs text-white/90 bg-black/50 px-2 py-0.5 rounded max-w-[70%] truncate">
+            <div className="absolute bottom-2 left-2 text-xs text-white/90 bg-black/50 px-2 py-0.5 rounded max-w-[60%] truncate">
               {status.title}
             </div>
           )}
+
+          {/* viewer controls */}
+          {!iAmLive && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+              {status.broadcaster && (
+                <span className="text-[11px] text-white/80 bg-black/50 px-2 py-0.5 rounded">@{status.broadcaster.handle}</span>
+              )}
+              <button onClick={toggleMute} className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label={muted ? "Unmute" : "Mute"}>
+                {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              </button>
+              <button onClick={goFullscreen} className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="Fullscreen">
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* broadcaster controls */}
           {iAmLive && (
             <div className="absolute top-2 right-2 flex items-center gap-2">
               {secondsLeft !== null && secondsLeft <= 300 && (
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-yellow-500 text-black">
-                  {fmt(secondsLeft)} left
-                </span>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-yellow-500 text-black">{fmt(secondsLeft)} left</span>
               )}
-              <button
-                onClick={() => endBroadcast()}
-                className="text-[11px] font-semibold px-2 py-1 rounded bg-white text-black flex items-center gap-1"
-              >
+              <button onClick={() => endBroadcast()} className="text-[11px] font-semibold px-2 py-1 rounded bg-white text-black flex items-center gap-1">
                 <X className="w-3 h-3" /> End
               </button>
             </div>
           )}
-          {!iAmLive && status.broadcaster && (
-            <div className="absolute bottom-2 right-2 text-[11px] text-white/80 flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded">
-              <Users className="w-3 h-3" /> @{status.broadcaster.handle}
-            </div>
-          )}
         </div>
       )}
+
+      {err && showPlayer && <p className="px-4 py-1.5 text-xs text-[var(--red)]">{err}</p>}
 
       {canBroadcast && isDesktop && !status.live && !iAmLive && (
         <button
@@ -189,6 +233,9 @@ export default function ChannelLive({
           {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
           {starting ? "Starting…" : "Go live — share your screen"}
         </button>
+      )}
+      {canBroadcast && isDesktop && err && !starting && !showPlayer && (
+        <p className="px-4 pb-2 text-xs text-[var(--red)]">{err}</p>
       )}
     </div>
   );

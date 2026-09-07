@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getMembership, canModerate } from "@/lib/rooms";
 import { newSession, pushTracks, DAILY_STREAM_LIMIT_SECONDS } from "@/lib/realtime";
+import { sendPushToUser } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 // POST /api/channels/:id/stream/start
@@ -65,8 +66,34 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .single();
   if (error) return new Response(error.message, { status: 500 });
 
+  // Tell the channel's members someone just went live.
+  void notifyLive(channel.room_id, id, userId).catch(() => {});
+
   return Response.json({
     streamId: stream.id,
     answer: (pushed.sessionDescription as { sdp: string } | undefined)?.sdp ?? null,
   });
+}
+
+async function notifyLive(roomId: string, channelId: string, broadcasterId: string) {
+  const [{ data: actor }, { data: chan }, { data: members }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("handle").eq("id", broadcasterId).maybeSingle(),
+    supabaseAdmin.from("channels").select("name, slug, room_id").eq("id", channelId).maybeSingle(),
+    supabaseAdmin.from("room_members").select("user_id").eq("room_id", roomId).eq("status", "active"),
+  ]);
+  const { data: room } = await supabaseAdmin.from("rooms").select("slug").eq("id", roomId).maybeSingle();
+  const targets = (members ?? []).map((m) => m.user_id).filter((u) => u !== broadcasterId);
+  if (!targets.length) return;
+
+  await supabaseAdmin.from("notifications").insert(
+    targets.map((u) => ({ user_id: u, actor_id: broadcasterId, type: "channel_live", room_id: roomId }))
+  );
+  const url = room?.slug ? `/rooms/${room.slug}?c=${channelId}` : "/rooms";
+  for (const u of targets) {
+    void sendPushToUser(u, {
+      title: "🔴 Live now",
+      body: `@${actor?.handle ?? "someone"} is live in ${chan?.name ?? "a channel"}`,
+      url,
+    });
+  }
 }

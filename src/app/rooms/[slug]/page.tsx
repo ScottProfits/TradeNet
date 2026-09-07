@@ -615,7 +615,9 @@ function RoomPageInner() {
 
           {/* Messages */}
           <div className={`${showChat ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0 min-h-0`}>
-            {activeChannel && <ChannelLive key={activeChannel} channelId={activeChannel} canBroadcast={isMod} />}
+            {/* One persistent instance — it resets internally on topic change.
+                (Keying it caused it to stack instead of swap in Safari.) */}
+            <ChannelLive channelId={activeChannel ?? ""} canBroadcast={isMod && !!activeChannel} />
             <div key={activeChannel} ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && <p className="text-center text-gray-600 text-sm pt-8">No messages yet — say hi.</p>}
               {messages.map((m) => {
