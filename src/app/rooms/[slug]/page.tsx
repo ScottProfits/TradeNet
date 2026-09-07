@@ -471,6 +471,14 @@ function RoomPageInner() {
     }
   }
 
+  function backToTopics() {
+    setShowChat(false);
+    // Drop ?c= so a refresh on the topic list stays on the list.
+    if (typeof window !== "undefined" && room) {
+      window.history.replaceState(null, "", `/rooms/${room.slug}`);
+    }
+  }
+
   async function shareChannel() {
     const url = `${window.location.origin}/rooms/${room!.slug}`;
     try {
@@ -493,7 +501,7 @@ function RoomPageInner() {
       <div className="glass-card rounded-t-2xl pl-4 pr-14 md:pr-4 py-3 flex items-center gap-3 flex-shrink-0">
         {mobileChat ? (
           <>
-            <button onClick={() => setShowChat(false)} className="md:hidden text-gray-400 hover:text-white -ml-1">
+            <button onClick={backToTopics} className="md:hidden text-gray-400 hover:text-white -ml-1">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex-1 min-w-0 flex items-center gap-1.5">
