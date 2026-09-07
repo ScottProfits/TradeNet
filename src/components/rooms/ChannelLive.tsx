@@ -402,18 +402,22 @@ export default function ChannelLive({
             </div>
           )}
 
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-          </div>
+          {/* Expanded = pure video: only the X stays. Everything else
+              (LIVE tag, title, handle, fullscreen toggle) is hidden. */}
+          {!expanded && (
+            <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+            </div>
+          )}
 
-          {status.title && (
+          {!expanded && status.title && (
             <div className="absolute bottom-2 left-2 text-xs text-white/90 bg-black/50 px-2 py-0.5 rounded max-w-[60%] truncate">
               {status.title}
             </div>
           )}
 
           {/* viewer controls */}
-          {!iAmLive && (
+          {!iAmLive && !expanded && (
             <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
               {status.broadcaster && (
                 <span className="text-[11px] text-white/80 bg-black/50 px-2 py-0.5 rounded">@{status.broadcaster.handle}</span>
@@ -425,6 +429,17 @@ export default function ChannelLive({
                 <Maximize2 className="w-3.5 h-3.5" />
               </button>
             </div>
+          )}
+
+          {/* expanded: keep just a mute toggle, bottom-right, out of the way */}
+          {!iAmLive && expanded && (
+            <button
+              onClick={toggleMute}
+              className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center"
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
           )}
 
           {/* broadcaster controls */}
