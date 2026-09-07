@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play } from "lucide-react";
+import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Mic, MicOff } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
 
 interface LiveStatus {
@@ -29,7 +29,9 @@ export default function ChannelLive({
   const [muted, setMuted] = useState(true);
   const [paused, setPaused] = useState(false);
   const [preview, setPreview] = useState(false); // broadcaster's own feed peek
+  const [micOn, setMicOn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const micTrackRef = useRef<MediaStreamTrack | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -61,6 +63,8 @@ export default function ChannelLive({
         fetch(`/api/channels/${channelId}/stream`, { method: "DELETE", keepalive: true }).catch(() => {});
       }
       broadcastRef.current = null;
+      micTrackRef.current?.stop();
+      micTrackRef.current = null;
       viewerPcRef.current?.close();
       viewerPcRef.current = null;
       watchingIdRef.current = null;
@@ -150,13 +154,31 @@ export default function ChannelLive({
     }
   });
 
+  // Its own gesture — acquire the mic BEFORE "Go live" so getDisplayMedia
+  // can be the first call in the go-live click (Safari requirement).
+  async function toggleMic() {
+    setErr(null);
+    if (micOn || micTrackRef.current) {
+      micTrackRef.current?.stop();
+      micTrackRef.current = null;
+      setMicOn(false);
+      return;
+    }
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micTrackRef.current = s.getAudioTracks()[0] ?? null;
+      setMicOn(!!micTrackRef.current);
+    } catch {
+      setErr("Microphone access is off. Enable it in Settings, or go live without it.");
+    }
+  }
+
   async function goLive() {
     setErr(null);
     const title = prompt("Stream title (optional)") ?? undefined;
-    const withMic = confirm("Include your microphone? (Cancel = screen audio only)");
     setStarting(true);
     try {
-      const b = await startBroadcast(channelId, { title, withMic }, () => {
+      const b = await startBroadcast(channelId, { title, micTrack: micTrackRef.current }, () => {
         // native "Stop sharing" → tear our UI down too
         broadcastRef.current = null;
         setSecondsLeft(null);
@@ -181,6 +203,9 @@ export default function ChannelLive({
   async function endBroadcast(auto = false) {
     broadcastRef.current?.stop();
     broadcastRef.current = null;
+    micTrackRef.current?.stop();
+    micTrackRef.current = null;
+    setMicOn(false);
     setSecondsLeft(null);
     await fetch(`/api/channels/${channelId}/stream`, { method: "DELETE" }).catch(() => {});
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -348,14 +373,26 @@ export default function ChannelLive({
       {err && showPlayer && <p className="px-4 py-1.5 text-xs text-[var(--red)]">{err}</p>}
 
       {canBroadcast && isDesktop && !status.live && !iAmLive && (
-        <button
-          onClick={goLive}
-          disabled={starting}
-          className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-        >
-          {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
-          {starting ? "Starting…" : "Go live — share your screen"}
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={goLive}
+            disabled={starting}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+          >
+            {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
+            {starting ? "Starting…" : "Go live — share your screen"}
+          </button>
+          <button
+            onClick={toggleMic}
+            title={micOn ? "Mic on — will be included" : "Turn mic on before going live"}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-l border-[var(--border)] transition-colors ${
+              micOn ? "text-[var(--green)]" : "text-gray-500 hover:text-white"
+            }`}
+          >
+            {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+            {micOn ? "Mic on" : "Mic"}
+          </button>
+        </div>
       )}
       {canBroadcast && isDesktop && err && !starting && !showPlayer && (
         <p className="px-4 pb-2 text-xs text-[var(--red)]">{err}</p>

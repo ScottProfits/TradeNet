@@ -97,7 +97,12 @@ function RoomPageInner() {
   const [membership, setMembership] = useState<Membership | null>(cachedShell?.membership ?? null);
   const [liveChannels, setLiveChannels] = useState<Set<string>>(new Set());
   const [canParticipate, setCanParticipate] = useState(cachedShell?.canParticipate ?? false);
-  const [activeChannel, setActiveChannel] = useState<string | null>(cachedShell?.channels?.[0]?.id ?? null);
+  const [activeChannel, setActiveChannel] = useState<string | null>(() => {
+    const wanted = searchParams.get("c");
+    if (wanted && cachedShell?.channels?.some((c) => c.id === wanted)) return wanted;
+    const desktop = typeof window !== "undefined" && window.innerWidth >= 768;
+    return desktop ? (cachedShell?.channels?.[0]?.id ?? null) : null;
+  });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -155,7 +160,15 @@ function RoomPageInner() {
     setCanParticipate(data.canParticipate);
     setPendingApproval(data.membership?.status === "pending");
     const wanted = searchParams.get("c");
-    setActiveChannel((prev) => prev ?? (data.channels.find((c: Channel) => c.id === wanted)?.id ?? data.channels[0]?.id ?? null));
+    // Only auto-open a topic if the URL points at one, or on desktop where the
+    // two-pane layout needs a selection. Mobile with no ?c= stays on the list.
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
+    setActiveChannel((prev) => {
+      if (prev) return prev;
+      const fromUrl = data.channels.find((c: Channel) => c.id === wanted)?.id;
+      if (fromUrl) return fromUrl;
+      return isDesktop ? (data.channels[0]?.id ?? null) : null;
+    });
     setLoading(false);
   }, [slug, searchParams, userId, isLoaded]);
 

@@ -31,24 +31,19 @@ async function iceServers(): Promise<RTCIceServer[]> {
   }
 }
 
-/** Capture the screen (+ mic) and publish it as a live stream for a channel. */
+/**
+ * Capture the screen and publish it as a live stream for a channel.
+ * `micTrack` (if given) must already be acquired on its own user gesture —
+ * Safari requires getDisplayMedia to be the FIRST call in this gesture.
+ */
 export async function startBroadcast(
   channelId: string,
-  opts: { title?: string; withMic?: boolean },
+  opts: { title?: string; micTrack?: MediaStreamTrack | null },
   onEnded?: () => void
 ): Promise<Broadcast> {
-  // Ask for the mic FIRST — while the user is still looking at this tab.
-  // (If we did it after the screen picker, the OS prompt would be hidden
-  // behind the screen the broadcaster just started sharing.)
-  let micTrack: MediaStreamTrack | undefined;
-  if (opts.withMic) {
-    try {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micTrack = mic.getAudioTracks()[0];
-    } catch {}
-  }
-
+  // MUST be first — Safari rejects getDisplayMedia after any awaited prompt.
   const display = await navigator.mediaDevices.getDisplayMedia(SCREEN_CONSTRAINTS);
+  const micTrack = opts.micTrack ?? undefined;
   const videoTrack = display.getVideoTracks()[0];
   // Sharpness over smoothness for text/charts.
   try {
