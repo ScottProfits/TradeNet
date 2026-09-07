@@ -14,9 +14,9 @@ function headers() {
   return { Authorization: `Bearer ${APP_SECRET}`, "Content-Type": "application/json" };
 }
 
-async function cf(path: string, body?: unknown) {
+async function cf(path: string, body?: unknown, method: "POST" | "PUT" = "POST") {
   const res = await fetch(`${BASE}/apps/${APP_ID}${path}`, {
-    method: "POST",
+    method,
     headers: headers(),
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -55,19 +55,18 @@ export function pullTracks(
   });
 }
 
-/** Apply a renegotiation answer/offer for an existing session. */
+/** Apply a renegotiation answer/offer for an existing session. (PUT) */
 export function renegotiate(sessionId: string, sdp: string, type: "answer" | "offer") {
-  return cf(`/sessions/${sessionId}/renegotiate`, {
-    sessionDescription: { type, sdp },
-  });
+  return cf(`/sessions/${sessionId}/renegotiate`, { sessionDescription: { type, sdp } }, "PUT");
 }
 
-/** Close a track (used to tear a broadcaster stream down). */
+/** Close tracks (used to tear a broadcaster stream down). (PUT) */
 export function closeTracks(sessionId: string, trackNames: string[]) {
-  return cf(`/sessions/${sessionId}/tracks/close`, {
-    tracks: trackNames.map((t) => ({ trackName: t })),
-    force: true,
-  });
+  return cf(
+    `/sessions/${sessionId}/tracks/close`,
+    { tracks: trackNames.map((t) => ({ trackName: t })), force: true },
+    "PUT"
+  );
 }
 
 /** Short-lived TURN credentials for the browser's RTCPeerConnection. */
