@@ -386,17 +386,20 @@ export default function ChannelLive({
               the video to reveal the controls. Tapping the video never
               pauses; only this button does. */}
           {!iAmLive && (paused || controlsShown) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            <div
+              onClick={tapVideo}
               className="absolute inset-0 flex items-center justify-center bg-black/30"
-              aria-label={paused ? "Play" : "Pause"}
             >
-              <span className="w-16 h-16 rounded-full bg-black/55 text-white flex items-center justify-center">
+              <button
+                onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                aria-label={paused ? "Play" : "Pause"}
+                className="w-16 h-16 rounded-full bg-black/55 text-white flex items-center justify-center"
+              >
                 {paused
                   ? <Play className="w-7 h-7 fill-current translate-x-0.5" />
                   : <Pause className="w-7 h-7 fill-current" />}
-              </span>
-            </button>
+              </button>
+            </div>
           )}
 
           <div className="absolute top-2 left-2 flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white pointer-events-none">
