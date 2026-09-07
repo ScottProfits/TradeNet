@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Mic, MicOff } from "lucide-react";
+import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Pause, Mic, MicOff } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
 
 interface LiveStatus {
@@ -28,8 +28,11 @@ export default function ChannelLive({
   const [starting, setStarting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
-  const [showPlayBtn, setShowPlayBtn] = useState(false); // only for a deliberate pause
+  const [paused, setPaused] = useState(false); // reflects a deliberate user pause
+  const [controlsShown, setControlsShown] = useState(false); // tap toggles the control overlay
   const [expanded, setExpanded] = useState(false);
+  const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fsRef = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState(false); // broadcaster's own feed peek
   const [micOn, setMicOn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -249,20 +252,60 @@ export default function ChannelLive({
     if (!v.muted) v.play().catch(() => {});
   }
 
+  // Tapping the video only shows/hides the controls — it never pauses.
+  // Pausing happens only when the user taps the play/pause button itself.
+  function tapVideo() {
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    setControlsShown((s) => {
+      const next = !s;
+      if (next) controlsTimer.current = setTimeout(() => setControlsShown(false), 3500);
+      return next;
+    });
+  }
+
   function togglePlay() {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) { userPausedRef.current = false; setShowPlayBtn(false); v.play().catch(() => {}); }
-    else { userPausedRef.current = true; setShowPlayBtn(true); v.pause(); }
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    if (v.paused) {
+      userPausedRef.current = false;
+      setPaused(false);
+      setControlsShown(false);
+      v.play().catch(() => {});
+    } else {
+      userPausedRef.current = true;
+      setPaused(true);
+      setControlsShown(true);
+      v.pause();
+    }
   }
+
+  // Enter/exit real fullscreen alongside the CSS overlay. On iOS Safari
+  // requestFullscreen on a <div> is a no-op — the overlay alone covers it.
+  useEffect(() => {
+    const el = fsRef.current;
+    if (expanded && el && !document.fullscreenElement) {
+      const rq =
+        el.requestFullscreen ||
+        (el as unknown as { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen;
+      Promise.resolve(rq?.call(el)).catch(() => {});
+    } else if (!expanded && document.fullscreenElement) {
+      Promise.resolve(document.exitFullscreen?.()).catch(() => {});
+    }
+    const onFsChange = () => {
+      if (!document.fullscreenElement) setExpanded(false);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, [expanded]);
 
   // A live stream should just keep playing. Only an explicit user pause
   // (togglePlay) stops it — any other pause gets auto-resumed silently.
   useEffect(() => {
     const v = videoRef.current;
     if (!v || iAmLive) return;
-    const onPlay = () => setShowPlayBtn(false);
-    const onPause = () => { if (!userPausedRef.current) v.play().catch(() => {}); };
+    const onPlay = () => setPaused(false);
+    const onPause = () => { if (!userPausedRef.current) v.play().catch(() => {}); else setPaused(true); };
     const onVisible = () => {
       if (document.visibilityState === "visible" && !userPausedRef.current) v.play().catch(() => {});
     };
@@ -320,7 +363,7 @@ export default function ChannelLive({
             playsInline
             autoPlay
             muted={muted}
-            onClick={togglePlay}
+            onClick={tapVideo}
             className={
               expanded
                 ? "max-h-full max-w-full w-auto h-auto bg-black object-contain"
@@ -338,15 +381,19 @@ export default function ChannelLive({
             </button>
           )}
 
-          {/* tap-to-play — only after a deliberate pause */}
-          {showPlayBtn && (
+          {/* Play/pause — shown only while paused or when the viewer tapped
+              the video to reveal the controls. Tapping the video never
+              pauses; only this button does. */}
+          {!iAmLive && (paused || controlsShown) && (
             <button
-              onClick={togglePlay}
-              className="absolute inset-0 flex items-center justify-center bg-black/40"
-              aria-label="Play"
+              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+              className="absolute inset-0 flex items-center justify-center bg-black/30"
+              aria-label={paused ? "Play" : "Pause"}
             >
-              <span className="w-14 h-14 rounded-full bg-white/90 text-black flex items-center justify-center">
-                <Play className="w-6 h-6 fill-current translate-x-0.5" />
+              <span className="w-16 h-16 rounded-full bg-black/55 text-white flex items-center justify-center">
+                {paused
+                  ? <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                  : <Pause className="w-7 h-7 fill-current" />}
               </span>
             </button>
           )}
@@ -396,6 +443,7 @@ export default function ChannelLive({
         (expanded && mounted
           ? createPortal(
               <div
+                ref={fsRef}
                 className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
                 style={{ height: "100dvh", width: "100vw" }}
               >
