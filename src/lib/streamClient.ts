@@ -34,7 +34,8 @@ async function iceServers(): Promise<RTCIceServer[]> {
 /** Capture the screen (+ mic) and publish it as a live stream for a channel. */
 export async function startBroadcast(
   channelId: string,
-  opts: { title?: string; withMic?: boolean }
+  opts: { title?: string; withMic?: boolean },
+  onEnded?: () => void
 ): Promise<Broadcast> {
   const display = await navigator.mediaDevices.getDisplayMedia(SCREEN_CONSTRAINTS);
   const videoTrack = display.getVideoTracks()[0];
@@ -92,18 +93,30 @@ export async function startBroadcast(
   const { streamId, answer } = await res.json();
   await pc.setRemoteDescription({ type: "answer", sdp: answer });
 
+  let ended = false;
   const cleanup = () => {
     pc.close();
     display.getTracks().forEach((t) => t.stop());
     micTrack?.stop();
   };
-  // If the user hits the browser's native "Stop sharing", end the stream.
-  videoTrack.addEventListener("ended", () => {
+  // If the user hits the browser's native "Stop sharing" (or the track dies
+  // any other way), end the stream everywhere.
+  const endEverywhere = () => {
+    if (ended) return;
+    ended = true;
     fetch(`/api/channels/${channelId}/stream`, { method: "DELETE" }).catch(() => {});
     cleanup();
+    onEnded?.();
+  };
+  // Any of the shared tracks ending (native "Stop sharing", closed window,
+  // revoked permission) tears the whole stream down.
+  display.getTracks().forEach((t) => t.addEventListener("ended", endEverywhere));
+  micTrack?.addEventListener("ended", endEverywhere);
+  pc.addEventListener("connectionstatechange", () => {
+    if (pc.connectionState === "failed" || pc.connectionState === "closed") endEverywhere();
   });
 
-  return { pc, stream: outbound, streamId, stop: cleanup };
+  return { pc, stream: outbound, streamId, stop: () => { ended = true; cleanup(); } };
 }
 
 /** Subscribe to a live channel stream and get a MediaStream to play. */

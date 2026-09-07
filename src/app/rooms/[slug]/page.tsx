@@ -95,6 +95,7 @@ function RoomPageInner() {
   const [room, setRoom] = useState<Room | null>(cachedShell?.room ?? null);
   const [channels, setChannels] = useState<Channel[]>(cachedShell?.channels ?? []);
   const [membership, setMembership] = useState<Membership | null>(cachedShell?.membership ?? null);
+  const [liveChannels, setLiveChannels] = useState<Set<string>>(new Set());
   const [canParticipate, setCanParticipate] = useState(cachedShell?.canParticipate ?? false);
   const [activeChannel, setActiveChannel] = useState<string | null>(cachedShell?.channels?.[0]?.id ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -184,6 +185,19 @@ function RoomPageInner() {
     const t = setInterval(() => fetchMessages(activeChannel, { silent: true }), 4000);
     return () => clearInterval(t);
   }, [activeChannel, canParticipate, fetchMessages]);
+
+  // Which topics have a live stream — for the 🔴 badge in the topic list.
+  useEffect(() => {
+    if (!room || !canParticipate) return;
+    const load = () =>
+      fetch(`/api/rooms/${room.id}/live`)
+        .then((r) => (r.ok ? r.json() : { live: [] }))
+        .then((d) => setLiveChannels(new Set(d.live ?? [])))
+        .catch(() => {});
+    load();
+    const t = setInterval(load, 8000);
+    return () => clearInterval(t);
+  }, [room, canParticipate]);
 
   // "Who's typing" — a tighter poll, only while the chat pane is on screen.
   useEffect(() => {
@@ -595,6 +609,11 @@ function RoomPageInner() {
                       {c.mods_only_posts ? <Megaphone className="w-3.5 h-3.5" /> : <Hash className="w-3.5 h-3.5" />}
                     </span>
                     <span className="truncate flex-1 text-left font-medium">{c.name}</span>
+                    {liveChannels.has(c.id) && (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+                      </span>
+                    )}
                     <ChevronLeft className="w-4 h-4 rotate-180 text-gray-600 md:hidden" />
                   </button>
                 );

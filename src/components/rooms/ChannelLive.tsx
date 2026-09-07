@@ -48,17 +48,35 @@ export default function ChannelLive({
   }, [channelId]);
 
   // Single persistent instance — reset everything whenever the topic changes,
-  // and hard-teardown on unmount.
+  // and hard-teardown on unmount (also end the broadcast, don't orphan it).
   useEffect(() => {
     setStatus({ live: false });
     setSecondsLeft(null);
     setErr(null);
     return () => {
-      broadcastRef.current?.stop();
+      if (broadcastRef.current) {
+        broadcastRef.current.stop();
+        fetch(`/api/channels/${channelId}/stream`, { method: "DELETE", keepalive: true }).catch(() => {});
+      }
       broadcastRef.current = null;
       viewerPcRef.current?.close();
       viewerPcRef.current = null;
       watchingIdRef.current = null;
+    };
+  }, [channelId]);
+
+  // Tab close / navigate away while broadcasting → end the stream server-side.
+  useEffect(() => {
+    const end = () => {
+      if (!broadcastRef.current) return;
+      broadcastRef.current.stop();
+      fetch(`/api/channels/${channelId}/stream`, { method: "DELETE", keepalive: true }).catch(() => {});
+    };
+    window.addEventListener("pagehide", end);
+    window.addEventListener("beforeunload", end);
+    return () => {
+      window.removeEventListener("pagehide", end);
+      window.removeEventListener("beforeunload", end);
     };
   }, [channelId]);
 
@@ -122,7 +140,14 @@ export default function ChannelLive({
     const withMic = confirm("Include your microphone? (Cancel = screen audio only)");
     setStarting(true);
     try {
-      const b = await startBroadcast(channelId, { title, withMic });
+      const b = await startBroadcast(channelId, { title, withMic }, () => {
+        // native "Stop sharing" → tear our UI down too
+        broadcastRef.current = null;
+        setSecondsLeft(null);
+        if (videoRef.current) videoRef.current.srcObject = null;
+        setStatus({ live: false });
+        poll();
+      });
       broadcastRef.current = b;
       const v = videoRef.current;
       if (v) {
