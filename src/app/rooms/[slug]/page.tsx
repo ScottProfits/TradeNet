@@ -113,7 +113,9 @@ function RoomPageInner() {
 
   // Mobile is master–detail like Discord: the topic list and the chat are
   // separate screens. Desktop shows both side by side.
-  const [showChat, setShowChat] = useState(false);
+  // Start in the chat view (mobile) if the URL points at a topic — so a
+  // pull-to-refresh lands back in the topic, not the topic list.
+  const [showChat, setShowChat] = useState(() => !!searchParams.get("c"));
 
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -450,6 +452,10 @@ function RoomPageInner() {
     if (id !== activeChannel) setMessages([]); // avoid a 1-frame flash of the old topic's messages
     setActiveChannel(id);
     setShowChat(true);
+    // Keep the topic in the URL so a pull-to-refresh reloads back into it.
+    if (typeof window !== "undefined" && room) {
+      window.history.replaceState(null, "", `/rooms/${room.slug}?c=${id}`);
+    }
   }
 
   async function shareChannel() {

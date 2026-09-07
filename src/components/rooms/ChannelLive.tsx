@@ -34,6 +34,7 @@ export default function ChannelLive({
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewerPcRef = useRef<RTCPeerConnection | null>(null);
   const watchingIdRef = useRef<string | null>(null);
+  const userPausedRef = useRef(false);
 
   const isDesktop = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
   const iAmLive = !!broadcastRef.current;
@@ -109,6 +110,7 @@ export default function ChannelLive({
     if (status.isBroadcaster || broadcastRef.current) return;
     if (status.live && status.streamId && watchingIdRef.current !== status.streamId) {
       watchingIdRef.current = status.streamId;
+      userPausedRef.current = false;
       setErr(null);
       watchStream(status.streamId)
         .then(({ pc, stream }) => {
@@ -118,7 +120,8 @@ export default function ChannelLive({
             v.srcObject = stream;
             v.muted = true;
             setMuted(true);
-            v.play().catch(() => {});
+            const tryPlay = (n = 0) => v.play().catch(() => { if (n < 5) setTimeout(() => tryPlay(n + 1), 200); });
+            tryPlay();
           }
         })
         .catch(() => {
@@ -188,29 +191,42 @@ export default function ChannelLive({
   function togglePlay() {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) v.play().catch(() => {});
-    else v.pause();
+    if (v.paused) { userPausedRef.current = false; v.play().catch(() => {}); }
+    else { userPausedRef.current = true; v.pause(); }
   }
 
-  // Keep the play/pause UI in sync with the element, and resume after the
-  // viewer exits fullscreen (Safari leaves it paused).
+  // A live stream should just keep playing. Only an explicit user pause
+  // (togglePlay) stops it — any other pause (fullscreen exit, tab switch,
+  // re-render) gets auto-resumed.
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || iAmLive) return;
     const onPlay = () => setPaused(false);
-    const onPause = () => setPaused(true);
-    const onFsEnd = () => { setTimeout(() => v.play().catch(() => {}), 50); };
+    const onPause = () => {
+      setPaused(true);
+      if (!userPausedRef.current) setTimeout(() => v.play().catch(() => {}), 60);
+    };
+    const onFsEnd = () => {
+      if (!userPausedRef.current) setTimeout(() => v.play().catch(() => {}), 60);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !userPausedRef.current) v.play().catch(() => {});
+    };
     v.addEventListener("play", onPlay);
     v.addEventListener("pause", onPause);
     v.addEventListener("webkitendfullscreen", onFsEnd);
+    v.addEventListener("webkitpresentationmodechanged", onFsEnd);
     document.addEventListener("fullscreenchange", onFsEnd);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
       v.removeEventListener("webkitendfullscreen", onFsEnd);
+      v.removeEventListener("webkitpresentationmodechanged", onFsEnd);
       document.removeEventListener("fullscreenchange", onFsEnd);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [showPlayer]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [showPlayer, iAmLive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function goFullscreen() {
     const el = wrapRef.current;
