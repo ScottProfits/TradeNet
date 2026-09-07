@@ -28,6 +28,7 @@ export default function ChannelLive({
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
   const [paused, setPaused] = useState(false);
+  const [preview, setPreview] = useState(false); // broadcaster's own feed peek
   const [err, setErr] = useState<string | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -137,6 +138,18 @@ export default function ChannelLive({
     }
   }, [status.live, status.streamId, status.isBroadcaster]);
 
+  // Attach the broadcaster's own stream once the (collapsible) preview video
+  // is in the DOM.
+  useEffect(() => {
+    const v = videoRef.current;
+    const b = broadcastRef.current;
+    if (v && b && v.srcObject !== b.stream) {
+      v.srcObject = b.stream;
+      v.muted = true;
+      v.play().catch(() => {});
+    }
+  });
+
   async function goLive() {
     setErr(null);
     const title = prompt("Stream title (optional)") ?? undefined;
@@ -152,13 +165,8 @@ export default function ChannelLive({
         poll();
       });
       broadcastRef.current = b;
-      const v = videoRef.current;
-      if (v) {
-        v.srcObject = b.stream;
-        v.muted = true;
-        v.play().catch(() => {});
-      }
-      await poll();
+      setStarting(false);
+      await poll(); // flips to the broadcaster view; the effect below attaches the stream
     } catch (e) {
       const name = (e as { name?: string })?.name;
       if (name === "NotAllowedError" || name === "NotReadableError") {
@@ -239,6 +247,39 @@ export default function ChannelLive({
     return err ? <p className="px-4 py-2 text-xs text-[var(--red)] border-b border-[var(--border)]">{err}</p> : null;
   }
 
+  // Broadcaster: slim bar so the chat stays visible while you stream. Your
+  // own screen is right in front of you — a small collapsible preview is
+  // enough to sanity-check the feed.
+  if (iAmLive) {
+    return (
+      <div className="border-b border-[var(--border)] bg-black/40">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded bg-red-600 text-white">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+          </span>
+          <span className="text-xs text-gray-400 truncate">You&apos;re streaming — chat is below</span>
+          {secondsLeft !== null && secondsLeft <= 300 && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-yellow-500 text-black shrink-0">{fmt(secondsLeft)} left</span>
+          )}
+          <button onClick={() => setPreview((p) => !p)} className="ml-auto text-xs text-gray-400 hover:text-white shrink-0">
+            {preview ? "Hide" : "Preview"}
+          </button>
+          <button onClick={() => endBroadcast()} className="text-[11px] font-semibold px-2 py-1 rounded bg-white text-black flex items-center gap-1 shrink-0">
+            <X className="w-3 h-3" /> End
+          </button>
+        </div>
+        <video
+          ref={videoRef}
+          playsInline
+          autoPlay
+          muted
+          className={`w-full bg-black object-contain ${preview ? "max-h-40" : "h-0"}`}
+        />
+        {err && <p className="px-3 pb-2 text-xs text-[var(--red)]">{err}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="border-b border-[var(--border)] bg-black/40">
       {showPlayer && (
@@ -248,12 +289,12 @@ export default function ChannelLive({
             playsInline
             autoPlay
             muted={muted}
-            onClick={iAmLive ? undefined : togglePlay}
+            onClick={togglePlay}
             className="w-full max-h-[46vh] bg-black object-contain"
           />
 
           {/* tap-to-play — always reachable for viewers, e.g. after fullscreen */}
-          {!iAmLive && paused && (
+          {paused && (
             <button
               onClick={togglePlay}
               className="absolute inset-0 flex items-center justify-center bg-black/40"
