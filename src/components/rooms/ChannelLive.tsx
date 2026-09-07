@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Mic, MicOff } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
 
@@ -32,11 +33,14 @@ export default function ChannelLive({
   const [preview, setPreview] = useState(false); // broadcaster's own feed peek
   const [micOn, setMicOn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const micTrackRef = useRef<MediaStreamTrack | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewerPcRef = useRef<RTCPeerConnection | null>(null);
+  const viewerStreamRef = useRef<MediaStream | null>(null);
   const watchingIdRef = useRef<string | null>(null);
   const userPausedRef = useRef(false);
 
@@ -122,6 +126,7 @@ export default function ChannelLive({
       watchStream(status.streamId)
         .then(({ pc, stream }) => {
           viewerPcRef.current = pc;
+          viewerStreamRef.current = stream;
           const v = videoRef.current;
           if (v) {
             v.srcObject = stream;
@@ -155,6 +160,27 @@ export default function ChannelLive({
       v.play().catch(() => {});
     }
   });
+
+  // Lock the page behind the fullscreen overlay.
+  useEffect(() => {
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [expanded]);
+
+  // Toggling the CSS overlay re-parents the <video> in the DOM, which drops
+  // its srcObject — reattach the live stream and keep it playing.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const s = viewerStreamRef.current ?? broadcastRef.current?.stream ?? null;
+    if (s && v.srcObject !== s) {
+      v.srcObject = s;
+      v.muted = iAmLive ? true : muted;
+      v.play().catch(() => {});
+    }
+  }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Its own gesture — acquire the mic BEFORE "Go live" so getDisplayMedia
   // can be the first call in the go-live click (Safari requirement).
@@ -287,24 +313,19 @@ export default function ChannelLive({
     );
   }
 
-  return (
-    <div className="border-b border-[var(--border)] bg-black/40">
-      {showPlayer && (
-        <div
-          ref={wrapRef}
-          className={
-            expanded
-              ? "fixed inset-0 z-[60] bg-black flex items-center justify-center"
-              : "relative bg-black"
-          }
-        >
+  const playerInner = (
+    <>
           <video
             ref={videoRef}
             playsInline
             autoPlay
             muted={muted}
             onClick={togglePlay}
-            className={`w-full bg-black object-contain ${expanded ? "max-h-full" : "max-h-[46vh]"}`}
+            className={
+              expanded
+                ? "max-h-full max-w-full w-auto h-auto bg-black object-contain"
+                : "w-full bg-black object-contain max-h-[46vh]"
+            }
           />
 
           {expanded && (
@@ -366,8 +387,27 @@ export default function ChannelLive({
               </button>
             </div>
           )}
-        </div>
-      )}
+    </>
+  );
+
+  return (
+    <div className="border-b border-[var(--border)] bg-black/40">
+      {showPlayer &&
+        (expanded && mounted
+          ? createPortal(
+              <div
+                className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+                style={{ height: "100dvh", width: "100vw" }}
+              >
+                {playerInner}
+              </div>,
+              document.body
+            )
+          : (
+            <div ref={wrapRef} className="relative bg-black">
+              {playerInner}
+            </div>
+          ))}
 
       {err && showPlayer && <p className="px-4 py-1.5 text-xs text-[var(--red)]">{err}</p>}
 
