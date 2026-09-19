@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, MoreHorizontal, Ban, Flag } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, MoreHorizontal, Ban, Flag, Hash } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
@@ -642,42 +642,48 @@ function ProfilePageInner() {
           const active = SOCIALS.filter((s) => profile[s.key as keyof typeof profile]);
           if (!active.length) return null;
           return (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {active.map((s) => {
-                const val = profile[s.key as keyof typeof profile] as string;
-                const handle = extractHandle(val);
-                const label = s.prefix ? `${s.prefix}/${handle.replace(/^@/, "")}` : handle;
-                return (
-                  <a key={s.key} href={s.buildUrl(val)} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-[var(--green)]/30 hover:bg-[var(--green)]/5 text-gray-400 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors">
-                    <span>{s.icon}</span>
-                    {label}
-                  </a>
-                );
-              })}
+            <div className="mt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 mb-1.5">Links</p>
+              <div className="flex flex-wrap gap-2">
+                {active.map((s) => {
+                  const val = profile[s.key as keyof typeof profile] as string;
+                  const handle = extractHandle(val);
+                  const label = s.prefix ? `${s.prefix}/${handle.replace(/^@/, "")}` : handle;
+                  return (
+                    <a key={s.key} href={s.buildUrl(val)} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-white/25 text-gray-400 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors">
+                      <span>{s.icon}</span>
+                      {label}
+                    </a>
+                  );
+                })}
+              </div>
             </div>
           );
         })()}
 
         {/* Channels this trader runs */}
         {data.channels && data.channels.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {data.channels.map((ch) => {
-              const paid = !!ch.price_cents && ch.price_cents > 0;
-              return (
-                <Link
-                  key={ch.id}
-                  href={`/rooms/${ch.slug}`}
-                  className="flex items-center gap-1.5 bg-white/5 border border-white/10 hover:border-[var(--green)]/30 hover:bg-[var(--green)]/5 text-gray-300 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
-                >
-                  <span>💬</span>
-                  {ch.name}
-                  <span className={paid ? "text-[var(--green)]" : "text-gray-500"}>
-                    · {paid ? `$${(ch.price_cents! / 100).toFixed(ch.price_cents! % 100 ? 2 : 0)}/mo` : "Free"}
-                  </span>
-                </Link>
-              );
-            })}
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 mb-1.5">Ryzr channels</p>
+            <div className="flex flex-wrap gap-2">
+              {data.channels.map((ch) => {
+                const paid = !!ch.price_cents && ch.price_cents > 0;
+                return (
+                  <Link
+                    key={ch.id}
+                    href={`/rooms/${ch.slug}`}
+                    className="flex items-center gap-1.5 bg-[var(--green)]/[0.08] border border-[var(--green)]/25 hover:border-[var(--green)]/50 hover:bg-[var(--green)]/[0.14] text-gray-200 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    <Hash className="w-3 h-3 text-[var(--green)]" />
+                    {ch.name}
+                    <span className={paid ? "text-[var(--green)]" : "text-gray-500"}>
+                      · {paid ? `$${(ch.price_cents! / 100).toFixed(ch.price_cents! % 100 ? 2 : 0)}/mo` : "Free"}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         )}
 
