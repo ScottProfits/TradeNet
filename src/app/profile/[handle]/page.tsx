@@ -73,6 +73,7 @@ interface Profile {
   discord?: string;
   youtube?: string;
   website?: string;
+  twitter?: string;
 }
 
 interface Trade {
@@ -635,6 +636,7 @@ function ProfilePageInner() {
           const SOCIALS = [
             { key: "instagram", icon: "📸", prefix: "IG", buildUrl: (v: string) => `https://instagram.com/${extractHandle(v).replace(/^@/, "")}` },
             { key: "tiktok", icon: "🎵", prefix: "TT", buildUrl: (v: string) => `https://tiktok.com/@${extractHandle(v).replace(/^@/, "")}` },
+            { key: "twitter", icon: "𝕏", prefix: "X", buildUrl: (v: string) => `https://x.com/${extractHandle(v).replace(/^@/, "")}` },
             { key: "discord", icon: "🎮", prefix: "Discord", buildUrl: (v: string) => v.startsWith("http") ? v : `https://${v}` },
             { key: "youtube", icon: "▶️", prefix: "YT", buildUrl: (v: string) => `https://youtube.com/@${extractHandle(v).replace(/^@/, "")}` },
             { key: "website", icon: "🌐", prefix: "", buildUrl: (v: string) => v.startsWith("http") ? v : `https://${v}` },

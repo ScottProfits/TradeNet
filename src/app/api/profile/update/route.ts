@@ -7,7 +7,7 @@ export async function PATCH(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const { handle, full_name, bio, brokerage, trading_style, instagram, tiktok, discord, youtube, website } = await req.json();
+  const { handle, full_name, bio, brokerage, trading_style, instagram, tiktok, discord, youtube, website, twitter } = await req.json();
 
   if (!handle || handle.trim().length < 3) {
     return new Response("Handle must be at least 3 characters", { status: 400 });
@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabaseAdmin
     .from("profiles")
-    .upsert({ id: userId, handle: clean, full_name, bio, brokerage, trading_style, instagram, tiktok, discord, youtube, website }, { onConflict: "id" });
+    .upsert({ id: userId, handle: clean, full_name, bio, brokerage, trading_style, instagram, tiktok, discord, youtube, website, twitter }, { onConflict: "id" });
 
   if (error) return new Response(error.message, { status: 500 });
   return new Response("OK", { status: 200 });

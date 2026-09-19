@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [tradingStyle, setTradingStyle] = useState(cachedMe?.trading_style ?? "");
   const [instagram, setInstagram] = useState(cachedMe?.instagram ?? "");
   const [tiktok, setTiktok] = useState(cachedMe?.tiktok ?? "");
+  const [twitter, setTwitter] = useState(cachedMe?.twitter ?? "");
   const [discord, setDiscord] = useState(cachedMe?.discord ?? "");
   const [youtube, setYoutube] = useState(cachedMe?.youtube ?? "");
   const [website, setWebsite] = useState(cachedMe?.website ?? "");
@@ -84,6 +85,7 @@ export default function SettingsPage() {
     setAvatarPreview(me.avatar_url ?? "");
     setInstagram(me.instagram ?? "");
     setTiktok(me.tiktok ?? "");
+    setTwitter(me.twitter ?? "");
     setDiscord(me.discord ?? "");
     setYoutube(me.youtube ?? "");
     setWebsite(me.website ?? "");
@@ -155,7 +157,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/profile/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle, instagram, tiktok, discord, youtube, website }),
+      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle, instagram, tiktok, discord, youtube, website, twitter }),
     });
 
     if (res.ok) {
@@ -305,6 +307,7 @@ export default function SettingsPage() {
             {[
               { label: "Instagram", icon: "📸", value: instagram, set: setInstagram, placeholder: "instagram.com/yourhandle" },
               { label: "TikTok", icon: "🎵", value: tiktok, set: setTiktok, placeholder: "tiktok.com/@yourhandle" },
+              { label: "X / Twitter", icon: "𝕏", value: twitter, set: setTwitter, placeholder: "x.com/yourhandle" },
               { label: "Discord", icon: "🎮", value: discord, set: setDiscord, placeholder: "discord.gg/yourserver" },
               { label: "YouTube", icon: "▶️", value: youtube, set: setYoutube, placeholder: "youtube.com/@yourchannel" },
               { label: "Website", icon: "🌐", value: website, set: setWebsite, placeholder: "yoursite.com" },

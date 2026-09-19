@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Zap, X, UserPlus, Check } from "lucide-react";
@@ -57,6 +57,21 @@ function StrategiesPageInner() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.hotStrategies) setStrategies(d.hotStrategies); setLoading(false); });
   }, [isDemo]);
+
+  // Deep link from a specific strategy card (?strategy=IFVG) — open its
+  // detail drawer as soon as the list loads instead of just landing on
+  // the full list with nothing selected.
+  const wantedStrategy = searchParams.get("strategy");
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (!wantedStrategy || loading || openedRef.current) return;
+    const match = strategies.find((s) => s.name === wantedStrategy);
+    if (match) {
+      openedRef.current = true;
+      openStrategy(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedStrategy, loading, strategies]);
 
   async function openStrategy(s: HotStrategy) {
     setSelected(s);

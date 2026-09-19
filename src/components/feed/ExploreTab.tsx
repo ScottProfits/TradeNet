@@ -233,7 +233,11 @@ export default function ExploreTab() {
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {data!.hotStrategies.map((s) => (
-                <div key={s.name} className="glass-card rounded-2xl p-3 space-y-1 hover:border-yellow-400/30 transition-colors">
+                <Link
+                  key={s.name}
+                  href={`/explore/strategies?strategy=${encodeURIComponent(s.name)}`}
+                  className="glass-card rounded-2xl p-3 space-y-1 hover:border-yellow-400/30 active:border-yellow-400/40 transition-colors"
+                >
                   <p className="font-semibold text-white text-sm truncate">{s.name}</p>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>{s.count} {s.count === 1 ? "trade" : "trades"}</span>
@@ -243,7 +247,7 @@ export default function ExploreTab() {
                   <p className={`text-xs font-semibold ${s.avgPnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red"}`}>
                     {s.avgPnl >= 0 ? "+" : ""}${Math.abs(s.avgPnl).toLocaleString()} avg
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}
