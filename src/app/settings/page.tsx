@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import { useCachedFetch, peekCache } from "@/lib/useCachedFetch";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Camera, ShieldCheck, Zap, Trash2, ChevronDown } from "lucide-react";
+import { CheckCircle, Camera, ShieldCheck, Zap, Trash2, ChevronDown, DollarSign, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import BackButton from "@/components/ui/BackButton";
 import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
@@ -411,6 +412,21 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* Creator earnings */}
+      <Link
+        href="/settings/earnings"
+        className="glass-card rounded-2xl p-6 flex items-center justify-between gap-3 hover:border-[var(--green)]/40 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-[var(--green)]" />
+          <div>
+            <h2 className="font-bold text-white">Creator earnings</h2>
+            <p className="text-xs text-gray-500">Connect payouts, view balance, manage your bank account.</p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-gray-600 shrink-0" />
+      </Link>
 
       {/* Broker Connections */}
       <div className="glass-card rounded-2xl p-6 space-y-4">
