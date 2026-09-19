@@ -80,12 +80,25 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
     ) {
         stopDismissWatchdog()
         picker.dismiss(animated: true)
-        guard let url = info[.mediaURL] as? URL else {
+        guard let sourceUrl = info[.mediaURL] as? URL else {
             savedCall?.reject("No video captured")
             savedCall = nil
             return
         }
-        savedCall?.resolve(["path": url.absoluteString])
+        // UIImagePickerController owns its temp files and can clean them up
+        // as soon as it's dismissed — copy to a location we control before
+        // handing the path back, so the JS-side fetch() of it can't lose a
+        // race against that cleanup ("Load failed").
+        do {
+            let destUrl = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ryzr-video-\(UUID().uuidString)")
+                .appendingPathExtension(sourceUrl.pathExtension.isEmpty ? "mov" : sourceUrl.pathExtension)
+            try? FileManager.default.removeItem(at: destUrl)
+            try FileManager.default.copyItem(at: sourceUrl, to: destUrl)
+            savedCall?.resolve(["path": destUrl.absoluteString])
+        } catch {
+            savedCall?.reject("Couldn't save the recorded video: \(error.localizedDescription)")
+        }
         savedCall = nil
     }
 
