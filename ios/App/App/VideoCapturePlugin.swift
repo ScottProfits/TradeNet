@@ -8,7 +8,7 @@ import UIKit
 // through at full quality via the web file input, so this plugin only
 // handles the video case.
 @objc(VideoCapturePlugin)
-public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
     public let identifier = "VideoCapturePlugin"
     public let jsName = "VideoCapture"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -28,8 +28,12 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
             picker.sourceType = .camera
             picker.mediaTypes = ["public.movie"]
             picker.videoQuality = .typeHigh
+            // Built-in trim UI after recording — drag the in/out handles,
+            // then "Choose" to use the trimmed range.
+            picker.allowsEditing = true
             picker.delegate = self
             picker.modalPresentationStyle = .fullScreen
+            picker.presentationController?.delegate = self
             self.bridge?.viewController?.present(picker, animated: true)
         }
     }
@@ -50,6 +54,13 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
 
     public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
+        savedCall?.reject("Cancelled")
+        savedCall = nil
+    }
+
+    // Safety net: covers any dismissal that doesn't go through the two
+    // delegate methods above, so the JS promise never hangs indefinitely.
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         savedCall?.reject("Cancelled")
         savedCall = nil
     }
