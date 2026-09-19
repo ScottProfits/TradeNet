@@ -16,12 +16,19 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
     ]
 
     private var savedCall: CAPPluginCall?
+    private var dismissWatchdog: Timer?
+    private weak var activePicker: UIImagePickerController?
 
     @objc func captureVideo(_ call: CAPPluginCall) {
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
             call.reject("Camera not available")
             return
         }
+        // A previous call that never got a delegate callback (e.g. the
+        // built-in trim screen's own Cancel, which doesn't reliably call
+        // back through UIImagePickerControllerDelegate) must not be left
+        // hanging when a new capture starts.
+        savedCall?.reject("Cancelled")
         savedCall = call
         DispatchQueue.main.async {
             let picker = UIImagePickerController()
@@ -34,14 +41,44 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
             picker.delegate = self
             picker.modalPresentationStyle = .fullScreen
             picker.presentationController?.delegate = self
+            self.activePicker = picker
             self.bridge?.viewController?.present(picker, animated: true)
+            self.startDismissWatchdog()
         }
+    }
+
+    // Belt-and-suspenders: the trim/edit screen shown when allowsEditing
+    // is on doesn't reliably route its own Cancel button through either
+    // UIImagePickerControllerDelegate or UIAdaptivePresentationControllerDelegate,
+    // so poll for the picker silently disappearing and treat that as a
+    // cancel too — otherwise the JS promise only ever gets resolved by our
+    // 15s client-side timeout, which is what "nothing happens" looks like.
+    private func startDismissWatchdog() {
+        dismissWatchdog?.invalidate()
+        dismissWatchdog = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { [weak self] timer in
+            guard let self else { timer.invalidate(); return }
+            guard let picker = self.activePicker else { timer.invalidate(); return }
+            if picker.presentingViewController == nil || picker.view.window == nil {
+                timer.invalidate()
+                self.dismissWatchdog = nil
+                self.activePicker = nil
+                self.savedCall?.reject("Cancelled")
+                self.savedCall = nil
+            }
+        }
+    }
+
+    private func stopDismissWatchdog() {
+        dismissWatchdog?.invalidate()
+        dismissWatchdog = nil
+        activePicker = nil
     }
 
     public func imagePickerController(
         _ picker: UIImagePickerController,
         didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
     ) {
+        stopDismissWatchdog()
         picker.dismiss(animated: true)
         guard let url = info[.mediaURL] as? URL else {
             savedCall?.reject("No video captured")
@@ -53,6 +90,7 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
     }
 
     public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        stopDismissWatchdog()
         picker.dismiss(animated: true)
         savedCall?.reject("Cancelled")
         savedCall = nil
@@ -61,6 +99,7 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
     // Safety net: covers any dismissal that doesn't go through the two
     // delegate methods above, so the JS promise never hangs indefinitely.
     public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        stopDismissWatchdog()
         savedCall?.reject("Cancelled")
         savedCall = nil
     }
