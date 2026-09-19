@@ -127,8 +127,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       const preview = URL.createObjectURL(file);
       const poster = await captureVideoPoster(preview);
       setPostMedia([{ file, preview, type: "video", poster }]);
-    } catch {
-      /* cancelled or camera unavailable — nothing to do */
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message !== "Cancelled") alert("Record HD failed: " + message);
     }
   }
 
@@ -197,8 +198,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       setMediaPreview(preview);
       setMediaType("video");
       setMediaPoster(await captureVideoPoster(preview));
-    } catch {
-      /* cancelled or camera unavailable — nothing to do */
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message !== "Cancelled") alert("Record HD failed: " + message);
     }
   }
 

@@ -16,9 +16,17 @@ export function nativeVideoCaptureAvailable() {
 }
 
 export async function captureNativeVideo(): Promise<File> {
-  const { path } = await VideoCapturePlugin.captureVideo();
+  // A timeout guards against the native side silently never resolving
+  // (e.g. no root view controller to present on) — without this, a
+  // hung call looks identical to "nothing happens" with no error ever
+  // surfacing, which makes it impossible to tell what actually failed.
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Timed out waiting for the native camera to respond.")), 15000)
+  );
+  const { path } = await Promise.race([VideoCapturePlugin.captureVideo(), timeout]);
   const src = Capacitor.convertFileSrc(path);
   const res = await fetch(src);
+  if (!res.ok) throw new Error(`Couldn't read the recorded video (${res.status}).`);
   const blob = await res.blob();
   return new File([blob], `video-${Date.now()}.mov`, { type: blob.type || "video/quicktime" });
 }
