@@ -42,6 +42,20 @@ function EarningsInner() {
     }
   }
 
+  // Where you actually view payouts and edit your payout bank account —
+  // separate from `connect`, which is only for (re)running onboarding.
+  async function openDashboard() {
+    setBusy(true);
+    const res = await fetch("/api/creator/dashboard", { method: "POST" });
+    if (res.ok) {
+      const { url } = await res.json();
+      window.location.href = url;
+    } else {
+      alert(await errorMessage(res));
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="max-w-lg mx-auto space-y-5">
       <BackButton fallbackHref="/settings" iconOnly className="text-gray-400 hover:text-white transition-colors" />
@@ -60,11 +74,11 @@ function EarningsInner() {
               rolling schedule.
             </p>
             <button
-              onClick={connect}
+              onClick={openDashboard}
               disabled={busy}
               className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white"
             >
-              <ExternalLink className="w-4 h-4" /> Open Stripe dashboard
+              <ExternalLink className="w-4 h-4" /> View payouts / edit bank account
             </button>
           </>
         )}
