@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import VoiceRecorder, { type VoiceClip } from "@/components/feed/VoiceRecorder";
 import { extFor } from "@/lib/voice";
+import { captureNativeVideo, nativeVideoCaptureAvailable } from "@/lib/videoCapture";
 
 // Blob URLs don't support the "#t=" media-fragment seek that works on real
 // network URLs, and iOS WebKit won't render a first frame on its own — so we
@@ -117,6 +118,20 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     setPostMedia((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // Records through the native camera at full quality instead of the web
+  // <input capture> flow, which WebKit silently caps to a much lower
+  // bitrate/resolution than photo capture gets. Only offered in-app.
+  async function handleNativeRecordPostVideo() {
+    try {
+      const file = await captureNativeVideo();
+      const preview = URL.createObjectURL(file);
+      const poster = await captureVideoPoster(preview);
+      setPostMedia([{ file, preview, type: "video", poster }]);
+    } catch {
+      /* cancelled or camera unavailable — nothing to do */
+    }
+  }
+
   useEffect(() => {
     if (!ticker || ticker.length < 1) { setTickerResults([]); return; }
     const timer = setTimeout(async () => {
@@ -172,6 +187,19 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     setMediaPoster(undefined);
     setMediaType(null);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function handleNativeRecordTradeVideo() {
+    try {
+      const file = await captureNativeVideo();
+      const preview = URL.createObjectURL(file);
+      setMedia(file);
+      setMediaPreview(preview);
+      setMediaType("video");
+      setMediaPoster(await captureVideoPoster(preview));
+    } catch {
+      /* cancelled or camera unavailable — nothing to do */
+    }
   }
 
   async function handlePostSubmit(e: React.FormEvent) {
@@ -327,9 +355,16 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               </div>
             )}
             {postMedia.length === 0 && (
-              <button type="button" onClick={() => postFileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
-                <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add up to 3 photos, or a video
-              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => postFileRef.current?.click()} className="flex-1 border border-dashed border-[var(--border)] rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
+                  <ImagePlus className="w-4 h-4" /><Video className="w-4 h-4" /> Add up to 3 photos, or a video
+                </button>
+                {nativeVideoCaptureAvailable() && (
+                  <button type="button" onClick={handleNativeRecordPostVideo} className="shrink-0 border border-dashed border-[var(--border)] rounded-lg py-3 px-3 flex items-center justify-center gap-1.5 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs" title="Record video at full quality">
+                    <Video className="w-4 h-4" /> HD
+                  </button>
+                )}
+              </div>
             )}
             {postMedia.length > 0 && postMedia.length < 3 && postMedia[0].type !== "video" && (
               <button type="button" onClick={() => postFileRef.current?.click()} className="w-full border border-dashed border-[var(--border)] rounded-lg py-2 flex items-center justify-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors text-xs">
@@ -610,17 +645,30 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="w-full border border-dashed border-[var(--border)] rounded-lg py-4 flex flex-col items-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors"
-              >
-                <div className="flex gap-3">
-                  <ImagePlus className="w-5 h-5" />
-                  <Video className="w-5 h-5" />
-                </div>
-                <span className="text-xs">Tap to attach a photo or video</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="flex-1 border border-dashed border-[var(--border)] rounded-lg py-4 flex flex-col items-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors"
+                >
+                  <div className="flex gap-3">
+                    <ImagePlus className="w-5 h-5" />
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs">Tap to attach a photo or video</span>
+                </button>
+                {nativeVideoCaptureAvailable() && (
+                  <button
+                    type="button"
+                    onClick={handleNativeRecordTradeVideo}
+                    className="shrink-0 border border-dashed border-[var(--border)] rounded-lg py-4 px-4 flex flex-col items-center gap-2 text-gray-500 hover:border-[var(--green)] hover:text-[var(--green)] transition-colors"
+                    title="Record video at full quality"
+                  >
+                    <Video className="w-5 h-5" />
+                    <span className="text-xs">Record HD</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
