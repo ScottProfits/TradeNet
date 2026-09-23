@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
 import NativePushSetup from "@/components/ui/NativePushSetup";
+import NativeSplashHide from "@/components/ui/NativeSplashHide";
 import ProfileGate from "@/components/ui/ProfileGate";
 import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />
           <PushNotificationSetup />
           <NativePushSetup />
+          <NativeSplashHide />
           <ProfileGate />
           <ClientErrorLogger />
           <NavVisibilityProvider>

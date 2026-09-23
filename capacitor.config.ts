@@ -18,6 +18,15 @@ const config: CapacitorConfig = {
     backgroundColor: '#000000',
   },
   plugins: {
+    // Keep the launch splash up until the live page has rendered (hidden
+    // from NativeSplashHide), instead of a black gap while www.ryzr.app
+    // loads. The failsafe hides it anyway if the page never loads.
+    SplashScreen: {
+      launchAutoHide: false,
+      launchShowDuration: 0,
+      backgroundColor: '#000000',
+      showSpinner: false,
+    },
     PushNotifications: {
       // Capacitor's own foreground notification handler suppresses banners
       // unless these are explicitly listed.
