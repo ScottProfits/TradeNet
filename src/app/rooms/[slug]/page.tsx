@@ -521,7 +521,7 @@ function RoomPageInner() {
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <Users className="w-3 h-3" /> {room.member_count}
                 {room.visibility === "unlisted" && <> · Unlisted</>}
-                {room.owner && <> · @{room.owner.handle}</>}
+                {room.owner && <> · <Link href={`/profile/${room.owner.handle}`} className="hover:text-white transition-colors">@{room.owner.handle}</Link></>}
               </p>
             </div>
           </>
@@ -671,10 +671,12 @@ function RoomPageInner() {
                 if (m.hidden) return null;
                 return (
                   <div key={m.id} data-msg className="group flex gap-2.5" onClick={(e) => onMessageTap(m.id, e)}>
-                    <SafeAvatar src={m.sender?.avatar_url} alt={m.sender?.handle ?? ""} initials={m.sender?.handle ?? "?"} className="w-8 h-8 text-xs shrink-0" />
+                    <Link href={`/profile/${m.sender?.handle}`} className="shrink-0 self-start" aria-label={`@${m.sender?.handle ?? "user"}`}>
+                      <SafeAvatar src={m.sender?.avatar_url} alt={m.sender?.handle ?? ""} initials={m.sender?.handle ?? "?"} className="w-8 h-8 text-xs" />
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <Link href={`/profile/${m.sender?.handle}`} className="text-sm font-semibold text-white hover:text-[var(--green)]">
+                        <Link href={`/profile/${m.sender?.handle}`} className="text-sm font-semibold text-white hover:text-[var(--green)] py-1 -my-1 pr-1">
                           @{m.sender?.handle ?? "unknown"}
                         </Link>
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
