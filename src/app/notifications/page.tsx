@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, Suspense } from "react";
-import { useCachedFetch } from "@/lib/useCachedFetch";
-import { useSearchParams } from "next/navigation";
+import { useCachedFetch, primeCache, peekCache } from "@/lib/useCachedFetch";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Bell, Heart, UserPlus, MessageCircle, CornerDownRight, Star, Megaphone, DoorOpen } from "lucide-react";
 import { RepostIcon } from "@/components/feed/Repost";
 import Link from "next/link";
@@ -71,6 +71,7 @@ export default function NotificationsPage() {
 
 function NotificationsPageInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isDemo = searchParams.get("demo") === "1";
   const { data, loading: fetchLoading, mutate } = useCachedFetch<Notification[]>(
     "notifications:list",
@@ -87,6 +88,29 @@ function NotificationsPageInner() {
       mutate(data.map((n) => ({ ...n, read: true })));
     }
   }, [isDemo, data, mutate]);
+
+  // Warm the destination behind each recent notification — its route code
+  // and its data — so the first tap opens instantly instead of sitting on
+  // "Loading..." (worst on a weak signal). Only the newest few, to stay light.
+  useEffect(() => {
+    if (isDemo || !data) return;
+    const seen = new Set<string>();
+    for (const n of data.slice(0, 8)) {
+      const isTrade = !!n.trade_id && n.type !== "message_like";
+      const id = isTrade ? n.trade_id : n.post_id;
+      if (!id || n.type === "message_like" || n.room?.slug) continue;
+      const key = `${isTrade ? "trade" : "post"}:${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      router.prefetch(isTrade ? `/trade/${id}` : `/post/${id}`);
+      if (peekCache(key) === undefined) {
+        fetch(isTrade ? `/api/trades/${id}` : `/api/posts/${id}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((json) => { if (json) primeCache(key, json); })
+          .catch(() => {});
+      }
+    }
+  }, [isDemo, data, router]);
 
   const grouped = notifs.reduce<Record<string, Notification[]>>((acc, n) => {
     const date = new Date(n.created_at);
