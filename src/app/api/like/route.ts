@@ -54,8 +54,16 @@ export async function DELETE(req: NextRequest) {
 
   const { tradeId } = await req.json();
 
-  await supabaseAdmin.from("likes").delete().match({ user_id: userId, trade_id: tradeId });
-  await supabaseAdmin.rpc("decrement_likes", { trade_id_input: tradeId });
+  // Only decrement if a like row was actually removed — otherwise a stray
+  // DELETE (double tap, stale UI) drifts the counter below the real total.
+  const { data: removed } = await supabaseAdmin
+    .from("likes")
+    .delete()
+    .match({ user_id: userId, trade_id: tradeId })
+    .select("trade_id");
+  if (removed && removed.length > 0) {
+    await supabaseAdmin.rpc("decrement_likes", { trade_id_input: tradeId });
+  }
 
   return new Response("OK", { status: 200 });
 }

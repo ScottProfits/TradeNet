@@ -80,7 +80,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
     setLiking(true);
     const next = !liked;
     setLiked(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
+    setLikeCount((c) => Math.max(0, c + (next ? 1 : -1)));
     setLikeOverride(likeCacheKey, next);
     try {
       const res = await fetch("/api/like", {
@@ -91,7 +91,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
       if (!res.ok) throw new Error("like request failed");
     } catch {
       setLiked(!next);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setLikeCount((c) => Math.max(0, c + (next ? -1 : 1)));
       clearLikeOverride(likeCacheKey);
     }
     setLiking(false);
@@ -260,7 +260,7 @@ export default function TradeCard({ trade, trader, imageUrl, avatarUrl, strategy
           )}
         >
           <Heart className={clsx("w-4 h-4", liked && "fill-current")} />
-          {likeCount}
+          {Math.max(likeCount, liked ? 1 : 0)}
         </button>
         <button
           onClick={() => toggleComments("text")}

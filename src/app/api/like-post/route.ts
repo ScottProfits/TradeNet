@@ -38,9 +38,16 @@ export async function DELETE(req: NextRequest) {
 
   const { postId } = await req.json();
 
-  await supabaseAdmin.from("post_likes").delete().match({ user_id: userId, post_id: postId });
-  const { data: post } = await supabase.from("posts").select("likes_count").eq("id", postId).single();
-  if (post) await supabaseAdmin.from("posts").update({ likes_count: Math.max(0, (post.likes_count ?? 0) - 1) }).eq("id", postId);
+  // Only decrement if a like row was actually removed (see /api/like).
+  const { data: removed } = await supabaseAdmin
+    .from("post_likes")
+    .delete()
+    .match({ user_id: userId, post_id: postId })
+    .select("post_id");
+  if (removed && removed.length > 0) {
+    const { data: post } = await supabase.from("posts").select("likes_count").eq("id", postId).single();
+    if (post) await supabaseAdmin.from("posts").update({ likes_count: Math.max(0, (post.likes_count ?? 0) - 1) }).eq("id", postId);
+  }
 
   return new Response("OK", { status: 200 });
 }

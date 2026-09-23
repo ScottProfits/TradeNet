@@ -64,11 +64,13 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
   const isOwner = userId === post.user_id;
 
 
+  const [liking, setLiking] = useState(false);
   async function handleLike() {
-    if (!isSignedIn) return;
+    if (!isSignedIn || liking) return;
+    setLiking(true);
     const next = !liked;
     setLiked(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
+    setLikeCount((c) => Math.max(0, c + (next ? 1 : -1)));
     setLikeOverride(post.id, next);
     const res = await fetch("/api/like-post", {
       method: next ? "POST" : "DELETE",
@@ -77,9 +79,10 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
     });
     if (!res.ok) {
       setLiked(!next);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setLikeCount((c) => Math.max(0, c + (next ? -1 : 1)));
       clearLikeOverride(post.id);
     }
+    setLiking(false);
   }
 
   async function handleShare() {
@@ -206,7 +209,7 @@ export default function PostCard({ post, onDelete, autoPlayVideo = false, repost
           className={clsx("flex items-center gap-1.5 text-sm transition-colors", liked ? "text-pink-400" : "text-gray-500 hover:text-pink-400")}
         >
           <Heart className={clsx("w-4 h-4", liked && "fill-current")} />
-          {likeCount}
+          {Math.max(likeCount, liked ? 1 : 0)}
         </button>
         <button
           onClick={() => toggleComments("text")}
