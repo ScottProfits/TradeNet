@@ -488,8 +488,10 @@ export default function ManageRoomPage() {
           </h2>
           {members.filter((m) => m.status === "pending").map((m) => (
             <div key={m.user_id} className="flex items-center gap-3 p-4 border-t border-[var(--border)]">
-              <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
-              <span className="flex-1 text-sm font-semibold text-white truncate">@{m.profile?.handle}</span>
+              <Link href={`/profile/${m.profile?.handle}`} className="shrink-0">
+                <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
+              </Link>
+              <Link href={`/profile/${m.profile?.handle}`} className="flex-1 text-sm font-semibold text-white truncate hover:text-[var(--green)] transition-colors">@{m.profile?.handle}</Link>
               <button onClick={() => approveMember(m.user_id)} className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[var(--green)] text-black">Approve</button>
               <button onClick={() => removeMember(m.user_id)} className="text-xs text-gray-500 hover:text-red-400">Deny</button>
             </div>
@@ -503,10 +505,12 @@ export default function ManageRoomPage() {
         </h2>
         {members.filter((m) => m.status !== "pending").map((m) => (
           <div key={m.user_id} className="flex items-center gap-3 p-4 border-t border-[var(--border)]">
-            <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
+            <Link href={`/profile/${m.profile?.handle}`} className="shrink-0">
+              <SafeAvatar src={m.profile?.avatar_url} alt={m.profile?.handle ?? ""} initials={m.profile?.handle ?? "?"} className="w-9 h-9 text-xs" />
+            </Link>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-white truncate">@{m.profile?.handle}</span>
+                <Link href={`/profile/${m.profile?.handle}`} className="text-sm font-semibold text-white truncate hover:text-[var(--green)] transition-colors">@{m.profile?.handle}</Link>
                 {m.profile?.verified && <VerifiedBadge className="w-3 h-3" />}
               </div>
               <span className="text-xs text-gray-500 capitalize">
