@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, ChevronLeft, Megaphone, Pencil, Share2, Ban } from "lucide-react";
+import { Send, Hash, Lock, Plus, Users, Trash2, Flag, ImagePlus, X, ChevronLeft, Megaphone, Pencil, Share2, Ban, Pin, PinOff } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -128,6 +128,40 @@ function RoomPageInner() {
   const lastIdRef = useRef<string | null>(null);
   const lastTypingPingRef = useRef(0);
   const isMod = membership?.role === "owner" || membership?.role === "mod";
+  const isOwner = membership?.role === "owner";
+
+  // Owner-pinned message for the active topic, shown as a banner above the chat.
+  const [pinned, setPinned] = useState<{
+    id: string; content: string; image_url: string | null; sender: { handle: string } | null;
+  } | null>(null);
+  const loadPinned = useCallback(async (channelId: string) => {
+    try {
+      const r = await fetch(`/api/channels/${channelId}/pin`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setPinned(d.message ?? null);
+    } catch { /* keep whatever we had */ }
+  }, []);
+  useEffect(() => {
+    setPinned(null);
+    if (!activeChannel || !canParticipate) return;
+    void loadPinned(activeChannel);
+    const t = setInterval(() => void loadPinned(activeChannel), 20000);
+    return () => clearInterval(t);
+  }, [activeChannel, canParticipate, loadPinned]);
+
+  async function togglePin(m: ChatMessage) {
+    if (!activeChannel) return;
+    const unpin = pinned?.id === m.id;
+    const res = await fetch(`/api/channels/${activeChannel}/pin`, {
+      method: unpin ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: unpin ? undefined : JSON.stringify({ messageId: m.id }),
+    });
+    if (!res.ok) { alert(await errorMessage(res)); return; }
+    setReactingId(null);
+    void loadPinned(activeChannel);
+  }
 
   const loadRoom = useCallback(async () => {
     if (!isLoaded) return;
@@ -496,7 +530,7 @@ function RoomPageInner() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-20px)] -mb-6">
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top))-8px)] lg:h-[calc(100dvh-20px)] -mb-6">
       {/* Header — room info, or (mobile chat screen) the current topic */}
       <div className="glass-card rounded-t-2xl pl-4 pr-14 md:pr-4 py-3 flex items-center gap-3 flex-shrink-0">
         {mobileChat ? (
@@ -664,6 +698,29 @@ function RoomPageInner() {
             {/* One persistent instance — it resets internally on topic change.
                 (Keying it caused it to stack instead of swap in Safari.) */}
             <ChannelLive channelId={activeChannel ?? ""} canBroadcast={isMod && !!activeChannel} />
+            {pinned && (
+              <div className="flex items-start gap-2 px-4 py-2 border-b border-[var(--border)] bg-[var(--green)]/[0.06]">
+                <Pin className="w-3.5 h-3.5 text-[var(--green)] mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--green)]">
+                    Pinned{pinned.sender?.handle ? ` · @${pinned.sender.handle}` : ""}
+                  </p>
+                  <p className="text-sm text-gray-200 line-clamp-2 break-words">
+                    {pinned.content || (pinned.image_url ? "📎 Attachment" : "")}
+                  </p>
+                </div>
+                {isOwner && (
+                  <button
+                    onClick={() => togglePin({ id: pinned.id } as ChatMessage)}
+                    className="text-gray-500 hover:text-white shrink-0 p-1"
+                    title="Unpin"
+                    aria-label="Unpin"
+                  >
+                    <PinOff className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
             <div key={activeChannel} ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && <p className="text-center text-gray-600 text-sm pt-8">No messages yet — say hi.</p>}
               {messages.map((m) => {
@@ -682,6 +739,11 @@ function RoomPageInner() {
                         {m.sender?.verified && <VerifiedBadge className="w-3 h-3" />}
                         <span className="text-[11px] text-gray-600">{timeAgo(m.created_at)}</span>
                         <span data-reaction-ui className="ml-auto hidden md:flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {isOwner && (
+                            <button onClick={() => togglePin(m)} className="text-gray-600 hover:text-[var(--green)]" title={pinned?.id === m.id ? "Unpin" : "Pin"}>
+                              {pinned?.id === m.id ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
                           {mine && m.content && editingId !== m.id && (
                             <button onClick={() => startEdit(m)} className="text-gray-600 hover:text-white" title="Edit">
                               <Pencil className="w-3.5 h-3.5" />
@@ -770,6 +832,15 @@ function RoomPageInner() {
                               >
                                 +
                               </button>
+                              {isOwner && (
+                                <button
+                                  onClick={() => togglePin(m)}
+                                  className="ml-1 flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-[var(--green)]/40 text-[var(--green)]"
+                                >
+                                  {pinned?.id === m.id ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                                  {pinned?.id === m.id ? "Unpin" : "Pin"}
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
