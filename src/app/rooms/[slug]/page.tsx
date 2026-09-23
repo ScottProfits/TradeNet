@@ -130,6 +130,31 @@ function RoomPageInner() {
   const isMod = membership?.role === "owner" || membership?.role === "mod";
   const isOwner = membership?.role === "owner";
 
+  // The chat is a fixed-height, full-screen layout — the document itself must
+  // never scroll. Otherwise iOS scrolls the whole page to reveal the input
+  // when the keyboard opens and leaves it shifted (header under the status
+  // bar, black band at the bottom) after the keyboard closes.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = { h: html.style.overflow, b: body.style.overflow, o: body.style.overscrollBehavior };
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    const vv = window.visualViewport;
+    const onResize = () => {
+      // Keyboard closed (visual viewport back to full height) → snap back.
+      if (vv && vv.height >= window.innerHeight - 1) window.scrollTo(0, 0);
+    };
+    vv?.addEventListener("resize", onResize);
+    return () => {
+      vv?.removeEventListener("resize", onResize);
+      html.style.overflow = prev.h;
+      body.style.overflow = prev.b;
+      body.style.overscrollBehavior = prev.o;
+    };
+  }, []);
+
   // Owner-pinned message for the active topic, shown as a banner above the chat.
   const [pinned, setPinned] = useState<{
     id: string; content: string; image_url: string | null; sender: { handle: string } | null;
