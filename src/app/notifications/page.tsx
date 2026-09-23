@@ -19,6 +19,7 @@ interface Notification {
   comment_id: string | null;
   room_id?: string | null;
   room?: { name: string; slug: string } | null;
+  preview?: { kind: "trade" | "post"; image: string | null; text: string; pnl?: number } | null;
   actor: { handle: string; avatar_url: string; verified: boolean };
 }
 
@@ -159,7 +160,7 @@ function NotificationsPageInner() {
                       : n.trade_id
                         ? `/trade/${n.trade_id}${n.comment_id ? `#comment-${n.comment_id}` : ""}`
                         : n.post_id
-                          ? "/feed"
+                          ? `/post/${n.post_id}`
                           : `/profile/${n.actor?.handle}`;
                     return (
                       <div
@@ -199,6 +200,30 @@ function NotificationsPageInner() {
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">{timeAgo(n.created_at)}</p>
                         </div>
+                        {n.preview && (
+                          <Link
+                            href={tradeHref}
+                            aria-label="Open"
+                            className="shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-white/10 bg-white/[0.04] flex items-center justify-center"
+                          >
+                            {n.preview.image && !/\.(mp4|mov|webm|m4v)(\?|$)/i.test(n.preview.image) ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={n.preview.image} alt="" className="w-full h-full object-cover" />
+                            ) : n.preview.kind === "trade" ? (
+                              <span
+                                className={`text-[10px] font-bold leading-tight text-center px-1 ${
+                                  (n.preview.pnl ?? 0) >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"
+                                }`}
+                              >
+                                {n.preview.text}
+                              </span>
+                            ) : (
+                              <span className="text-[9px] leading-tight text-gray-400 px-1 line-clamp-4 text-left">
+                                {n.preview.text || "Post"}
+                              </span>
+                            )}
+                          </Link>
+                        )}
                       </div>
                     );
                   })}

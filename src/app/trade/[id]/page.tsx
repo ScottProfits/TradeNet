@@ -75,7 +75,7 @@ export default function TradePage() {
     if (!isSignedIn || !trade) return;
     const next = !liked;
     setLiked(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
+    setLikeCount((c) => Math.max(0, c + (next ? 1 : -1)));
     try {
       await fetch("/api/like", {
         method: next ? "POST" : "DELETE",
@@ -84,7 +84,7 @@ export default function TradePage() {
       });
     } catch {
       setLiked(!next);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setLikeCount((c) => Math.max(0, c + (next ? -1 : 1)));
     }
   }
 
