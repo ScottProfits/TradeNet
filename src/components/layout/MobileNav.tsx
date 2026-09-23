@@ -107,7 +107,22 @@ export default function MobileNav() {
   }
 
   const tabColor = (idx: number) => (isActive(idx) ? "var(--green)" : "rgba(255,255,255,0.4)");
-  const tabGlow = (idx: number) => (isActive(idx) ? "drop-shadow(0 0 6px rgba(0,200,150,0.8))" : "none");
+  // Active-tab glow is a soft radial gradient behind the icon. A CSS
+  // drop-shadow filter on the SVG inside this backdrop-filter bar makes
+  // WebKit paint an opaque black box behind the icon.
+  const glow = (idx: number) =>
+    isActive(idx) ? (
+      <span
+        aria-hidden
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          width: 44,
+          height: 44,
+          background: "radial-gradient(circle, rgba(0,200,150,0.32) 0%, rgba(0,200,150,0) 70%)",
+        }}
+      />
+    ) : null;
+  const iconStyle = (idx: number): React.CSSProperties => ({ color: tabColor(idx), position: "relative" });
 
   const tapTargetStyle: React.CSSProperties = {
     width: TAP_SIZE,
@@ -152,13 +167,15 @@ export default function MobileNav() {
         }}
       >
         {/* Home */}
-        <Link href="/feed" aria-label="Home" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Home className="w-[27px] h-[27px]" style={{ color: tabColor(0), filter: tabGlow(0) }} />
+        <Link href="/feed" aria-label="Home" className="relative flex items-center justify-center transition-transform active:scale-90" style={tapTargetStyle}>
+          {glow(0)}
+          <Home className="w-[27px] h-[27px]" style={iconStyle(0)} />
         </Link>
 
         {/* Market */}
-        <Link href="/market" aria-label="Market" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <BarChart2 className="w-[27px] h-[27px]" style={{ color: tabColor(1), filter: tabGlow(1) }} />
+        <Link href="/market" aria-label="Market" className="relative flex items-center justify-center transition-transform active:scale-90" style={tapTargetStyle}>
+          {glow(1)}
+          <BarChart2 className="w-[27px] h-[27px]" style={iconStyle(1)} />
         </Link>
 
         {/* Center post button */}
@@ -177,8 +194,9 @@ export default function MobileNav() {
         </button>
 
         {/* Alerts */}
-        <Link href="/notifications" aria-label="Alerts" className="relative flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
-          <Bell className="w-[27px] h-[27px]" style={{ color: tabColor(3), filter: tabGlow(3) }} />
+        <Link href="/notifications" aria-label="Alerts" className="relative flex items-center justify-center transition-transform active:scale-90" style={tapTargetStyle}>
+          {glow(3)}
+          <Bell className="w-[27px] h-[27px]" style={iconStyle(3)} />
           {hasUnread && (
             <span
               className="absolute rounded-full"
@@ -195,13 +213,12 @@ export default function MobileNav() {
         </Link>
 
         {/* Profile */}
-        <Link href={profileHref} aria-label="Profile" className="flex items-center justify-center transition-all active:scale-90" style={tapTargetStyle}>
+        <Link href={profileHref} aria-label="Profile" className="relative flex items-center justify-center transition-transform active:scale-90" style={tapTargetStyle}>
           <SafeAvatar
             src={profileAvatar || user?.imageUrl}
             alt="Profile"
             initials={user?.username ?? "?"}
             className={clsx("w-[27px] h-[27px] text-xs", pathname.startsWith("/profile") ? "ring-2 ring-[var(--green)]" : "")}
-            style={{ filter: tabGlow(4) }}
           />
         </Link>
       </div>
