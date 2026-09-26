@@ -14,15 +14,22 @@ export default function NativeSplashHide() {
       if (cancelled) return;
       try {
         const { SplashScreen } = await import("@capacitor/splash-screen");
-        await SplashScreen.hide({ fadeOutDuration: 200 });
+        await SplashScreen.hide({ fadeOutDuration: 250 });
       } catch {
         /* plugin not in this native build — nothing to hide */
       }
     };
-    void hide();
+    // Two animation frames = the first real paint has happened, so hiding the
+    // splash now reveals content instead of the blank WebView behind it.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => void hide());
+    });
     const failsafe = setTimeout(hide, 8000);
     return () => {
       cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       clearTimeout(failsafe);
     };
   }, []);
