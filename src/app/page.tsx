@@ -3,6 +3,8 @@ import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import FinancialDisclosures from "@/components/ui/FinancialDisclosures";
+import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
   return (
@@ -17,7 +19,7 @@ function VerifiedCandle({ className = "w-8 h-8" }: { className?: string }) {
 
 const FEATURES = [
   { emoji: "📊", title: "Post Your Trades", desc: "Share ticker, direction, P&L, and charts. Your track record, public and permanent." },
-  { emoji: "✅", title: "Verified P&L", desc: "Connect Alpaca to verify real trades. Verified traders earn a badge that can't be faked." },
+  { emoji: "✅", title: "Verified P&L", desc: "Connect your broker (Rithmic or Tradovate) and real fills post with a verified P&L badge that can't be faked." },
   { emoji: "🏆", title: "Leaderboard", desc: "Ranked by actual returns. Not followers. Not hype. Real performance, updated live." },
   { emoji: "🤝", title: "Trader Network", desc: "Follow traders who match your style. DM them, discuss their setups, debate the market — build real connections with people who actually trade." },
   { emoji: "💬", title: "Market Talk", desc: "Comment on any trade, share your take on a ticker, post market opinions. A live conversation between people with real skin in the game." },
@@ -26,16 +28,67 @@ const FEATURES = [
   { emoji: "📓", title: "Private Journal", desc: "Attach notes to any trade. Build a private journal only you can see." },
 ];
 
-const SOCIAL_PROOF = [
-  { handle: "markv", style: "Day Trader", quote: "Finally a place where results matter more than follower count. I've connected with traders I actually learn from." },
-  { handle: "tradewithjess", style: "Swing Trader", quote: "The DMs and comment threads are where the real alpha is. People sharing setups, calling out bad entries — it's like a trading desk." },
-  { handle: "scalperking", style: "Scalper", quote: "Verified P&L changed everything. No more fake gurus flexing screenshots." },
-];
+type LandingTrade = { id: string; ticker: string; direction: string; pnl: number; created_at: string; handle: string };
+type LandingPost = { id: string; content: string; created_at: string; handle: string };
+
+function timeAgo(iso: string) {
+  const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 3600) return `${Math.max(1, Math.floor(s / 60))}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+const money = (n: number) => `${n >= 0 ? "+" : "-"}$${Math.abs(Math.round(n)).toLocaleString()}`;
+
+// Real, public activity for the logged-out page — never fabricated. Any
+// failure just hides the section that needed the data.
+async function getLandingData() {
+  const empty = { trades: [] as LandingTrade[], posts: [] as LandingPost[], traders: 0, tradeCount: 0 };
+  try {
+    const [{ data: tradeRows }, { data: postRows }, tradersRes, tradesRes] = await Promise.all([
+      supabase
+        .from("trades")
+        .select("id, ticker, direction, pnl, created_at, profiles!trades_user_id_fkey(handle)")
+        .neq("is_public", false)
+        .order("created_at", { ascending: false })
+        .limit(12),
+      supabase
+        .from("posts")
+        .select("id, content, created_at, user_id")
+        .order("created_at", { ascending: false })
+        .limit(12),
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("trades").select("id", { count: "exact", head: true }),
+    ]);
+
+    const trades: LandingTrade[] = (tradeRows ?? [])
+      .map((t) => {
+        const prof = t.profiles as unknown as { handle: string } | { handle: string }[] | null;
+        const handle = Array.isArray(prof) ? prof[0]?.handle : prof?.handle;
+        return handle ? { id: t.id, ticker: t.ticker, direction: t.direction, pnl: t.pnl ?? 0, created_at: t.created_at, handle } : null;
+      })
+      .filter((t): t is LandingTrade => !!t);
+
+    const withText = (postRows ?? []).filter((p) => (p.content ?? "").trim().length > 0).slice(0, 4);
+    let posts: LandingPost[] = [];
+    if (withText.length) {
+      const ids = [...new Set(withText.map((p) => p.user_id))];
+      const { data: profs } = await supabase.from("profiles").select("id, handle").in("id", ids);
+      const map = Object.fromEntries((profs ?? []).map((p) => [p.id, p.handle]));
+      posts = withText
+        .filter((p) => map[p.user_id])
+        .map((p) => ({ id: p.id, content: p.content.trim(), created_at: p.created_at, handle: map[p.user_id] }));
+    }
+    return { trades, posts, traders: tradersRes.count ?? 0, tradeCount: tradesRes.count ?? 0 };
+  } catch {
+    return empty;
+  }
+}
 
 export default async function LandingPage() {
   const { userId } = await auth();
   if (userId) redirect("/feed");
   const isLoggedIn = false;
+  const { trades, posts, traders, tradeCount } = await getLandingData();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -66,10 +119,12 @@ export default async function LandingPage() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-4 sm:px-6 text-center">
         <div className="max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            Live trades happening now
-          </div>
+          {trades.length > 0 && (
+            <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              Live trades happening now
+            </div>
+          )}
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
             The social network<br />
             <span className="text-green-400">built for traders.</span>
@@ -97,18 +152,21 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Ticker strip */}
-      <div className="border-y border-white/5 bg-white/[0.02] py-3 overflow-hidden">
-        <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap">
-          {["@markv +$2,400 TSLA LONG", "@tradewithjess +$880 AAPL LONG", "@scalperking +$1,200 SPY SHORT", "@daytrader99 +$3,100 NVDA LONG", "@wavetrader -$240 META SHORT", "@swingkid +$5,500 AMZN LONG", "@markv +$2,400 TSLA LONG", "@tradewithjess +$880 AAPL LONG", "@scalperking +$1,200 SPY SHORT", "@daytrader99 +$3,100 NVDA LONG"].map((item, i) => (
-            <span key={i} className="text-xs text-gray-500 font-mono shrink-0">
-              <span className="text-green-400">{item.split(" ")[0]}</span>
-              {" "}{item.split(" ").slice(1).join(" ")}
-            </span>
-          ))}
+      {/* Ticker strip — real recent public trades */}
+      {trades.length > 0 && (
+        <div className="border-y border-white/5 bg-white/[0.02] py-3 overflow-hidden">
+          <div className="flex gap-8 animate-[marquee_30s_linear_infinite] whitespace-nowrap w-max">
+            {[...trades, ...trades].map((t, i) => (
+              <span key={`${t.id}-${i}`} className="text-xs text-gray-500 font-mono shrink-0">
+                <span className="text-green-400">@{t.handle}</span>{" "}
+                <span className={t.pnl >= 0 ? "text-green-400" : "text-red-400"}>{money(t.pnl)}</span>{" "}
+                {t.ticker} {t.direction}
+              </span>
+            ))}
+          </div>
+          <style>{`@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
         </div>
-        <style>{`@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
-      </div>
+      )}
 
       {/* Features */}
       <section className="py-20 px-4 sm:px-6">
@@ -160,27 +218,26 @@ export default async function LandingPage() {
                   ))}
                 </ul>
               </div>
-              <div className="space-y-3">
-                {[
-                  { handle: "markv", msg: "TSLA looking weak at resistance, targeting $180 puts", time: "2m ago" },
-                  { handle: "tradewithjess", msg: "Anyone else watching NVDA earnings play? Long into close", time: "8m ago" },
-                  { handle: "scalperking", msg: "SPY rejected off VWAP again — classic. Already short.", time: "14m ago" },
-                  { handle: "swingkid", msg: "Closed AMZN for +$7,200. Thesis played out perfectly.", time: "21m ago" },
-                ].map((m) => (
-                  <div key={m.handle} className="flex items-start gap-3 bg-white/[0.04] border border-white/5 rounded-2xl p-4">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0 mt-0.5">
-                      {m.handle[0].toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-xs font-semibold text-white">@{m.handle}</span>
-                        <span className="text-[10px] text-gray-600 shrink-0">{m.time}</span>
+              {posts.length > 0 && (
+                <div className="space-y-3">
+                  {posts.map((p) => (
+                    <div key={p.id} className="flex items-start gap-3 bg-white/[0.04] border border-white/5 rounded-2xl p-4">
+                      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0 mt-0.5">
+                        {p.handle[0].toUpperCase()}
                       </div>
-                      <p className="text-sm text-gray-400 leading-relaxed">{m.msg}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-xs font-semibold text-white">@{p.handle}</span>
+                          <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(p.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-gray-400 leading-relaxed break-words">
+                          {p.content.length > 140 ? `${p.content.slice(0, 140)}…` : p.content}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -188,30 +245,45 @@ export default async function LandingPage() {
 
       <div className="max-w-5xl mx-auto border-t border-white/5" />
 
-      {/* Social proof */}
-      <section className="py-20 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12">Traders are already posting.</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {SOCIAL_PROOF.map((t) => (
-              <div key={t.handle} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6">
-                <p className="text-sm text-gray-300 leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400">
-                    {t.handle[0].toUpperCase()}
+      {/* Social proof — real numbers + real recent trades */}
+      {trades.length > 0 && (
+        <>
+          <section className="py-20 px-4 sm:px-6">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">Traders are already posting.</h2>
+              {(traders > 0 || tradeCount > 0) && (
+                <p className="text-center text-sm text-gray-500 mb-12">
+                  {traders > 0 && <>{traders.toLocaleString()} trader{traders === 1 ? "" : "s"}</>}
+                  {traders > 0 && tradeCount > 0 && " · "}
+                  {tradeCount > 0 && <>{tradeCount.toLocaleString()} trade{tradeCount === 1 ? "" : "s"} posted</>}
+                </p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {trades.slice(0, 3).map((t) => (
+                  <div key={t.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-white">${t.ticker}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{t.direction}</span>
+                    </div>
+                    <p className={`text-2xl font-extrabold mb-4 ${t.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{money(t.pnl)}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400">
+                        {t.handle[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-white">@{t.handle}</p>
+                        <p className="text-[10px] text-gray-600">{timeAgo(t.created_at)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-white">@{t.handle}</p>
-                    <p className="text-[10px] text-gray-600">{t.style}</p>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
 
-      <div className="max-w-5xl mx-auto border-t border-white/5" />
+          <div className="max-w-5xl mx-auto border-t border-white/5" />
+        </>
+      )}
 
       {/* Recommended trading platform / market data partners */}
       <section className="py-20 px-4 sm:px-6">
