@@ -40,6 +40,31 @@ function timeAgo(iso: string) {
 }
 const money = (n: number) => `${n >= 0 ? "+" : "-"}$${Math.abs(Math.round(n)).toLocaleString()}`;
 
+// Clearly-labeled samples used ONLY to fill gaps beside real content, so the
+// page isn't empty while the community is small. Every one is tagged "Example"
+// in the UI and none uses a real-looking username.
+const EXAMPLE_TRADES = [
+  { ticker: "NQ", direction: "LONG", pnl: 840 },
+  { ticker: "ES", direction: "SHORT", pnl: -210 },
+  { ticker: "TSLA", direction: "LONG", pnl: 1250 },
+];
+const EXAMPLE_POSTS = [
+  "Held through the open and took profit at the prior day high. Recaps like this are what you'll see in the feed.",
+  "Watching 29,650 as support into the close — thoughts? Comment on any trade or post to start a conversation.",
+];
+const EXAMPLE_CHANNELS = [
+  { name: "Morning Futures Room", description: "Live chat and daily recaps around the open.", price: "Free" },
+  { name: "Swing Trade Ideas", description: "Weekly setups and watchlists from the channel owner.", price: "$15/mo" },
+  { name: "Options Flow Talk", description: "Discuss unusual activity and post your entries.", price: "Free" },
+];
+function ExampleTag() {
+  return (
+    <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-400 border border-yellow-400/30 bg-yellow-400/10 rounded px-1.5 py-0.5">
+      Example
+    </span>
+  );
+}
+
 // Real, public activity for the logged-out page — never fabricated. Any
 // failure just hides the section that needed the data.
 async function getLandingData() {
@@ -196,7 +221,7 @@ export default async function LandingPage() {
       <div className="max-w-5xl mx-auto border-t border-white/5" />
 
       {/* Channels — real public channels */}
-      {channels.length > 0 && (
+      {true && (
         <>
           <section className="py-20 px-4 sm:px-6">
             <div className="max-w-5xl mx-auto">
@@ -234,7 +259,23 @@ export default async function LandingPage() {
                     </Link>
                   );
                 })}
+                {EXAMPLE_CHANNELS.slice(0, Math.max(0, 3 - channels.length)).map((c) => (
+                  <div key={c.name} className="flex items-start gap-3 bg-white/[0.02] border border-dashed border-white/15 rounded-2xl p-5">
+                    <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center text-lg font-bold text-gray-400 shrink-0">#</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-gray-300 truncate">{c.name}</p>
+                        <ExampleTag />
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{c.description}</p>
+                      <p className="text-[11px] text-gray-600 mt-2">Sample channel · {c.price}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+              <p className="text-center text-[11px] text-gray-600 mt-6">
+                Cards marked <span className="text-yellow-400">Example</span> are samples showing how Ryzr looks — not real users, trades or channels.
+              </p>
             </div>
           </section>
 
@@ -273,26 +314,38 @@ export default async function LandingPage() {
                   ))}
                 </ul>
               </div>
-              {posts.length > 0 && (
-                <div className="space-y-3">
-                  {posts.map((p) => (
-                    <div key={p.id} className="flex items-start gap-3 bg-white/[0.04] border border-white/5 rounded-2xl p-4">
-                      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0 mt-0.5">
-                        {p.handle[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="text-xs font-semibold text-white">@{p.handle}</span>
-                          <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(p.created_at)}</span>
-                        </div>
-                        <p className="text-sm text-gray-400 leading-relaxed break-words">
-                          {p.content.length > 140 ? `${p.content.slice(0, 140)}…` : p.content}
-                        </p>
-                      </div>
+              <div className="space-y-3">
+                {posts.slice(0, 3).map((p) => (
+                  <div key={p.id} className="flex items-start gap-3 bg-white/[0.04] border border-white/5 rounded-2xl p-4">
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0 mt-0.5">
+                      {p.handle[0].toUpperCase()}
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-white">@{p.handle}</span>
+                        <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(p.created_at)}</span>
+                      </div>
+                      <p className="text-sm text-gray-400 leading-relaxed break-words">
+                        {p.content.length > 140 ? `${p.content.slice(0, 140)}…` : p.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {EXAMPLE_POSTS.slice(0, Math.max(0, 3 - posts.length)).map((text) => (
+                  <div key={text} className="flex items-start gap-3 bg-white/[0.02] border border-dashed border-white/15 rounded-2xl p-4">
+                    <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs font-bold text-gray-400 shrink-0 mt-0.5">
+                      ?
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-gray-300">Example post</span>
+                        <ExampleTag />
+                      </div>
+                      <p className="text-sm text-gray-500 leading-relaxed">{text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -300,45 +353,54 @@ export default async function LandingPage() {
 
       <div className="max-w-5xl mx-auto border-t border-white/5" />
 
-      {/* Social proof — real numbers + real recent trades */}
-      {trades.length > 0 && (
-        <>
-          <section className="py-20 px-4 sm:px-6">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">Traders are already posting.</h2>
-              {(traders > 0 || tradeCount > 0) && (
-                <p className="text-center text-sm text-gray-500 mb-12">
-                  {traders > 0 && <>{traders.toLocaleString()} trader{traders === 1 ? "" : "s"}</>}
-                  {traders > 0 && tradeCount > 0 && " · "}
-                  {tradeCount > 0 && <>{tradeCount.toLocaleString()} trade{tradeCount === 1 ? "" : "s"} posted</>}
-                </p>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {trades.slice(0, 3).map((t) => (
-                  <div key={t.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-white">${t.ticker}</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{t.direction}</span>
-                    </div>
-                    <p className={`text-2xl font-extrabold mb-4 ${t.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{money(t.pnl)}</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400">
-                        {t.handle[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-white">@{t.handle}</p>
-                        <p className="text-[10px] text-gray-600">{timeAgo(t.created_at)}</p>
-                      </div>
-                    </div>
+      {/* Social proof — real numbers + real recent trades, topped up with labeled examples */}
+      <section className="py-20 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">Traders are already posting.</h2>
+          {(traders > 0 || tradeCount > 0) && (
+            <p className="text-center text-sm text-gray-500 mb-12">
+              {traders > 0 && <>{traders.toLocaleString()} trader{traders === 1 ? "" : "s"}</>}
+              {traders > 0 && tradeCount > 0 && " · "}
+              {tradeCount > 0 && <>{tradeCount.toLocaleString()} trade{tradeCount === 1 ? "" : "s"} posted</>}
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {trades.slice(0, 3).map((t) => (
+              <div key={t.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-white">${t.ticker}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{t.direction}</span>
+                </div>
+                <p className={`text-2xl font-extrabold mb-4 ${t.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{money(t.pnl)}</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400">
+                    {t.handle[0].toUpperCase()}
                   </div>
-                ))}
+                  <div>
+                    <p className="text-xs font-semibold text-white">@{t.handle}</p>
+                    <p className="text-[10px] text-gray-600">{timeAgo(t.created_at)}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            ))}
+            {EXAMPLE_TRADES.slice(0, Math.max(0, 3 - trades.length)).map((t) => (
+              <div key={`ex-${t.ticker}`} className="bg-white/[0.02] border border-dashed border-white/15 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-white">${t.ticker}</span>
+                  <ExampleTag />
+                </div>
+                <p className={`text-2xl font-extrabold mb-4 ${t.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{money(t.pnl)}</p>
+                <div>
+                  <p className="text-xs font-semibold text-gray-300">Example trade</p>
+                  <p className="text-[10px] text-gray-600">Sample card — not a real user or trade</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="max-w-5xl mx-auto border-t border-white/5" />
-        </>
-      )}
+      <div className="max-w-5xl mx-auto border-t border-white/5" />
 
       {/* Recommended trading platform / market data partners */}
       <section className="py-20 px-4 sm:px-6">
