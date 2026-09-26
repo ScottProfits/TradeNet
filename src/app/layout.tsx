@@ -8,6 +8,7 @@ import ConditionalShell from "@/components/layout/ConditionalShell";
 import PushNotificationSetup from "@/components/ui/PushNotificationSetup";
 import NativePushSetup from "@/components/ui/NativePushSetup";
 import NativeSplashHide from "@/components/ui/NativeSplashHide";
+import TermsGate from "@/components/ui/TermsGate";
 import ProfileGate from "@/components/ui/ProfileGate";
 import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NativePushSetup />
           <NativeSplashHide />
           <ProfileGate />
+          <TermsGate />
           <ClientErrorLogger />
           <NavVisibilityProvider>
             <ConditionalShell>{children}</ConditionalShell>

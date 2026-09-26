@@ -60,6 +60,18 @@ export default function TermsPage() {
         </ul>
       </section>
 
+      <section className="space-y-3" id="community-standards">
+        <h2 className="text-xl font-semibold text-white">Community Standards — Zero Tolerance</h2>
+        <p>There is no tolerance on Ryzr for objectionable content or abusive users. This includes harassment, threats, hate speech, sexually explicit material, graphic violence, scams and fraud, spam, and impersonation — in posts, comments, direct messages, channel chat, voice notes, images, video, and live streams.</p>
+        <ul className="list-disc list-inside space-y-2 text-gray-400">
+          <li>You can report any post, comment, message, or user, and block any user, from within the app.</li>
+          <li>We review reports within 24 hours. Content that breaks these rules is removed, and the accounts responsible are warned, suspended, or permanently banned.</li>
+          <li>Channel owners and moderators can remove messages and remove or ban members from their channels. Live streams can be ended immediately.</li>
+          <li>You can delete your account at any time from Settings.</li>
+        </ul>
+        <p>Questions or urgent concerns: see our <a href="/support" className="text-[var(--green)] underline">Support</a> page.</p>
+      </section>
+
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">7. P&L Verification</h2>
         <p>Ryzr offers optional P&L verification features. Verified badges indicate that a trade has been reviewed against brokerage data. Unverified trades are self-reported and have not been independently confirmed. We do not guarantee the accuracy of any trade data posted on the platform.</p>

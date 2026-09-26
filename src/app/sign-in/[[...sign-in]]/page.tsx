@@ -21,14 +21,6 @@ const HIGHLIGHTS = [
   { emoji: "📓", text: "Private journal attached to every trade" },
 ];
 
-const RECENT = [
-  { handle: "scalperking", ticker: "SPY", pnl: 1200, ago: "2m ago" },
-  { handle: "markv", ticker: "TSLA", pnl: 2400, ago: "5m ago" },
-  { handle: "swingkid", ticker: "AMZN", pnl: 7200, ago: "11m ago" },
-  { handle: "tradewithjess", ticker: "NVDA", pnl: 5800, ago: "18m ago" },
-  { handle: "daytrader99", ticker: "AAPL", pnl: 3100, ago: "24m ago" },
-];
-
 export default function SignInPage() {
   return (
     <div className="min-h-screen bg-[#080808] flex flex-col lg:flex-row">
@@ -62,23 +54,6 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <div className="relative z-10 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold">Recent trades</p>
-          </div>
-          {RECENT.map((t, i) => (
-            <div key={i} className="flex items-center gap-3 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2.5">
-              <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-[10px] font-bold text-green-400 shrink-0">
-                {t.handle[0].toUpperCase()}
-              </div>
-              <span className="text-sm text-gray-400 flex-1">@{t.handle}</span>
-              <span className="text-xs font-mono text-gray-600">${t.ticker}</span>
-              <span className="text-sm font-bold text-green-400">+${t.pnl.toLocaleString()}</span>
-              <span className="text-[10px] text-gray-700 w-12 text-right">{t.ago}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* RIGHT — form */}

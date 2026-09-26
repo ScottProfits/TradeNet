@@ -13,3 +13,12 @@ Still to add before submitting (not decided/verified yet):
   the current build (fresh install on an iPad Air simulator loads the landing page and
   Sign In fine). Use a new build number (1-3 are used).
 - Do NOT upload iPad screenshots (iPhone-only, TARGETED_DEVICE_FAMILY = 1).
+
+---
+Suggested addition for Guideline 1.2 (user-generated content) — paste into the review notes too:
+
+"User-generated content safeguards: all users must accept our Terms and community standards (zero
+tolerance for objectionable content and abusive users) before using the app. Users can report any
+post, comment, message or user and block any user in-app. We review reports within 24 hours and
+remove content / ban offending accounts. Channel owners and moderators can remove messages and ban
+members; live streams can be ended immediately. Users can delete their account in Settings."

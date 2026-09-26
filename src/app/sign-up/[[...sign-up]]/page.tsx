@@ -13,22 +13,6 @@ function VerifiedCandle({ className = "w-7 h-7" }: { className?: string }) {
   );
 }
 
-const TRADES = [
-  { handle: "markv", ticker: "TSLA", pnl: 2400, dir: "LONG" },
-  { handle: "tradewithjess", ticker: "NVDA", pnl: 5800, dir: "LONG" },
-  { handle: "scalperking", ticker: "SPY", pnl: 1200, dir: "SHORT" },
-  { handle: "daytrader99", ticker: "AAPL", pnl: 3100, dir: "LONG" },
-  { handle: "swingkid", ticker: "AMZN", pnl: 7200, dir: "LONG" },
-  { handle: "wavetrader", ticker: "META", pnl: 940, dir: "SHORT" },
-];
-
-const LEADERBOARD = [
-  { rank: 1, handle: "markv", pnl: 48200, win: 84 },
-  { rank: 2, handle: "tradewithjess", pnl: 31500, win: 79 },
-  { rank: 3, handle: "scalperking", pnl: 27900, win: 72 },
-  { rank: 4, handle: "daytrader99", pnl: 19400, win: 68 },
-];
-
 export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-[#080808] flex flex-col">
@@ -45,10 +29,6 @@ export default function SignUpPage() {
             <span className="text-2xl font-black text-white tracking-tight">Ryzr</span>
           </div>
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Trades happening right now
-            </div>
             <h1 className="text-5xl font-extrabold text-white leading-tight tracking-tight">
               Your P&L.<br />
               <span className="text-green-400">Your rank.</span><br />
@@ -58,35 +38,8 @@ export default function SignUpPage() {
               The only trading platform where your results do the talking. Post trades, climb the leaderboard, build a track record that can&apos;t be faked.
             </p>
           </div>
-          <div className="space-y-2">
-            <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">Live trades</p>
-            {TRADES.map((t, i) => (
-              <div key={i} className="flex items-center gap-3 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3">
-                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0">
-                  {t.handle[0].toUpperCase()}
-                </div>
-                <span className="text-sm text-gray-400 flex-1">@{t.handle}</span>
-                <span className="text-xs text-gray-600 font-mono">${t.ticker}</span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.dir === "LONG" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>{t.dir}</span>
-                <span className="text-sm font-bold text-green-400">+${t.pnl.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        <div className="relative z-10 space-y-3">
-          <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold">Top traders this month</p>
-          {LEADERBOARD.map((t) => (
-            <div key={t.rank} className="flex items-center gap-3">
-              <span className="text-xs text-gray-600 w-4 font-mono">#{t.rank}</span>
-              <div className="flex-1 bg-white/[0.03] rounded-lg px-3 py-2 flex items-center gap-3">
-                <span className="text-sm text-gray-300 flex-1">@{t.handle}</span>
-                <span className="text-xs text-gray-600">{t.win}% win rate</span>
-                <span className="text-sm font-bold text-green-400">+${t.pnl.toLocaleString()}</span>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* RIGHT — form */}
@@ -118,6 +71,12 @@ export default function SignUpPage() {
           </div>
 
           <SignUp forceRedirectUrl="/onboarding" />
+          <p className="text-[11px] text-gray-500 text-center leading-relaxed">
+            By creating an account you agree to our{" "}
+            <a href="/terms" className="underline text-gray-400">Terms of Service</a> (including our zero-tolerance policy for
+            objectionable content and abusive users) and{" "}
+            <a href="/privacy" className="underline text-gray-400">Privacy Policy</a>.
+          </p>
         </div>
       </div>
     </div>
