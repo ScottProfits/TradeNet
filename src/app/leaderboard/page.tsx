@@ -102,15 +102,15 @@ function LeaderboardPageInner() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[420px]">
+          <table className="w-full min-w-[340px]">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="text-left text-xs text-gray-500 px-3 py-3 w-8">#</th>
+                <th className="text-left text-xs text-gray-500 px-2 sm:px-3 py-3 w-8">#</th>
                 <th className="text-xs text-gray-500 px-1 py-3 w-6"></th>
-                <th className="text-left text-xs text-gray-500 px-3 py-3">Trader</th>
-                <th className="text-right text-xs text-gray-500 px-3 py-3">Trades</th>
-                <th className="text-right text-xs text-gray-500 px-3 py-3">Win %</th>
-                <th className="text-right text-xs text-gray-500 px-3 py-3 pr-4">P&L</th>
+                <th className="text-left text-xs text-gray-500 px-2 sm:px-3 py-3">Trader</th>
+                <th className="text-right text-xs text-gray-500 px-2 sm:px-3 py-3">Trades</th>
+                <th className="text-right text-xs text-gray-500 px-2 sm:px-3 py-3">Win %</th>
+                <th className="text-right text-xs text-gray-500 px-2 sm:px-3 py-3 pr-3 sm:pr-4">P&L</th>
               </tr>
             </thead>
             <tbody>
@@ -119,13 +119,13 @@ function LeaderboardPageInner() {
                   key={entry.profile?.id ?? i}
                   className="border-b border-[var(--border)] last:border-0 hover:bg-white/[0.02] transition-colors"
                 >
-                  <td className="px-3 py-3 text-sm font-mono text-gray-400">
+                  <td className="px-2 sm:px-3 py-3 text-sm font-mono text-gray-400">
                     {entry.pnl > 0 && i === 0 ? "🥇" : entry.pnl > 0 && i === 1 ? "🥈" : entry.pnl > 0 && i === 2 ? "🥉" : i + 1}
                   </td>
                   <td className="px-1 py-3">
                     <RankChange delta={entry.rankChange} />
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 sm:px-3 py-3">
                     <Link href={`/profile/${entry.profile?.handle}`} className="flex items-center gap-2 group">
                       <SafeAvatar src={entry.profile?.avatar_url} alt={entry.profile?.handle ?? ""} initials={entry.profile?.handle ?? "?"} className="w-8 h-8 text-xs" />
                       <div className="min-w-0">
@@ -141,9 +141,9 @@ function LeaderboardPageInner() {
                       </div>
                     </Link>
                   </td>
-                  <td className="px-3 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
-                  <td className="px-3 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
-                  <td className={clsx("px-3 py-3 pr-4 text-right text-sm font-bold whitespace-nowrap", entry.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
+                  <td className="px-2 sm:px-3 py-3 text-right text-sm text-gray-400">{entry.tradeCount}</td>
+                  <td className="px-2 sm:px-3 py-3 text-right text-sm text-gray-300">{entry.winRate}%</td>
+                  <td className={clsx("px-2 sm:px-3 py-3 pr-3 sm:pr-4 text-right text-sm font-bold whitespace-nowrap", entry.pnl >= 0 ? "text-[var(--green)] glow-green" : "text-[var(--red)] glow-red")}>
                     {entry.pnl >= 0 ? "+" : ""}${Math.abs(entry.pnl).toLocaleString()}
                   </td>
                 </tr>
