@@ -184,7 +184,7 @@ export default function MarketPage() {
           <h2 className="text-base font-bold text-white">📰 Market News</h2>
           <div className="glass-card rounded-2xl overflow-hidden divide-y divide-[var(--border)]">
             {news.length === 0 ? (
-              <p className="text-center text-gray-600 text-sm py-6">Loading…</p>
+              <p className="text-center text-gray-600 text-sm py-6">No headlines right now — check back in a few minutes.</p>
             ) : news.map((n, i) => (
               <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
                 className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors">

@@ -166,55 +166,61 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* ignore */ }
 
-  // ── Market news (Yahoo Finance) ───────────────────────────────────────────
-  let news: { title: string; source: string; url: string; published: string }[] = [];
-  try {
-    const nRes = await fetch(
-      "https://query1.finance.yahoo.com/v1/finance/search?q=market+news+stocks&lang=en-US&region=US&quotesCount=0&newsCount=8",
-      { headers: { "User-Agent": "Mozilla/5.0" }, next: { revalidate: 300 } }
-    );
-    if (nRes.ok) {
-      const nData = await nRes.json();
-      news = (nData.news ?? []).slice(0, 6).map((n: {
-        title: string; publisher?: string; link?: string; providerPublishTime?: number;
-      }) => ({
-        title: n.title,
-        source: n.publisher ?? "Yahoo Finance",
-        url: n.link ?? "",
-        published: n.providerPublishTime
-          ? new Date(n.providerPublishTime * 1000).toISOString()
-          : new Date().toISOString(),
-      }));
+  // ── Market news (RSS: CNBC + Yahoo Finance + FXStreet) ────────────────────
+  // Yahoo's JSON search endpoint now returns an empty news list, so use RSS
+  // feeds instead. Fetched in parallel with a short timeout each — one slow or
+  // blocked source can't blank the whole list.
+  type NewsItem = { title: string; source: string; url: string; published: string };
+  const decode = (t: string) =>
+    t
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+      .replace(/&apos;|&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .trim();
+  async function rss(url: string, source: string, limit: number): Promise<NewsItem[]> {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        next: { revalidate: 300 },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) return [];
+      const xml = await res.text();
+      return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
+        .slice(0, limit)
+        .map((m) => {
+          const b = m[1];
+          const title = decode(b.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "");
+          const link = decode(b.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "");
+          const pub = b.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim();
+          const d = pub ? new Date(pub) : null;
+          return {
+            title,
+            source,
+            url: link,
+            published: d && !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString(),
+          };
+        })
+        .filter((n) => n.title && n.url);
+    } catch {
+      return [];
     }
-  } catch { /* ignore */ }
-
-  // ── Forex news (FXStreet RSS) ─────────────────────────────────────────────
-  // Forex Factory has no public API/RSS (Cloudflare-blocked); FXStreet is the
-  // closest open forex-news source with a stable feed.
-  try {
-    const fxRes = await fetch("https://www.fxstreet.com/rss/news", {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      next: { revalidate: 300 },
-    });
-    if (fxRes.ok) {
-      const xml = await fxRes.text();
-      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 6);
-      const fxNews = items.map((m) => {
-        const block = m[1];
-        const title = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
-          ?? block.match(/<title>(.*?)<\/title>/)?.[1] ?? "";
-        const link = block.match(/<link>(.*?)<\/link>/)?.[1] ?? "";
-        const pubDate = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1];
-        return {
-          title,
-          source: "FXStreet",
-          url: link,
-          published: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-        };
-      }).filter((n) => n.title && n.url);
-      news = [...news, ...fxNews].sort((a, b) => b.published.localeCompare(a.published));
-    }
-  } catch { /* ignore */ }
+  }
+  const [cnbc, yahoo, fx] = await Promise.all([
+    rss("https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", "CNBC", 8),
+    rss("https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US", "Yahoo Finance", 6),
+    // Forex Factory has no public API/RSS (Cloudflare-blocked); FXStreet is the
+    // closest open forex-news source with a stable feed.
+    rss("https://www.fxstreet.com/rss/news", "FXStreet", 5),
+  ]);
+  const seen = new Set<string>();
+  const news: NewsItem[] = [...cnbc, ...yahoo, ...fx]
+    .filter((n) => (seen.has(n.title) ? false : (seen.add(n.title), true)))
+    .sort((a, b) => b.published.localeCompare(a.published))
+    .slice(0, 12);
 
   return Response.json({ marketStatus, upcomingEvents, todayEvents, trending, news });
 }
