@@ -30,6 +30,7 @@ const FEATURES = [
 
 type LandingTrade = { id: string; ticker: string; direction: string; pnl: number; created_at: string; handle: string };
 type LandingPost = { id: string; content: string; created_at: string; handle: string };
+type LandingChannel = { id: string; name: string; slug: string; description: string | null; avatar_url: string | null; price_cents: number | null; member_count: number };
 
 function timeAgo(iso: string) {
   const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -42,9 +43,9 @@ const money = (n: number) => `${n >= 0 ? "+" : "-"}$${Math.abs(Math.round(n)).to
 // Real, public activity for the logged-out page — never fabricated. Any
 // failure just hides the section that needed the data.
 async function getLandingData() {
-  const empty = { trades: [] as LandingTrade[], posts: [] as LandingPost[], traders: 0, tradeCount: 0 };
+  const empty = { trades: [] as LandingTrade[], posts: [] as LandingPost[], channels: [] as LandingChannel[], traders: 0, tradeCount: 0 };
   try {
-    const [{ data: tradeRows }, { data: postRows }, tradersRes, tradesRes] = await Promise.all([
+    const [{ data: tradeRows }, { data: postRows }, tradersRes, tradesRes, { data: channelRows }] = await Promise.all([
       supabase
         .from("trades")
         .select("id, ticker, direction, pnl, created_at, profiles!trades_user_id_fkey(handle)")
@@ -58,6 +59,13 @@ async function getLandingData() {
         .limit(12),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("trades").select("id", { count: "exact", head: true }),
+      // Public channels only (unlisted ones stay unlisted).
+      supabaseAdmin
+        .from("rooms")
+        .select("id, name, slug, description, avatar_url, price_cents, member_count")
+        .eq("visibility", "public")
+        .order("member_count", { ascending: false })
+        .limit(6),
     ]);
 
     const trades: LandingTrade[] = (tradeRows ?? [])
@@ -78,7 +86,7 @@ async function getLandingData() {
         .filter((p) => map[p.user_id])
         .map((p) => ({ id: p.id, content: p.content.trim(), created_at: p.created_at, handle: map[p.user_id] }));
     }
-    return { trades, posts, traders: tradersRes.count ?? 0, tradeCount: tradesRes.count ?? 0 };
+    return { trades, posts, channels: (channelRows ?? []) as LandingChannel[], traders: tradersRes.count ?? 0, tradeCount: tradesRes.count ?? 0 };
   } catch {
     return empty;
   }
@@ -88,7 +96,7 @@ export default async function LandingPage() {
   const { userId } = await auth();
   if (userId) redirect("/feed");
   const isLoggedIn = false;
-  const { trades, posts, traders, tradeCount } = await getLandingData();
+  const { trades, posts, channels, traders, tradeCount } = await getLandingData();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -186,6 +194,53 @@ export default async function LandingPage() {
       </section>
 
       <div className="max-w-5xl mx-auto border-t border-white/5" />
+
+      {/* Channels — real public channels */}
+      {channels.length > 0 && (
+        <>
+          <section className="py-20 px-4 sm:px-6">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">Join a trading channel.</h2>
+              <p className="text-gray-500 text-center mb-12 text-sm">
+                Live chat, topics and daily recaps run by traders — free or members-only.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {channels.map((c) => {
+                  const paid = !!c.price_cents && c.price_cents > 0;
+                  return (
+                    <Link
+                      key={c.id}
+                      href={`/rooms/${c.slug}`}
+                      className="flex items-start gap-3 bg-white/[0.03] border border-white/5 rounded-2xl p-5 hover:border-green-500/30 hover:bg-green-500/[0.03] transition-all"
+                    >
+                      {c.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-green-500/15 flex items-center justify-center text-lg font-bold text-green-400 shrink-0">
+                          {c.name[0]?.toUpperCase() ?? "#"}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-white truncate">{c.name}</p>
+                        {c.description && <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{c.description}</p>}
+                        <div className="flex items-center gap-2 mt-2 text-[11px]">
+                          <span className="text-gray-500">{c.member_count.toLocaleString()} member{c.member_count === 1 ? "" : "s"}</span>
+                          <span className={`font-semibold px-1.5 py-0.5 rounded-full ${paid ? "bg-green-500/15 text-green-400" : "bg-white/[0.06] text-gray-400"}`}>
+                            {paid ? `$${(c.price_cents! / 100).toFixed(c.price_cents! % 100 === 0 ? 0 : 2)}/mo` : "Free"}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <div className="max-w-5xl mx-auto border-t border-white/5" />
+        </>
+      )}
 
       {/* Networking section */}
       <section className="py-20 px-4 sm:px-6">
