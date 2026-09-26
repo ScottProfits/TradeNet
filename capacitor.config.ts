@@ -23,7 +23,10 @@ const config: CapacitorConfig = {
     // loads. The failsafe hides it anyway if the page never loads.
     SplashScreen: {
       launchAutoHide: false,
-      launchShowDuration: 0,
+      // NOTE: 0 makes the plugin skip showing the launch splash entirely.
+      // With launchAutoHide false this value is not a timer — hide() is.
+      launchShowDuration: 3000,
+      launchFadeInDuration: 0,
       backgroundColor: '#000000',
       showSpinner: false,
     },
