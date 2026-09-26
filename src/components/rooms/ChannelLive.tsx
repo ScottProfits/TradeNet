@@ -38,6 +38,12 @@ export default function ChannelLive({
   const [err, setErr] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // Owners/mods on a phone can't start a stream (screen sharing isn't
+  // available in the iOS app) — tell them where to do it, once, dismissibly.
+  const [hintDismissed, setHintDismissed] = useState(true);
+  useEffect(() => {
+    try { setHintDismissed(localStorage.getItem("ryzr_golive_hint") === "1"); } catch { setHintDismissed(false); }
+  }, []);
   const micTrackRef = useRef<MediaStreamTrack | null>(null);
   const broadcastRef = useRef<Broadcast | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -321,6 +327,26 @@ export default function ChannelLive({
   }, [showPlayer, iAmLive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!showPlayer && !(canBroadcast && isDesktop)) {
+    if (canBroadcast && !isDesktop && !hintDismissed && channelId) {
+      return (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--border)] bg-white/[0.02]">
+          <Radio className="w-3.5 h-3.5 text-red-400 shrink-0" />
+          <p className="text-[11px] text-gray-400 flex-1">
+            Want to go live? Open <span className="text-white font-medium">ryzr.app</span> on a desktop browser and share your screen. This app is for watching streams.
+          </p>
+          <button
+            onClick={() => {
+              setHintDismissed(true);
+              try { localStorage.setItem("ryzr_golive_hint", "1"); } catch { /* ignore */ }
+            }}
+            className="text-gray-500 hover:text-white shrink-0 p-1"
+            aria-label="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      );
+    }
     return err ? <p className="px-4 py-2 text-xs text-[var(--red)] border-b border-[var(--border)]">{err}</p> : null;
   }
 
