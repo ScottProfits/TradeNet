@@ -12,7 +12,9 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
     public let identifier = "VideoCapturePlugin"
     public let jsName = "VideoCapture"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "readVideoChunk", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deleteVideo", returnType: CAPPluginReturnPromise)
     ]
 
     private var savedCall: CAPPluginCall?
@@ -66,6 +68,38 @@ public class VideoCapturePlugin: CAPPlugin, CAPBridgedPlugin, UIImagePickerContr
                 self.savedCall = nil
             }
         }
+    }
+
+    // The app's WebView loads https://www.ryzr.app, and WKWebView can't
+    // intercept https requests — so the usual "convertFileSrc + fetch()" trick
+    // for reading a local file can't work here. Hand the recorded video to JS
+    // in base64 chunks over the plugin bridge instead.
+    @objc func readVideoChunk(_ call: CAPPluginCall) {
+        guard let path = call.getString("path"), let url = URL(string: path) else {
+            call.reject("Missing video path")
+            return
+        }
+        let offset = call.getInt("offset") ?? 0
+        let length = call.getInt("length") ?? (3 * 1024 * 1024)
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let size = (try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
+                let handle = try FileHandle(forReadingFrom: url)
+                defer { try? handle.close() }
+                try handle.seek(toOffset: UInt64(offset))
+                let data = try handle.read(upToCount: length) ?? Data()
+                call.resolve(["data": data.base64EncodedString(), "size": size, "bytes": data.count])
+            } catch {
+                call.reject("Couldn't read the recorded video: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @objc func deleteVideo(_ call: CAPPluginCall) {
+        if let path = call.getString("path"), let url = URL(string: path) {
+            try? FileManager.default.removeItem(at: url)
+        }
+        call.resolve()
     }
 
     private func stopDismissWatchdog() {
