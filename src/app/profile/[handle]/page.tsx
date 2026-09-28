@@ -74,6 +74,8 @@ interface Profile {
   youtube?: string;
   website?: string;
   twitter?: string;
+  product_link_url?: string | null;
+  product_link_label?: string | null;
 }
 
 interface Trade {
@@ -630,6 +632,19 @@ function ProfilePageInner() {
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm mt-4 text-left leading-relaxed break-words whitespace-pre-wrap">{profile.bio}</p>}
+
+        {/* Product link — a dedicated button, distinct from the plain
+            social-link chips below, for something the trader sells. */}
+        {profile.product_link_url && (
+          <a
+            href={profile.product_link_url.startsWith("http") ? profile.product_link_url : `https://${profile.product_link_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[var(--green)] text-black text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            🔗 {profile.product_link_label || "View Product"}
+          </a>
+        )}
 
         {/* Social links */}
         {(() => {

@@ -21,6 +21,41 @@ async function setMemberCount(roomId: string, delta: number) {
     .eq("id", roomId);
 }
 
+async function applyIndicatorSubscription(sub: Stripe.Subscription, tvUsername?: string) {
+  const userId = sub.metadata?.ryzr_user_id;
+  if (!userId) return;
+
+  const status = mapStatus(sub.status);
+  if (status === "canceled") {
+    // Only flip an existing active/needs_grant row to needs_revoke — don't
+    // resurrect a row that was already fully revoked.
+    await supabaseAdmin
+      .from("indicator_subscriptions")
+      .update({ status: "needs_revoke", updated_at: new Date().toISOString() })
+      .eq("stripe_subscription_id", sub.id)
+      .in("status", ["needs_grant", "active"]);
+    return;
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from("indicator_subscriptions")
+    .select("id, tv_username")
+    .eq("stripe_subscription_id", sub.id)
+    .maybeSingle();
+
+  await supabaseAdmin.from("indicator_subscriptions").upsert(
+    {
+      user_id: userId,
+      tv_username: tvUsername ?? existing?.tv_username ?? "",
+      status: existing ? existing.tv_username ? "active" : "needs_grant" : "needs_grant",
+      stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer?.id,
+      stripe_subscription_id: sub.id,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
+}
+
 async function applySubscription(sub: Stripe.Subscription) {
   const roomId = sub.metadata?.ryzr_room_id;
   const userId = sub.metadata?.ryzr_user_id;
@@ -87,7 +122,22 @@ export async function POST(req: Request) {
           ...sub.metadata,
           ryzr_room_id: sub.metadata?.ryzr_room_id ?? (session.metadata?.ryzr_room_id ?? ""),
           ryzr_user_id: sub.metadata?.ryzr_user_id ?? (session.metadata?.ryzr_user_id ?? ""),
+          kind: sub.metadata?.kind ?? session.metadata?.kind ?? "",
         };
+
+        if (sub.metadata.kind === "indicator") {
+          const tvUsername = session.custom_fields?.find((f) => f.key === "tv_username")?.text?.value ?? "";
+          await applyIndicatorSubscription(sub, tvUsername);
+          if (sub.metadata.ryzr_user_id) {
+            void sendPushToUser(sub.metadata.ryzr_user_id, {
+              title: "✅ Indicator access requested",
+              body: "We'll add your TradingView access shortly.",
+              url: "/indicator",
+            });
+          }
+          break;
+        }
+
         await applySubscription(sub);
 
         const userId = sub.metadata.ryzr_user_id;
@@ -106,7 +156,12 @@ export async function POST(req: Request) {
       }
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        await applySubscription(event.data.object as Stripe.Subscription);
+        const sub = event.data.object as Stripe.Subscription;
+        if (sub.metadata?.kind === "indicator") {
+          await applyIndicatorSubscription(sub);
+          break;
+        }
+        await applySubscription(sub);
         break;
       }
       case "account.updated": {

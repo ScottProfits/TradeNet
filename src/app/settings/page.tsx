@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const [discord, setDiscord] = useState(cachedMe?.discord ?? "");
   const [youtube, setYoutube] = useState(cachedMe?.youtube ?? "");
   const [website, setWebsite] = useState(cachedMe?.website ?? "");
+  const [productLinkUrl, setProductLinkUrl] = useState(cachedMe?.product_link_url ?? "");
+  const [productLinkLabel, setProductLinkLabel] = useState(cachedMe?.product_link_label ?? "");
   const [avatarPreview, setAvatarPreview] = useState(cachedMe?.avatar_url ?? "");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
@@ -89,6 +91,8 @@ export default function SettingsPage() {
     setDiscord(me.discord ?? "");
     setYoutube(me.youtube ?? "");
     setWebsite(me.website ?? "");
+    setProductLinkUrl(me.product_link_url ?? "");
+    setProductLinkLabel(me.product_link_label ?? "");
     setLoading(false);
   }, [me]);
 
@@ -157,7 +161,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/profile/update", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle, instagram, tiktok, discord, youtube, website, twitter }),
+      body: JSON.stringify({ handle, full_name: fullName, bio, brokerage, trading_style: tradingStyle, instagram, tiktok, discord, youtube, website, twitter, product_link_url: productLinkUrl, product_link_label: productLinkLabel }),
     });
 
     if (res.ok) {
@@ -324,6 +328,30 @@ export default function SettingsPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Product link — a dedicated, prominent button on your profile,
+              separate from the generic Website field, for something you're
+              selling (a paid indicator, a course, etc). */}
+          <div className="space-y-3 pt-2">
+            <p className="text-sm font-semibold text-white">Product link (optional)</p>
+            <p className="text-xs text-gray-500">
+              Shows as its own button on your profile — separate from Website — for
+              something you sell, like an invite-only TradingView indicator.
+            </p>
+            <input
+              value={productLinkLabel}
+              onChange={(e) => setProductLinkLabel(e.target.value)}
+              placeholder="Button text, e.g. Get My Indicator"
+              maxLength={40}
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+            />
+            <input
+              value={productLinkUrl}
+              onChange={(e) => setProductLinkUrl(e.target.value)}
+              placeholder="ryzr.app/indicator"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+            />
           </div>
 
           {error && <p className="text-[var(--red)] text-sm">{error}</p>}
