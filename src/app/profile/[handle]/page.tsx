@@ -640,7 +640,7 @@ function ProfilePageInner() {
             href={profile.product_link_url.startsWith("http") ? profile.product_link_url : `https://${profile.product_link_url}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[var(--green)] text-black text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--green)] text-black text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             🔗 {profile.product_link_label || "View Product"}
           </a>
