@@ -11,7 +11,7 @@ create table if not exists products (
   title text not null,
   description text,
   price_cents int,                        -- null/0 = draft, not yet for sale
-  platform_fee_percent numeric not null default 10,
+  platform_fee_percent numeric not null default 4.5,
   stripe_product_id text,
   stripe_price_id text,
   delivery_instructions text,
