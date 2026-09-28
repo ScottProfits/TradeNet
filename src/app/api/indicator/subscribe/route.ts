@@ -2,10 +2,26 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { stripe, appUrl } from "@/lib/stripe";
 
+// GET /api/indicator/subscribe — the caller's own indicator subscription
+// status, so /indicator can show the TradingView link once active.
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const { data } = await supabaseAdmin
+    .from("indicator_subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .in("status", ["needs_grant", "active"])
+    .maybeSingle();
+
+  return Response.json({ active: data?.status === "active" });
+}
+
 // POST /api/indicator/subscribe — start a web Checkout for the HTF Swings
 // indicator's monthly access fee. Collects the buyer's TradingView username
-// as a Checkout custom field; the webhook records it as "needs_grant" once
-// payment completes, for an admin to add on TradingView's invite-only list.
+// as a Checkout custom field (handy for support even though the script is
+// Protected/public, not Invite-only, so nothing needs manual granting).
 export async function POST() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });

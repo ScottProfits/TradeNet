@@ -43,11 +43,16 @@ async function applyIndicatorSubscription(sub: Stripe.Subscription, tvUsername?:
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
 
+  // The script is Protected (not Invite-only), so there's no per-user access
+  // to manually grant — a completed checkout is immediately "active" and the
+  // TradingView link is delivered straight away. If this ever moves to
+  // Invite-only, switch this back to "needs_grant" and revert /indicator's
+  // success screen to point people at /admin/indicator-access instead.
   await supabaseAdmin.from("indicator_subscriptions").upsert(
     {
       user_id: userId,
       tv_username: tvUsername ?? existing?.tv_username ?? "",
-      status: existing ? existing.tv_username ? "active" : "needs_grant" : "needs_grant",
+      status: "active",
       stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer?.id,
       stripe_subscription_id: sub.id,
       updated_at: new Date().toISOString(),
@@ -151,8 +156,8 @@ export async function POST(req: Request) {
           await applyIndicatorSubscription(sub, tvUsername);
           if (sub.metadata.ryzr_user_id) {
             void sendPushToUser(sub.metadata.ryzr_user_id, {
-              title: "✅ Indicator access requested",
-              body: "We'll add your TradingView access shortly.",
+              title: "✅ Your indicator is ready",
+              body: "Tap to get the TradingView link.",
               url: "/indicator",
             });
           }
