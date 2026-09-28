@@ -56,6 +56,26 @@ async function applyIndicatorSubscription(sub: Stripe.Subscription, tvUsername?:
   );
 }
 
+async function applyProductSubscription(sub: Stripe.Subscription) {
+  const productId = sub.metadata?.ryzr_product_id;
+  const userId = sub.metadata?.ryzr_user_id;
+  if (!productId || !userId) return;
+
+  const status = mapStatus(sub.status);
+  if (status === "canceled") {
+    await supabaseAdmin
+      .from("product_subscriptions")
+      .delete()
+      .match({ product_id: productId, user_id: userId });
+    return;
+  }
+
+  await supabaseAdmin.from("product_subscriptions").upsert(
+    { product_id: productId, user_id: userId, status, stripe_subscription_id: sub.id },
+    { onConflict: "product_id,user_id" }
+  );
+}
+
 async function applySubscription(sub: Stripe.Subscription) {
   const roomId = sub.metadata?.ryzr_room_id;
   const userId = sub.metadata?.ryzr_user_id;
@@ -121,6 +141,7 @@ export async function POST(req: Request) {
         sub.metadata = {
           ...sub.metadata,
           ryzr_room_id: sub.metadata?.ryzr_room_id ?? (session.metadata?.ryzr_room_id ?? ""),
+          ryzr_product_id: sub.metadata?.ryzr_product_id ?? (session.metadata?.ryzr_product_id ?? ""),
           ryzr_user_id: sub.metadata?.ryzr_user_id ?? (session.metadata?.ryzr_user_id ?? ""),
           kind: sub.metadata?.kind ?? session.metadata?.kind ?? "",
         };
@@ -133,6 +154,20 @@ export async function POST(req: Request) {
               title: "✅ Indicator access requested",
               body: "We'll add your TradingView access shortly.",
               url: "/indicator",
+            });
+          }
+          break;
+        }
+
+        if (sub.metadata.kind === "product") {
+          await applyProductSubscription(sub);
+          const productId = sub.metadata.ryzr_product_id;
+          if (sub.metadata.ryzr_user_id && productId) {
+            const { data: product } = await supabaseAdmin.from("products").select("title").eq("id", productId).single();
+            void sendPushToUser(sub.metadata.ryzr_user_id, {
+              title: `✅ You're subscribed to ${product?.title ?? "the product"}`,
+              body: "Check how to access it.",
+              url: `/products/${productId}/thanks`,
             });
           }
           break;
@@ -159,6 +194,10 @@ export async function POST(req: Request) {
         const sub = event.data.object as Stripe.Subscription;
         if (sub.metadata?.kind === "indicator") {
           await applyIndicatorSubscription(sub);
+          break;
+        }
+        if (sub.metadata?.kind === "product") {
+          await applyProductSubscription(sub);
           break;
         }
         await applySubscription(sub);

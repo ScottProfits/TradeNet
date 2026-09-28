@@ -35,6 +35,15 @@ export default function SettingsPage() {
   const [website, setWebsite] = useState(cachedMe?.website ?? "");
   const [productLinkUrl, setProductLinkUrl] = useState(cachedMe?.product_link_url ?? "");
   const [productLinkLabel, setProductLinkLabel] = useState(cachedMe?.product_link_label ?? "");
+  const [payoutsEnabled, setPayoutsEnabled] = useState(false);
+  const [product, setProduct] = useState<{ id: string; title: string; description: string | null; price_cents: number | null; delivery_instructions: string | null } | null>(null);
+  const [prodTitle, setProdTitle] = useState("");
+  const [prodDesc, setProdDesc] = useState("");
+  const [prodPrice, setProdPrice] = useState("");
+  const [prodDelivery, setProdDelivery] = useState("");
+  const [prodSaving, setProdSaving] = useState(false);
+  const [prodSaved, setProdSaved] = useState(false);
+  const [prodError, setProdError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(cachedMe?.avatar_url ?? "");
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rithmicModalOpen, setRithmicModalOpen] = useState(false);
@@ -107,7 +116,44 @@ export default function SettingsPage() {
     fetch("/api/brokers/tradovate").then((r) => r.ok ? r.json() : null).then((d) => {
       if (d) setTradovateConnected(!!d.connected && !d.needsReconnect);
     });
+    fetch("/api/creator/onboard").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d) setPayoutsEnabled(!!d.payoutsEnabled);
+    });
+    fetch("/api/products").then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d) {
+        setProduct(d);
+        setProdTitle(d.title ?? "");
+        setProdDesc(d.description ?? "");
+        setProdPrice(d.price_cents ? (d.price_cents / 100).toString() : "");
+        setProdDelivery(d.delivery_instructions ?? "");
+      }
+    });
   }, [userId]);
+
+  async function saveProduct(e: React.FormEvent) {
+    e.preventDefault();
+    setProdError("");
+    setProdSaving(true);
+    setProdSaved(false);
+    const res = await fetch("/api/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: prodTitle,
+        description: prodDesc,
+        priceCents: prodPrice ? Math.round(parseFloat(prodPrice) * 100) : 0,
+        deliveryInstructions: prodDelivery,
+      }),
+    });
+    if (res.ok) {
+      setProduct(await res.json());
+      setProdSaved(true);
+      setTimeout(() => setProdSaved(false), 3000);
+    } else {
+      setProdError(await res.text());
+    }
+    setProdSaving(false);
+  }
 
   function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -336,9 +382,22 @@ export default function SettingsPage() {
           <div className="space-y-3 pt-2">
             <p className="text-sm font-semibold text-white">Product link (optional)</p>
             <p className="text-xs text-gray-500">
-              Shows as its own button on your profile — separate from Website — for
-              something you sell, like an invite-only TradingView indicator.
+              Shows as its own button on your profile — separate from Website. Point
+              it at your Ryzr product above, or any external link (your own
+              checkout page, a download, etc).
             </p>
+            {product?.id && product.price_cents && (
+              <button
+                type="button"
+                onClick={() => {
+                  setProductLinkUrl(`ryzr.app/products/${product.id}`);
+                  setProductLinkLabel((l) => l || `Get ${product.title}`);
+                }}
+                className="text-xs text-[var(--green)] underline"
+              >
+                Use my Ryzr product link
+              </button>
+            )}
             <input
               value={productLinkLabel}
               onChange={(e) => setProductLinkLabel(e.target.value)}
@@ -458,6 +517,82 @@ export default function SettingsPage() {
         </div>
         <ChevronRight className="w-4 h-4 text-gray-600 shrink-0" />
       </Link>
+
+      {/* Sell a product — self-serve pricing, same destination-charge/Connect
+          pattern as paid channels. Shows on your profile as a dedicated
+          button once priced. */}
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="font-bold text-white">Sell a product</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            One paid product or service, billed monthly through Ryzr. Shows as a
+            button on your profile once priced.
+          </p>
+        </div>
+
+        {!payoutsEnabled && (
+          <p className="text-xs text-yellow-500">
+            Connect payouts under Creator earnings above before you can charge for it —
+            you can still fill this in and save it as a draft.
+          </p>
+        )}
+
+        <form onSubmit={saveProduct} className="space-y-3">
+          <input
+            value={prodTitle}
+            onChange={(e) => setProdTitle(e.target.value)}
+            placeholder="Title, e.g. HTF Swings Indicator"
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+          />
+          <textarea
+            value={prodDesc}
+            onChange={(e) => setProdDesc(e.target.value)}
+            placeholder="Short description buyers will see"
+            rows={2}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">$</span>
+            <input
+              value={prodPrice}
+              onChange={(e) => setProdPrice(e.target.value)}
+              placeholder="19.99"
+              inputMode="decimal"
+              className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)]"
+            />
+            <span className="text-sm text-gray-500">/month</span>
+          </div>
+          <textarea
+            value={prodDelivery}
+            onChange={(e) => setProdDelivery(e.target.value)}
+            placeholder="What a buyer sees right after paying — a link, instructions to DM you their username, etc."
+            rows={2}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[var(--green)] resize-none"
+          />
+
+          {prodError && <p className="text-[var(--red)] text-sm">{prodError}</p>}
+          {prodSaved && (
+            <div className="flex items-center gap-2 text-[var(--green)] text-sm">
+              <CheckCircle className="w-4 h-4" /> Saved!
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={prodSaving || !prodTitle.trim()}
+            className="w-full py-2.5 rounded-xl bg-white/5 text-white font-semibold disabled:opacity-50"
+          >
+            {prodSaving ? "Saving…" : "Save product"}
+          </button>
+
+          {product?.id && product.price_cents ? (
+            <p className="text-xs text-gray-500 text-center">
+              Live at <Link href={`/products/${product.id}`} className="text-[var(--green)]">ryzr.app/products/{product.id}</Link> —
+              set this as your Product link below to feature it on your profile.
+            </p>
+          ) : null}
+        </form>
+      </div>
 
       {/* Broker Connections */}
       <div className="glass-card rounded-2xl p-6 space-y-4">
