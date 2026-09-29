@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       .from("profiles")
       .select("id, handle, full_name, avatar_url, verified, trading_style")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(2000),
     supabase
       .from("trades")
       .select("ticker, strategy, pnl, user_id")
