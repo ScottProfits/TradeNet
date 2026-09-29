@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useCachedFetch } from "@/lib/useCachedFetch";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -74,6 +75,18 @@ export default function ExploreTab() {
   const data = isDemo ? demoExplore : fetched ?? null;
   const loading = isDemo ? false : fetchLoading;
   const channels = (roomsData ?? []).slice(0, 6);
+  const [following, setFollowing] = useState<Set<string>>(new Set());
+
+  async function handleFollow(e: React.MouseEvent, id: string, handle: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setFollowing((prev) => new Set(prev).add(id));
+    await fetch("/api/follow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetHandle: handle }),
+    });
+  }
 
   function priceLabel(cents: number | null) {
     if (!cents || cents <= 0) return "Free";
@@ -211,7 +224,16 @@ export default function ExploreTab() {
                   </div>
                   {trader.trading_style && <p className="text-xs text-gray-500">{trader.trading_style}</p>}
                 </div>
-                <span className="text-xs text-blue-400 border border-blue-400/30 rounded-full px-2 py-0.5 shrink-0">Follow</span>
+                {following.has(trader.id) ? (
+                  <span className="text-xs text-[var(--green)] font-semibold shrink-0">Following ✓</span>
+                ) : (
+                  <button
+                    onClick={(e) => handleFollow(e, trader.id, trader.handle)}
+                    className="text-xs text-blue-400 border border-blue-400/30 rounded-full px-2 py-0.5 shrink-0 hover:bg-blue-400/10 transition-colors"
+                  >
+                    Follow
+                  </button>
+                )}
               </Link>
             ))}
           </div>
