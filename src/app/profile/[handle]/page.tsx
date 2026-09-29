@@ -584,7 +584,7 @@ function ProfilePageInner() {
                 </button>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col items-end gap-2">
                 <button
                   onClick={handleFollow}
                   disabled={followLoading}
@@ -597,36 +597,38 @@ function ProfilePageInner() {
                 >
                   {following ? "Following ✓" : "Follow"}
                 </button>
-                <button
-                  onClick={() => router.push(`/messages/${handle}`)}
-                  className="p-1.5 sm:p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors shrink-0"
-                  title="Send message"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-                <div className="relative shrink-0">
+                <div className="flex gap-2">
                   <button
-                    onClick={() => setMenuOpen((o) => !o)}
-                    className="p-1.5 sm:p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
-                    title="More"
+                    onClick={() => router.push(`/messages/${handle}`)}
+                    className="p-1.5 sm:p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors shrink-0"
+                    title="Send message"
                   >
-                    <MoreHorizontal className="w-4 h-4" />
+                    <MessageSquare className="w-4 h-4" />
                   </button>
-                  {menuOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                      <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl glass-card border border-[var(--border)] overflow-hidden">
-                        <button onClick={reportUser} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 text-left">
-                          <Flag className="w-4 h-4 text-yellow-500" /> Report
-                        </button>
-                        <button onClick={toggleBlock} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-white/5 border-t border-[var(--border)] text-red-400">
-                          <Ban className="w-4 h-4" /> {blocked ? "Unblock" : "Block"}
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setMenuOpen((o) => !o)}
+                      className="p-1.5 sm:p-2 border border-[var(--border)] text-gray-400 hover:text-white rounded-lg transition-colors"
+                      title="More"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                    {menuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                        <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl glass-card border border-[var(--border)] overflow-hidden">
+                          <button onClick={reportUser} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:bg-white/5 text-left">
+                            <Flag className="w-4 h-4 text-yellow-500" /> Report
+                          </button>
+                          <button onClick={toggleBlock} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-white/5 border-t border-[var(--border)] text-red-400">
+                            <Ban className="w-4 h-4" /> {blocked ? "Unblock" : "Block"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
