@@ -722,9 +722,11 @@ function RoomPageInner() {
           <div className={`${showChat ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0 min-h-0`}>
             {/* One persistent instance — it resets internally on topic change.
                 (Keying it caused it to stack instead of swap in Safari.) */}
-            <ChannelLive channelId={activeChannel ?? ""} canBroadcast={isMod && !!activeChannel} />
+            <div className="shrink-0">
+              <ChannelLive channelId={activeChannel ?? ""} canBroadcast={isMod && !!activeChannel} />
+            </div>
             {pinned && (
-              <div className="flex items-start gap-2 px-4 py-2 border-b border-[var(--border)] bg-[var(--green)]/[0.06]">
+              <div className="shrink-0 flex items-start gap-2 px-4 py-2 border-b border-[var(--border)] bg-[var(--green)]/[0.06]">
                 <Pin className="w-3.5 h-3.5 text-[var(--green)] mt-0.5 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--green)]">
@@ -925,7 +927,7 @@ function RoomPageInner() {
                 <Megaphone className="w-3.5 h-3.5" /> Only channel admins post in this topic.
               </p>
             ) : (
-            <form onSubmit={send} className="px-3 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
+            <form onSubmit={send} className="shrink-0 px-3 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
               {mediaPreview && (
                 <div className="relative inline-block">
                   {media?.type.startsWith("video/") ? (

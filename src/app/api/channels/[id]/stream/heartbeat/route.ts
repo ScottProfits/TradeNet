@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data: stream } = await supabaseAdmin
     .from("channel_streams")
-    .select("id, broadcaster_id, cf_session_id, video_track, audio_track, last_seen_at")
+    .select("id, broadcaster_id, cf_session_id, video_track, audio_track, last_seen_at, viewer_count")
     .eq("channel_id", id)
     .eq("status", "live")
     .maybeSingle();
@@ -63,5 +63,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     secondsUsed: seconds,
     secondsLeft: DAILY_STREAM_LIMIT_SECONDS - seconds,
     warn: seconds >= STREAM_WARN_AT_SECONDS,
+    viewerCount: stream.viewer_count ?? 0,
   });
 }

@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
 
   const [
     { data: topTraders },
+    { data: suggestPool },
     { data: recentTrades },
     { data: todayTrades },
     { data: prev7dTrades },
@@ -25,6 +26,11 @@ export async function GET(req: NextRequest) {
       .select("id, handle, full_name, avatar_url, verified, trading_style")
       .order("followers_count", { ascending: false })
       .limit(10),
+    supabase
+      .from("profiles")
+      .select("id, handle, full_name, avatar_url, verified, trading_style")
+      .order("created_at", { ascending: false })
+      .limit(100),
     supabase
       .from("trades")
       .select("ticker, strategy, pnl, user_id")
@@ -104,11 +110,18 @@ export async function GET(req: NextRequest) {
       .map((id) => ({ profile: profileMap[id], delta: Math.round(((recentPnl[id] ?? 0) - (prevPnl[id] ?? 0)) * 100) / 100 }));
   }
 
-  // Suggested Traders — popular traders the current user doesn't follow
+  // Suggested Traders — anyone not already followed, drawn from a wide pool
+  // (newest signups + everyone else) rather than just the top-followed few,
+  // so it doesn't run dry once those are all followed.
   const followingSet = new Set((following ?? []).map((f: { following_id: string }) => f.following_id));
   followingSet.add(userId ?? "");
-  const suggested = (topTraders ?? [])
-    .filter((t) => !followingSet.has(t.id))
+  type SuggestCandidate = { id: string; handle: string; full_name: string | null; avatar_url: string | null; verified: boolean; trading_style: string | null };
+  const candidates = new Map<string, SuggestCandidate>();
+  for (const t of [...(suggestPool ?? []), ...(topTraders ?? [])] as SuggestCandidate[]) {
+    if (!followingSet.has(t.id)) candidates.set(t.id, t);
+  }
+  const suggested = Array.from(candidates.values())
+    .sort(() => Math.random() - 0.5)
     .slice(0, 5);
 
   // Explore notifications — fire-and-forget, once per user per category per day

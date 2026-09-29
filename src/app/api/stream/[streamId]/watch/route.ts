@@ -53,5 +53,30 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ stre
   if (!viewerSessionId || !answer) return new Response("Missing viewerSessionId/answer", { status: 400 });
 
   await renegotiate(viewerSessionId, answer, "answer");
+
+  // Best-effort counter — not a critical-path figure, so a plain read/write
+  // is fine even though it's not perfectly atomic under heavy concurrency.
+  const { data: row } = await supabaseAdmin.from("channel_streams").select("viewer_count, viewer_peak").eq("id", streamId).maybeSingle();
+  const count = (row?.viewer_count ?? 0) + 1;
+  await supabaseAdmin
+    .from("channel_streams")
+    .update({ viewer_count: count, viewer_peak: Math.max(row?.viewer_peak ?? 0, count) })
+    .eq("id", streamId);
+
+  return Response.json({ ok: true });
+}
+
+// DELETE /api/stream/:streamId/watch — viewer left, decrement the count.
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ streamId: string }> }) {
+  const { streamId } = await params;
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const { data: row } = await supabaseAdmin.from("channel_streams").select("viewer_count").eq("id", streamId).maybeSingle();
+  await supabaseAdmin
+    .from("channel_streams")
+    .update({ viewer_count: Math.max(0, (row?.viewer_count ?? 1) - 1) })
+    .eq("id", streamId);
+
   return Response.json({ ok: true });
 }

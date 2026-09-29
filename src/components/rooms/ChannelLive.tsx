@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Pause, Mic, MicOff } from "lucide-react";
+import { Radio, X, Loader2, Volume2, VolumeX, Maximize2, Play, Pause, Mic, MicOff, Eye } from "lucide-react";
 import { startBroadcast, watchStream, localDay, type Broadcast } from "@/lib/streamClient";
 
 interface LiveStatus {
@@ -28,6 +28,8 @@ export default function ChannelLive({
   const [starting, setStarting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [muted, setMuted] = useState(true);
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
   const [paused, setPaused] = useState(false); // reflects a deliberate user pause
   const [controlsShown, setControlsShown] = useState(false); // tap toggles the control overlay
   const [expanded, setExpanded] = useState(false);
@@ -70,6 +72,8 @@ export default function ChannelLive({
   useEffect(() => {
     setStatus({ live: false });
     setSecondsLeft(null);
+    setShowUnmutePrompt(false);
+    setViewerCount(0);
     setErr(null);
     setExpanded(false);
     return () => {
@@ -110,7 +114,7 @@ export default function ChannelLive({
   // Broadcaster heartbeat.
   useEffect(() => {
     if (!broadcastRef.current) return;
-    const t = setInterval(async () => {
+    const beat = async () => {
       try {
         const r = await fetch(`/api/channels/${channelId}/stream/heartbeat`, {
           method: "POST",
@@ -119,9 +123,14 @@ export default function ChannelLive({
         });
         const j = await r.json();
         if (j.ended) endBroadcast(true);
-        else if (typeof j.secondsLeft === "number") setSecondsLeft(j.secondsLeft);
+        else {
+          if (typeof j.secondsLeft === "number") setSecondsLeft(j.secondsLeft);
+          if (typeof j.viewerCount === "number") setViewerCount(j.viewerCount);
+        }
       } catch {}
-    }, 15000);
+    };
+    beat();
+    const t = setInterval(beat, 15000);
     return () => clearInterval(t);
   }, [status.isBroadcaster, channelId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -129,20 +138,30 @@ export default function ChannelLive({
   useEffect(() => {
     if (status.isBroadcaster || broadcastRef.current) return;
     if (status.live && status.streamId && watchingIdRef.current !== status.streamId) {
-      watchingIdRef.current = status.streamId;
+      const streamId = status.streamId;
+      watchingIdRef.current = streamId;
       userPausedRef.current = false;
       setErr(null);
-      watchStream(status.streamId)
+      watchStream(streamId)
         .then(({ pc, stream }) => {
           viewerPcRef.current = pc;
           viewerStreamRef.current = stream;
           const v = videoRef.current;
           if (v) {
             v.srcObject = stream;
-            v.muted = true;
-            setMuted(true);
-            const tryPlay = (n = 0) => v.play().catch(() => { if (n < 5) setTimeout(() => tryPlay(n + 1), 200); });
-            tryPlay();
+            // Try unmuted first — browsers allow autoplay-with-sound once a
+            // site has enough engagement, so this sometimes just works. If
+            // it's blocked, fall back to muted and prompt the viewer to tap.
+            v.muted = false;
+            setMuted(false);
+            v.play()
+              .catch(() => {
+                v.muted = true;
+                setMuted(true);
+                setShowUnmutePrompt(true);
+                const tryPlay = (n = 0) => v.play().catch(() => { if (n < 5) setTimeout(() => tryPlay(n + 1), 200); });
+                tryPlay();
+              });
           }
         })
         .catch(() => {
@@ -151,12 +170,30 @@ export default function ChannelLive({
         });
     }
     if (!status.live && watchingIdRef.current) {
+      fetch(`/api/stream/${watchingIdRef.current}/watch`, { method: "DELETE", keepalive: true }).catch(() => {});
       viewerPcRef.current?.close();
       viewerPcRef.current = null;
       watchingIdRef.current = null;
       if (videoRef.current) videoRef.current.srcObject = null;
     }
   }, [status.live, status.streamId, status.isBroadcaster]);
+
+  // Leave cleanly on unmount / channel switch / tab close, so the viewer
+  // count doesn't drift upward from people who just closed the tab.
+  useEffect(() => {
+    const leave = () => {
+      if (watchingIdRef.current) {
+        fetch(`/api/stream/${watchingIdRef.current}/watch`, { method: "DELETE", keepalive: true }).catch(() => {});
+      }
+    };
+    window.addEventListener("pagehide", leave);
+    window.addEventListener("beforeunload", leave);
+    return () => {
+      leave();
+      window.removeEventListener("pagehide", leave);
+      window.removeEventListener("beforeunload", leave);
+    };
+  }, [channelId]);
 
   // Attach the broadcaster's own stream once the (collapsible) preview video
   // is in the DOM.
@@ -256,7 +293,10 @@ export default function ChannelLive({
     if (!v) return;
     v.muted = !v.muted;
     setMuted(v.muted);
-    if (!v.muted) v.play().catch(() => {});
+    if (!v.muted) {
+      setShowUnmutePrompt(false);
+      v.play().catch(() => {});
+    }
   }
 
   // Tapping the video only shows/hides the controls — it never pauses.
@@ -361,6 +401,9 @@ export default function ChannelLive({
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
           </span>
           <span className="text-xs text-gray-400 truncate">You&apos;re streaming — chat is below</span>
+          <span className="flex items-center gap-1 text-[11px] text-gray-400 shrink-0">
+            <Eye className="w-3 h-3" /> {viewerCount}
+          </span>
           {secondsLeft !== null && secondsLeft <= 300 && (
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-yellow-500 text-black shrink-0">{fmt(secondsLeft)} left</span>
           )}
@@ -440,6 +483,19 @@ export default function ChannelLive({
             </div>
           )}
 
+          {/* Autoplay-with-sound almost always gets blocked by the browser on
+              first join — make the fallback obvious instead of a tiny icon. */}
+          {!iAmLive && showUnmutePrompt && muted && (
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+              className="absolute inset-0 flex items-center justify-center bg-black/40"
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full bg-white text-black">
+                <VolumeX className="w-4 h-4" /> Tap to unmute
+              </span>
+            </button>
+          )}
+
           {/* viewer controls */}
           {!iAmLive && !expanded && (
             <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
@@ -469,6 +525,9 @@ export default function ChannelLive({
           {/* broadcaster controls */}
           {iAmLive && (
             <div className="absolute top-2 right-2 flex items-center gap-2">
+              <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-black/60 text-white">
+                <Eye className="w-3 h-3" /> {viewerCount}
+              </span>
               {secondsLeft !== null && secondsLeft <= 300 && (
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-yellow-500 text-black">{fmt(secondsLeft)} left</span>
               )}
