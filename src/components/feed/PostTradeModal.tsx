@@ -9,6 +9,7 @@ import Image from "next/image";
 import VoiceRecorder, { type VoiceClip } from "@/components/feed/VoiceRecorder";
 import { extFor } from "@/lib/voice";
 import { captureNativeVideo, nativeVideoCaptureAvailable } from "@/lib/videoCapture";
+import { uploadMedia, checkUploadSize } from "@/lib/upload";
 
 // Blob URLs don't support the "#t=" media-fragment seek that works on real
 // network URLs, and iOS WebKit won't render a first frame on its own — so we
@@ -92,6 +93,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   const [mediaPoster, setMediaPoster] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -104,8 +106,11 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     const type: "image" | "video" = file.type.startsWith("video/") ? "video" : "image";
-    const preview = URL.createObjectURL(file);
     if (postFileRef.current) postFileRef.current.value = "";
+    const sizeError = checkUploadSize(file);
+    if (sizeError) { setError(sizeError); return; }
+    setError("");
+    const preview = URL.createObjectURL(file);
     const poster = type === "video" ? await captureVideoPoster(preview) : undefined;
     setPostMedia((prev) => {
       if (type === "video") return [{ file, preview, type, poster }];
@@ -124,6 +129,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   async function handleNativeRecordPostVideo() {
     try {
       const file = await captureNativeVideo();
+      const sizeError = checkUploadSize(file);
+      if (sizeError) { setError(sizeError); return; }
+      setError("");
       const preview = URL.createObjectURL(file);
       const poster = await captureVideoPoster(preview);
       setPostMedia([{ file, preview, type: "video", poster }]);
@@ -174,6 +182,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   async function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeError = checkUploadSize(file);
+    if (sizeError) { setError(sizeError); if (fileRef.current) fileRef.current.value = ""; return; }
+    setError("");
     const isVideo = file.type.startsWith("video/");
     const preview = URL.createObjectURL(file);
     setMedia(file);
@@ -193,6 +204,9 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
   async function handleNativeRecordTradeVideo() {
     try {
       const file = await captureNativeVideo();
+      const sizeError = checkUploadSize(file);
+      if (sizeError) { setError(sizeError); return; }
+      setError("");
       const preview = URL.createObjectURL(file);
       setMedia(file);
       setMediaPreview(preview);
@@ -216,7 +230,8 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
         for (const m of postMedia) {
           const ext = m.file.name.split(".").pop();
           const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, m.file, { contentType: m.file.type });
+          const { error: uploadError } = await uploadMedia("trade-images", path, m.file, { contentType: m.file.type, onProgress: setUploadPct });
+          setUploadPct(null);
           if (uploadError) { setError("Upload failed: " + uploadError.message); setSubmitting(false); return; }
           const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
           image_urls.push(data.publicUrl);
@@ -244,9 +259,8 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
       if (media && userId) {
         const ext = media.name.split(".").pop();
         const path = `${userId}/${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("trade-images")
-          .upload(path, media, { contentType: media.type });
+        const { error: uploadError } = await uploadMedia("trade-images", path, media, { contentType: media.type, onProgress: setUploadPct });
+        setUploadPct(null);
 
         if (uploadError) {
           setError("Upload failed: " + uploadError.message);
@@ -388,7 +402,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
                 className="text-[11px] tracking-[0.18em] font-semibold uppercase"
                 style={{ color: "#00C896", textShadow: "0 0 12px rgba(0,200,150,0.6)" }}
               >
-                {submitting ? "Posting..." : "Post"}
+                {submitting ? (uploadPct !== null ? `Uploading ${uploadPct}%` : "Posting...") : "Post"}
               </span>
             </button>
           </form>
@@ -690,7 +704,7 @@ export default function PostTradeModal({ onClose, onPosted, prefill }: Props) {
               className="text-[11px] tracking-[0.18em] font-semibold uppercase"
               style={{ color: "#00C896", textShadow: "0 0 12px rgba(0,200,150,0.6)" }}
             >
-              {submitting ? "Posting..." : "Post Trade"}
+              {submitting ? (uploadPct !== null ? `Uploading ${uploadPct}%` : "Posting...") : "Post Trade"}
             </span>
           </button>
         </form>}

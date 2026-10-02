@@ -5,6 +5,7 @@ import { X, TrendingUp, TrendingDown, ImagePlus, Video, Trash2 } from "lucide-re
 import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
+import { uploadMedia, checkUploadSize } from "@/lib/upload";
 
 interface EditTradeProps {
   tradeId: string;
@@ -40,6 +41,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   const [caption, setCaption] = useState(initial.notes);
   const [strategy, setStrategy] = useState(initial.strategy);
   const [saving, setSaving] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   // Media state: existingUrl (untouched), newMedia (replacement file), removed (explicit clear)
@@ -67,6 +69,9 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeError = checkUploadSize(file);
+    if (sizeError) { setError(sizeError); if (fileRef.current) fileRef.current.value = ""; return; }
+    setError("");
     setNewMedia(file);
     setNewMediaPreview(URL.createObjectURL(file));
     setNewMediaType(file.type.startsWith("video/") ? "video" : "image");
@@ -90,7 +95,8 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
     if (newMedia && userId) {
       const ext = newMedia.name.split(".").pop();
       const path = `${userId}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, newMedia, { contentType: newMedia.type });
+      const { error: uploadError } = await uploadMedia("trade-images", path, newMedia, { contentType: newMedia.type, onProgress: setUploadPct });
+      setUploadPct(null);
       if (uploadError) { setError("Upload failed: " + uploadError.message); setSaving(false); return; }
       const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
       image_url = data.publicUrl;
@@ -274,7 +280,7 @@ export default function EditTradeModal({ tradeId, initial, onSaved, onClose }: E
               className="text-[11px] tracking-[0.18em] font-semibold uppercase"
               style={{ color: "#00C896", textShadow: "0 0 12px rgba(0,200,150,0.6)" }}
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? (uploadPct !== null ? `Uploading ${uploadPct}%` : "Saving...") : "Save Changes"}
             </span>
           </button>
         </form>

@@ -15,6 +15,7 @@ import { timeAgo } from "@/lib/timeAgo";
 import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
+import { uploadMedia, checkUploadSize } from "@/lib/upload";
 import { errorMessage } from "@/lib/apiError";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
@@ -106,6 +107,7 @@ function RoomPageInner() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [joining, setJoining] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(cachedShell?.membership?.status === "pending");
   const [loading, setLoading] = useState(!cachedShell);
@@ -356,6 +358,8 @@ function RoomPageInner() {
   function pickMedia(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeError = checkUploadSize(file);
+    if (sizeError) { alert(sizeError); e.target.value = ""; return; }
     setMedia(file);
     setMediaPreview(URL.createObjectURL(file));
   }
@@ -381,8 +385,15 @@ function RoomPageInner() {
       const ts = Date.now();
       const ext = file.name.split(".").pop();
       const path = `${userId}/room-${ts}.${ext}`;
-      const { error } = await supabase.storage.from("trade-images").upload(path, file, { contentType: file.type });
-      if (!error) imageUrl = supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl;
+      const { error } = await uploadMedia("trade-images", path, file, { contentType: file.type, onProgress: setUploadPct });
+      setUploadPct(null);
+      if (error) {
+        alert("Upload failed: " + error.message);
+        setText(body);
+        setSending(false);
+        return;
+      }
+      imageUrl = supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl;
       if (file.type.startsWith("video/")) {
         const thumb = await extractVideoThumbnail(file);
         if (thumb) {
@@ -928,6 +939,7 @@ function RoomPageInner() {
               </p>
             ) : (
             <form onSubmit={send} className="shrink-0 px-3 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
+              {uploadPct !== null && <p className="text-xs text-gray-400">Uploading {uploadPct}%</p>}
               {mediaPreview && (
                 <div className="relative inline-block">
                   {media?.type.startsWith("video/") ? (

@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { isVideoUrl } from "@/lib/isVideoUrl";
 import { VIDEO_POSTER_DATA_URI } from "@/lib/videoPoster";
 import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
+import { uploadMedia, checkUploadSize } from "@/lib/upload";
 import { demoPartner, demoMessages, demoAutoReplies } from "@/lib/demoData";
 
 interface Message {
@@ -52,6 +53,7 @@ function ChatPageInner() {
   const [partner, setPartner] = useState<Profile | null>(isDemo ? demoPartner : null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
@@ -95,6 +97,8 @@ function ChatPageInner() {
   function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeError = checkUploadSize(file);
+    if (sizeError) { alert(sizeError); e.target.value = ""; return; }
     setMedia(file);
     setMediaPreview(URL.createObjectURL(file));
     setMediaType(file.type.startsWith("video/") ? "video" : "image");
@@ -191,11 +195,14 @@ function ChatPageInner() {
       const ext = media.name.split(".").pop();
       const ts = Date.now();
       const path = `${userId}/${ts}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("trade-images").upload(path, media, { contentType: media.type });
-      if (!uploadError) {
-        const { data } = supabase.storage.from("trade-images").getPublicUrl(path);
-        imageUrl = data.publicUrl;
+      const { error: uploadError } = await uploadMedia("trade-images", path, media, { contentType: media.type, onProgress: setUploadPct });
+      setUploadPct(null);
+      if (uploadError) {
+        alert("Upload failed: " + uploadError.message);
+        setSending(false);
+        return;
       }
+      imageUrl = supabase.storage.from("trade-images").getPublicUrl(path).data.publicUrl;
 
       if (mediaType === "video") {
         const thumb = await extractVideoThumbnail(media);
@@ -349,6 +356,7 @@ function ChatPageInner() {
 
       {/* Input */}
       <div className="glass-card rounded-b-2xl px-4 py-3 flex-shrink-0 space-y-2">
+        {uploadPct !== null && <p className="text-xs text-gray-400">Uploading {uploadPct}%</p>}
         {mediaPreview && (
           <div className="relative inline-block">
             {mediaType === "video" ? (
