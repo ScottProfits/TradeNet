@@ -131,9 +131,9 @@ export default function MobileNav() {
     marginRight: -TAP_OVERHANG,
   };
 
-  // Inside a channel it's a full-screen chat — no room for the floating
-  // nav, and it gets in the way of the keyboard.
-  if (/^\/rooms\/[^/]+/.test(pathname)) return null;
+  // Inside a channel or DM thread it's a full-screen chat — no room for the
+  // floating nav, and it covers the composer.
+  if (/^\/(rooms|messages)\/[^/]+/.test(pathname)) return null;
 
   return (
     <>
