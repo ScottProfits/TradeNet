@@ -1,14 +1,17 @@
 "use client";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import Navbar from "@/components/layout/Navbar";
 import MobileNav from "@/components/layout/MobileNav";
 import MobileTopMenu from "@/components/layout/MobileTopMenu";
+import { recordPath } from "@/lib/navHistory";
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/"];
 
 export default function ConditionalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  useEffect(() => { recordPath(pathname); }, [pathname]);
   const isAuth = pathname === "/" || AUTH_ROUTES.some((r) => r !== "/" && pathname.startsWith(r));
   const isProfileRoute = pathname.startsWith("/profile/");
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, Heart, Share2, BarChart2, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
+import { canGoBack } from "@/lib/navHistory";
 import { clsx } from "clsx";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import SafeAvatar from "@/components/ui/SafeAvatar";
@@ -114,7 +115,7 @@ export default function TradePage() {
     <div className="max-w-2xl mx-auto space-y-4 pb-24">
       {/* Back */}
       {isSignedIn ? (
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm pt-2">
+        <button onClick={() => (canGoBack() ? router.back() : router.push("/feed"))} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm pt-2">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
       ) : (

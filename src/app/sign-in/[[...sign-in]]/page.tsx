@@ -1,5 +1,29 @@
 "use client";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
+
+// Signing in lands on the feed. The only exception is pages that deliberately
+// send people to sign-in and expect them back (joining a room, buying a
+// product, the indicator, a shared trade) — any other stale redirect_url, like
+// a profile tab left open after the session expired, is ignored.
+const RETURN_TO = /^\/(rooms|products|indicator|trade)(\/|$)/;
+
+function afterSignInUrl(redirectUrl: string | null): string {
+  if (!redirectUrl || typeof window === "undefined") return "/feed";
+  try {
+    const url = new URL(redirectUrl, window.location.origin);
+    if (url.origin === window.location.origin && RETURN_TO.test(url.pathname)) {
+      return url.pathname + url.search + url.hash;
+    }
+  } catch {}
+  return "/feed";
+}
+
+function SignInForm() {
+  const params = useSearchParams();
+  return <SignIn forceRedirectUrl={afterSignInUrl(params.get("redirect_url"))} />;
+}
 
 function VerifiedCandle({ className = "w-7 h-7" }: { className?: string }) {
   return (
@@ -67,7 +91,9 @@ export default function SignInPage() {
             <h2 className="text-2xl font-bold text-white">Sign in to Ryzr</h2>
             <p className="text-gray-500 text-sm mt-1">Your leaderboard rank is waiting.</p>
           </div>
-          <SignIn />
+          <Suspense fallback={null}>
+            <SignInForm />
+          </Suspense>
         </div>
       </div>
     </div>

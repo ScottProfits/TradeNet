@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { canGoBack } from "@/lib/navHistory";
 
 interface BackButtonProps {
   fallbackHref?: string;
@@ -12,12 +13,10 @@ export default function BackButton({ fallbackHref = "/feed", className, iconOnly
   const router = useRouter();
 
   function handleBack() {
-    // If there's no real navigation history (e.g. a shared link opened fresh), fall back
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push(fallbackHref);
-    }
+    // No real in-app page to return to (shared link opened fresh, or we just
+    // came from sign-in) — go to the fallback instead of bouncing through auth.
+    if (canGoBack()) router.back();
+    else router.push(fallbackHref);
   }
 
   if (iconOnly) {
