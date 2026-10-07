@@ -53,7 +53,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
+    <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
       <html lang="en">
         <head>
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
