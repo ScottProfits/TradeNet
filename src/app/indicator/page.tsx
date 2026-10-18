@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import BackButton from "@/components/ui/BackButton";
 import { errorMessage } from "@/lib/apiError";
 import { INDICATOR_SCRIPT_URL } from "@/lib/indicator";
+import { nativeQuery, openExternal } from "@/lib/externalBrowser";
 
 export default function IndicatorPage() {
   return (
@@ -39,12 +40,12 @@ function IndicatorPageInner() {
     }
     setLoading(true);
     setError(null);
-    const res = await fetch("/api/indicator/subscribe", { method: "POST" });
+    const res = await fetch(`/api/indicator/subscribe${nativeQuery()}`, { method: "POST" });
     if (res.ok) {
       const { url } = await res.json();
-      // Web-only Stripe Checkout. On iOS the WebView will open it; the
+      // Web-only Stripe Checkout (in-app browser sheet on iOS); the
       // TradingView link shows immediately once we're back (see below).
-      window.location.href = url;
+      await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
       return;
     }
     setError(await errorMessage(res));

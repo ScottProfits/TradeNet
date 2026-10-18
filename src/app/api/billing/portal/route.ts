@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { stripe, appUrl } from "@/lib/stripe";
+import { stripe, returnUrl } from "@/lib/stripe";
 import { NextRequest } from "next/server";
 
 // POST /api/billing/portal { returnTo? } — Stripe billing portal link for
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const { returnTo } = await req.json().catch(() => ({}));
   const session = await stripe.billingPortal.sessions.create({
     customer: profile.stripe_customer_id,
-    return_url: `${appUrl()}${typeof returnTo === "string" && returnTo.startsWith("/") ? returnTo : "/rooms"}`,
+    return_url: returnUrl(req, typeof returnTo === "string" && returnTo.startsWith("/") ? returnTo : "/rooms"),
   });
 
   return Response.json({ url: session.url });

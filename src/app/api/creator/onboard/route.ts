@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { stripe, appUrl } from "@/lib/stripe";
+import { stripe, returnUrl } from "@/lib/stripe";
 
 // GET /api/creator/onboard — current Stripe Connect status for the caller.
 export async function GET() {
@@ -37,7 +37,7 @@ export async function GET() {
 
 // POST /api/creator/onboard — create the Express account if needed and
 // return a fresh onboarding link.
-export async function POST() {
+export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
@@ -63,8 +63,8 @@ export async function POST() {
 
   const link = await stripe.accountLinks.create({
     account: acct.stripe_account_id,
-    refresh_url: `${appUrl()}/settings/earnings?refresh=1`,
-    return_url: `${appUrl()}/settings/earnings?done=1`,
+    refresh_url: returnUrl(req, "/settings/earnings?refresh=1"),
+    return_url: returnUrl(req, "/settings/earnings?done=1"),
     type: "account_onboarding",
   });
 

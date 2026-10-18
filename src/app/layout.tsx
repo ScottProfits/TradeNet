@@ -12,6 +12,7 @@ import TermsGate from "@/components/ui/TermsGate";
 import ProfileGate from "@/components/ui/ProfileGate";
 import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
+import NativeLinkHandler from "@/components/ui/NativeLinkHandler";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ryzr.app"),
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PushNotificationSetup />
           <NativePushSetup />
           <NativeSplashHide />
+          <NativeLinkHandler />
           <ProfileGate />
           <TermsGate />
           <ClientErrorLogger />

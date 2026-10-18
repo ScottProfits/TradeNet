@@ -12,6 +12,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 import VoiceNote from "@/components/feed/VoiceNote";
 import CommentSection from "@/components/feed/CommentSection";
 import TradingViewChart from "@/components/ui/TradingViewChart";
+import { openExternal } from "@/lib/externalBrowser";
 
 interface TradeDetail {
   id: string;
@@ -93,7 +94,7 @@ export default function TradePage() {
     const url = window.location.href;
     const pnlStr = trade ? `${trade.pnl >= 0 ? "+" : ""}$${Math.abs(trade.pnl).toLocaleString()}` : "";
     const tweetText = trade ? `${pnlStr} $${trade.ticker} ${trade.direction} trade on Ryzr 📈` : "Check out this trade on Ryzr";
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer,width=550,height=420");
+    void openExternal(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(url)}`);
   }
 
   if (!tradeLoading && !trade) return (

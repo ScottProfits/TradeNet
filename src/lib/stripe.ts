@@ -31,6 +31,16 @@ export function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.ryzr.app";
 }
 
+/**
+ * Stripe return URL. When the iOS app opened Stripe in its in-app browser
+ * (`?native=1`, see lib/externalBrowser), return to the public /checkout-done
+ * page instead — that browser isn't signed in, so app pages would 404.
+ */
+export function returnUrl(req: Request, path: string): string {
+  const native = new URL(req.url).searchParams.get("native") === "1";
+  return native ? `${appUrl()}/checkout-done` : `${appUrl()}${path}`;
+}
+
 /** Platform's cut of a room subscription, as a Stripe application_fee_percent. */
 export function platformFeePercent(roomFee?: number | null): number {
   const n = typeof roomFee === "number" ? roomFee : 4.5;

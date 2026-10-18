@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { stripe, appUrl, platformFeePercent } from "@/lib/stripe";
+import { stripe, returnUrl, platformFeePercent } from "@/lib/stripe";
 import { getMembership } from "@/lib/rooms";
 import { NextRequest } from "next/server";
 
@@ -65,8 +65,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       metadata: { ryzr_room_id: id, ryzr_user_id: userId },
     },
     metadata: { ryzr_room_id: id, ryzr_user_id: userId },
-    success_url: `${appUrl()}/rooms/${room.slug}?welcome=1`,
-    cancel_url: `${appUrl()}/rooms/${room.slug}`,
+    success_url: returnUrl(req, `/rooms/${room.slug}?welcome=1`),
+    cancel_url: returnUrl(req, `/rooms/${room.slug}`),
     allow_promotion_codes: true,
   });
 

@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { DollarSign, ExternalLink } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import { errorMessage } from "@/lib/apiError";
+import { nativeQuery, openExternal } from "@/lib/externalBrowser";
 
 export default function EarningsPage() {
   return (
@@ -32,10 +33,10 @@ function EarningsInner() {
 
   async function connect() {
     setBusy(true);
-    const res = await fetch("/api/creator/onboard", { method: "POST" });
+    const res = await fetch(`/api/creator/onboard${nativeQuery()}`, { method: "POST" });
     if (res.ok) {
       const { url } = await res.json();
-      window.location.href = url;
+      await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
     } else {
       alert(await errorMessage(res));
       setBusy(false);
@@ -49,7 +50,7 @@ function EarningsInner() {
     const res = await fetch("/api/creator/dashboard", { method: "POST" });
     if (res.ok) {
       const { url } = await res.json();
-      window.location.href = url;
+      await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
     } else {
       alert(await errorMessage(res));
       setBusy(false);

@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { stripe, appUrl } from "@/lib/stripe";
+import { stripe, returnUrl } from "@/lib/stripe";
 
 // GET /api/indicator/subscribe — the caller's own indicator subscription
 // status, so /indicator can show the TradingView link once active.
@@ -22,7 +22,7 @@ export async function GET() {
 // indicator's monthly access fee. Collects the buyer's TradingView username
 // as a Checkout custom field (handy for support even though the script is
 // Protected/public, not Invite-only, so nothing needs manual granting).
-export async function POST() {
+export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
@@ -71,8 +71,8 @@ export async function POST() {
       metadata: { ryzr_user_id: userId, kind: "indicator" },
     },
     metadata: { ryzr_user_id: userId, kind: "indicator" },
-    success_url: `${appUrl()}/indicator?welcome=1`,
-    cancel_url: `${appUrl()}/indicator`,
+    success_url: returnUrl(req, "/indicator?welcome=1"),
+    cancel_url: returnUrl(req, "/indicator"),
     allow_promotion_codes: true,
   });
 

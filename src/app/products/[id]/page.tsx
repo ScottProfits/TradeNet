@@ -7,6 +7,7 @@ import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { errorMessage } from "@/lib/apiError";
+import { nativeQuery, openExternal } from "@/lib/externalBrowser";
 
 interface ProductData {
   id: string;
@@ -41,10 +42,10 @@ export default function ProductPage() {
     }
     setLoading(true);
     setError(null);
-    const res = await fetch(`/api/products/${id}/subscribe`, { method: "POST" });
+    const res = await fetch(`/api/products/${id}/subscribe${nativeQuery()}`, { method: "POST" });
     if (res.ok) {
       const { url } = await res.json();
-      window.location.href = url;
+      await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
       return;
     }
     setError(await errorMessage(res));

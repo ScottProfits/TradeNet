@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { stripe, appUrl, platformFeePercent } from "@/lib/stripe";
+import { stripe, returnUrl, platformFeePercent } from "@/lib/stripe";
 import { NextRequest } from "next/server";
 
 // POST /api/products/:id/subscribe — start a web Checkout for someone
@@ -61,8 +61,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       metadata: { ryzr_product_id: id, ryzr_user_id: userId, kind: "product" },
     },
     metadata: { ryzr_product_id: id, ryzr_user_id: userId, kind: "product" },
-    success_url: `${appUrl()}/products/${id}/thanks`,
-    cancel_url: `${appUrl()}/products/${id}`,
+    success_url: returnUrl(req, `/products/${id}/thanks`),
+    cancel_url: returnUrl(req, `/products/${id}`),
     allow_promotion_codes: true,
   });
 

@@ -17,6 +17,7 @@ import { isVideoUrl } from "@/lib/isVideoUrl";
 import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
 import { uploadMedia, checkUploadSize } from "@/lib/upload";
 import { errorMessage } from "@/lib/apiError";
+import { nativeQuery, openExternal } from "@/lib/externalBrowser";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
 
@@ -320,12 +321,12 @@ function RoomPageInner() {
     setJoining(true);
     const paidRoom = !!room!.price_cents && room!.price_cents > 0;
     if (paidRoom) {
-      // Web-only Stripe Checkout. On iOS the WebView will open it; the
+      // Web-only Stripe Checkout (in-app browser sheet on iOS); the
       // membership row is created by the webhook on return.
-      const res = await fetch(`/api/rooms/${room!.id}/subscribe`, { method: "POST" });
+      const res = await fetch(`/api/rooms/${room!.id}/subscribe${nativeQuery()}`, { method: "POST" });
       if (res.ok) {
         const { url } = await res.json();
-        window.location.href = url;
+        await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
         return;
       }
       alert(await errorMessage(res));
@@ -342,14 +343,14 @@ function RoomPageInner() {
   }
 
   async function openBillingPortal() {
-    const res = await fetch("/api/billing/portal", {
+    const res = await fetch(`/api/billing/portal${nativeQuery()}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ returnTo: `/rooms/${slug}` }),
     });
     if (res.ok) {
       const { url } = await res.json();
-      window.location.href = url;
+      await openExternal(url, { sameTabOnWeb: true, reloadOnClose: true });
     } else {
       alert(await errorMessage(res));
     }
