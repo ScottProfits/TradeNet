@@ -155,7 +155,10 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
           <div
             className="absolute inset-x-0 bottom-0 z-10 flex items-center gap-3 px-4 py-3 transition-opacity duration-200"
             style={{
-              paddingBottom: "0.75rem",
+              // Keep the scrubber well above the home-indicator strip: a
+              // sideways drag along the bottom edge is iOS's "switch app"
+              // gesture, which slid the whole app away mid-scrub.
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 2rem)",
               background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))",
               opacity: showControls ? 1 : 0,
               pointerEvents: showControls ? "auto" : "none",
@@ -178,7 +181,7 @@ export default function ExpandableVideo({ src, poster, className }: ExpandableVi
             <span className="text-xs text-white/80 tabular-nums shrink-0 w-9">{formatTime(currentTime)}</span>
             <div
               ref={trackRef}
-              className="relative flex-1 h-5 flex items-center touch-none"
+              className="relative flex-1 h-8 flex items-center touch-none"
               role="slider"
               aria-label="Seek"
               aria-valuemin={0}
