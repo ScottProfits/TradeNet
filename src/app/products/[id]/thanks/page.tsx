@@ -2,11 +2,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import BackButton from "@/components/ui/BackButton";
+import NotAvailableInApp from "@/components/ui/NotAvailableInApp";
+import { useHidesPaidContent } from "@/lib/paidContent";
 
 export default function ProductThanksPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<{ title: string; delivery_instructions: string | null } | null>(null);
   const [forbidden, setForbidden] = useState(false);
+  const hidePaid = useHidesPaidContent();
 
   useEffect(() => {
     fetch(`/api/products/${id}/thanks`).then(async (res) => {
@@ -15,6 +18,7 @@ export default function ProductThanksPage() {
     });
   }, [id]);
 
+  if (hidePaid) return <NotAvailableInApp />;
   if (forbidden) {
     return <p className="text-gray-500 text-sm text-center pt-20">You don&apos;t have an active subscription to this.</p>;
   }

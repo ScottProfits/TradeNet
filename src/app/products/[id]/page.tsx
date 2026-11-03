@@ -8,6 +8,8 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { errorMessage } from "@/lib/apiError";
 import { nativeQuery, openExternal } from "@/lib/externalBrowser";
+import NotAvailableInApp from "@/components/ui/NotAvailableInApp";
+import { useHidesPaidContent } from "@/lib/paidContent";
 
 interface ProductData {
   id: string;
@@ -27,6 +29,7 @@ export default function ProductPage() {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hidePaid = useHidesPaidContent();
 
   useEffect(() => {
     fetch(`/api/products/${id}`).then(async (res) => {
@@ -54,6 +57,7 @@ export default function ProductPage() {
 
   if (notFound) return <p className="text-gray-500 text-sm text-center pt-20">Not available.</p>;
   if (!product) return null;
+  if (hidePaid && !product.isOwner) return <NotAvailableInApp />;
 
   return (
     <div className="max-w-lg mx-auto space-y-5">

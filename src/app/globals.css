@@ -112,3 +112,8 @@ body {
 [class*=" cl-userPreviewMainIdentifier"] { color: #ffffff !important; font-weight: 600 !important; }
 [class^="cl-userPreviewSecondaryIdentifier"],
 [class*=" cl-userPreviewSecondaryIdentifier"] { color: #9ca3af !important; }
+
+/* Paid content is web-only in the iOS app (see src/lib/paidContent.ts). */
+html.native-app .web-only {
+  display: none !important;
+}

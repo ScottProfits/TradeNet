@@ -18,6 +18,8 @@ import { extractVideoThumbnail } from "@/lib/extractVideoThumbnail";
 import { uploadMedia, checkUploadSize } from "@/lib/upload";
 import { errorMessage } from "@/lib/apiError";
 import { nativeQuery, openExternal } from "@/lib/externalBrowser";
+import NotAvailableInApp from "@/components/ui/NotAvailableInApp";
+import { useHidesPaidContent } from "@/lib/paidContent";
 
 const REACTIONS = ["👍", "🔥", "😂", "🚀", "💯", "👀", "❤️", "🎯"];
 
@@ -91,6 +93,7 @@ function RoomPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { userId, isLoaded } = useAuth();
+  const hidePaid = useHidesPaidContent();
   const [signedOut, setSignedOut] = useState(false);
 
   const cachedShell = roomShellCache.get(slug);
@@ -527,6 +530,7 @@ function RoomPageInner() {
   if (!room) return <p className="text-gray-500 text-sm text-center pt-20">Room not found.</p>;
 
   const paid = !!room.price_cents && room.price_cents > 0;
+  if (hidePaid && paid && !isMod) return <NotAvailableInApp />;
   const activeChannelObj = channels.find((c) => c.id === activeChannel);
   const activeChannelName = activeChannelObj?.name ?? "";
   const canPostHere = !activeChannelObj?.mods_only_posts || isMod;

@@ -13,6 +13,7 @@ import ProfileGate from "@/components/ui/ProfileGate";
 import ClientErrorLogger from "@/components/ui/ClientErrorLogger";
 import { NavVisibilityProvider } from "@/contexts/NavVisibilityContext";
 import NativeLinkHandler from "@/components/ui/NativeLinkHandler";
+import { NATIVE_APP_CLASS_SCRIPT } from "@/lib/paidContent";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ryzr.app"),
@@ -55,9 +56,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" appearance={{ theme: dark, variables: { colorPrimary: "#22c55e", colorDanger: "#ef4444" } }}>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <head>
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+          <script dangerouslySetInnerHTML={{ __html: NATIVE_APP_CLASS_SCRIPT }} />
         </head>
         <body>
           <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }` }} />

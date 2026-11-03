@@ -6,6 +6,8 @@ import BackButton from "@/components/ui/BackButton";
 import { errorMessage } from "@/lib/apiError";
 import { INDICATOR_SCRIPT_URL } from "@/lib/indicator";
 import { nativeQuery, openExternal } from "@/lib/externalBrowser";
+import NotAvailableInApp from "@/components/ui/NotAvailableInApp";
+import { useHidesPaidContent } from "@/lib/paidContent";
 
 export default function IndicatorPage() {
   return (
@@ -24,6 +26,7 @@ function IndicatorPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(false);
   const [checked, setChecked] = useState(false);
+  const hidePaid = useHidesPaidContent();
 
   useEffect(() => {
     if (!userId) { setChecked(true); return; }
@@ -51,6 +54,8 @@ function IndicatorPageInner() {
     setError(await errorMessage(res));
     setLoading(false);
   }
+
+  if (hidePaid) return <NotAvailableInApp />;
 
   return (
     <div className="max-w-lg mx-auto space-y-5">

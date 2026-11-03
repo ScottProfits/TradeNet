@@ -83,8 +83,7 @@ export default function NewRoomPage() {
         </div>
 
         <p className="text-xs text-gray-500 leading-relaxed">
-          Your channel starts free with a <span className="text-gray-300">#general</span> topic. You can add more topics
-          and set a monthly price once payouts are connected.
+          Your channel starts free with a <span className="text-gray-300">#general</span> topic. You can add more topics<span className="web-only"> and set a monthly price once payouts are connected</span>.
         </p>
 
         {error && <p className="text-xs text-red-400">{error}</p>}

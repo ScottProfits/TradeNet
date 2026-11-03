@@ -66,6 +66,14 @@ export default function SettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  // The profile menu's "Delete account" item links here with ?delete=1.
+  const dangerZoneRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("delete") !== "1") return;
+    setDangerZoneOpen(true);
+    setTimeout(() => dangerZoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+  }, []);
+
   async function handleDeleteAccount() {
     setDeleting(true);
     const res = await fetch("/api/account", { method: "DELETE" });
@@ -379,7 +387,7 @@ export default function SettingsPage() {
           {/* Product link — a dedicated, prominent button on your profile,
               separate from the generic Website field, for something you're
               selling (a paid indicator, a course, etc). */}
-          <div className="space-y-3 pt-2">
+          <div className="web-only space-y-3 pt-2">
             <p className="text-sm font-semibold text-white">Product link (optional)</p>
             <p className="text-xs text-gray-500">
               Shows as its own button on your profile — separate from Website. Point
@@ -506,7 +514,7 @@ export default function SettingsPage() {
       {/* Creator earnings */}
       <Link
         href="/settings/earnings"
-        className="glass-card rounded-2xl p-6 flex items-center justify-between gap-3 hover:border-[var(--green)]/40 transition-colors"
+        className="web-only glass-card rounded-2xl p-6 flex items-center justify-between gap-3 hover:border-[var(--green)]/40 transition-colors"
       >
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-[var(--green)]" />
@@ -521,7 +529,7 @@ export default function SettingsPage() {
       {/* Sell a product — self-serve pricing, same destination-charge/Connect
           pattern as paid channels. Shows on your profile as a dedicated
           button once priced. */}
-      <div className="glass-card rounded-2xl p-6 space-y-4">
+      <div className="web-only glass-card rounded-2xl p-6 space-y-4">
         <div>
           <h2 className="font-bold text-white">Sell a product</h2>
           <p className="text-xs text-gray-500 mt-1">
@@ -761,14 +769,14 @@ export default function SettingsPage() {
       )}
 
       {/* Danger Zone */}
-      <div className="glass-card rounded-2xl p-6" style={{ borderColor: "rgba(255,77,77,0.25)" }}>
+      <div ref={dangerZoneRef} className="glass-card rounded-2xl p-6" style={{ borderColor: "rgba(255,77,77,0.25)" }}>
         <button
           onClick={() => setDangerZoneOpen((o) => !o)}
           className="w-full flex items-center justify-between gap-2"
         >
           <div className="flex items-center gap-2">
             <Trash2 className="w-5 h-5 text-[var(--red)]" />
-            <h2 className="font-bold text-white">Danger Zone</h2>
+            <h2 className="font-bold text-white">Delete Account</h2>
           </div>
           <ChevronDown className={clsx("w-4 h-4 text-gray-500 transition-transform", dangerZoneOpen && "rotate-180")} />
         </button>

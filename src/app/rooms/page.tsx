@@ -7,6 +7,7 @@ import { Users, Plus, Lock, Compass, ChevronRight } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { paidRoomClass } from "@/lib/paidContent";
 
 interface Room {
   id: string;
@@ -17,6 +18,7 @@ interface Room {
   price_cents: number | null;
   member_count: number;
   visibility?: string;
+  owner_id?: string;
   owner?: { handle: string; avatar_url: string; verified: boolean } | null;
 }
 
@@ -63,7 +65,7 @@ export default function RoomsPage() {
       >
         <h1 className="text-2xl font-bold text-white">Channels</h1>
         <p className="text-sm text-gray-400 mt-1 max-w-xs">
-          Trading rooms with live chat, topics and daily recaps — free or members-only.
+          Trading rooms with live chat, topics and daily recaps<span className="web-only"> — free or members-only</span>.
         </p>
         <Link
           href="/rooms/new"
@@ -80,7 +82,7 @@ export default function RoomsPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 px-1">Your channels</h2>
           <div className="space-y-2.5">
             {mine.map((r) => (
-              <RoomCard key={r.id} room={r} live={liveRooms.has(r.id)} />
+              <RoomCard key={r.id} room={r} userId={userId} live={liveRooms.has(r.id)} />
             ))}
           </div>
         </section>
@@ -100,7 +102,7 @@ export default function RoomsPage() {
           ) : (
             <div className="space-y-2.5">
               {browse.map((r) => (
-                <RoomCard key={r.id} room={r} showOwner live={liveRooms.has(r.id)} />
+                <RoomCard key={r.id} room={r} userId={userId} showOwner live={liveRooms.has(r.id)} />
               ))}
             </div>
           )}
@@ -110,12 +112,12 @@ export default function RoomsPage() {
   );
 }
 
-function RoomCard({ room, showOwner, live }: { room: Room; showOwner?: boolean; live?: boolean }) {
+function RoomCard({ room, userId, showOwner, live }: { room: Room; userId?: string | null; showOwner?: boolean; live?: boolean }) {
   const paid = !!room.price_cents && room.price_cents > 0;
   return (
     <Link
       href={`/rooms/${room.slug}`}
-      className="group flex items-center gap-3.5 p-3.5 rounded-2xl glass-card border border-[var(--border)] hover:border-[var(--green)]/30 transition-colors"
+      className={`${paidRoomClass(room, userId)} group flex items-center gap-3.5 p-3.5 rounded-2xl glass-card border border-[var(--border)] hover:border-[var(--green)]/30 transition-colors`}
     >
       <SafeAvatar
         src={room.avatar_url}

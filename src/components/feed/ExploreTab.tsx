@@ -8,6 +8,7 @@ import SafeAvatar from "@/components/ui/SafeAvatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { clsx } from "clsx";
 import { demoExplore } from "@/lib/demoData";
+import { WEB_ONLY } from "@/lib/paidContent";
 
 interface Trader {
   id: string;
@@ -121,7 +122,7 @@ export default function ExploreTab() {
                 <Link
                   key={c.id}
                   href={`/rooms/${c.slug}`}
-                  className="flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-[var(--green)]/40 transition-colors group"
+                  className={clsx(paid && WEB_ONLY, "flex items-center gap-3 glass-card rounded-2xl p-3 hover:border-[var(--green)]/40 transition-colors group")}
                 >
                   <SafeAvatar src={c.avatar_url} alt={c.name} initials={c.name} className="w-11 h-11 rounded-xl text-sm shrink-0" />
                   <div className="flex-1 min-w-0">

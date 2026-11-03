@@ -227,7 +227,7 @@ export default async function LandingPage() {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">Join a trading channel.</h2>
               <p className="text-gray-500 text-center mb-12 text-sm">
-                Live chat, topics and daily recaps run by traders — free or members-only.
+                Live chat, topics and daily recaps run by traders<span className="web-only"> — free or members-only</span>.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {channels.map((c) => {
@@ -236,7 +236,7 @@ export default async function LandingPage() {
                     <Link
                       key={c.id}
                       href={`/rooms/${c.slug}`}
-                      className="flex items-start gap-3 bg-white/[0.03] border border-white/5 rounded-2xl p-5 hover:border-green-500/30 hover:bg-green-500/[0.03] transition-all"
+                      className={`${paid ? "web-only " : ""}flex items-start gap-3 bg-white/[0.03] border border-white/5 rounded-2xl p-5 hover:border-green-500/30 hover:bg-green-500/[0.03] transition-all`}
                     >
                       {c.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -260,7 +260,7 @@ export default async function LandingPage() {
                   );
                 })}
                 {EXAMPLE_CHANNELS.slice(0, Math.max(0, 3 - channels.length)).map((c) => (
-                  <div key={c.name} className="flex items-start gap-3 bg-white/[0.02] border border-dashed border-white/15 rounded-2xl p-5">
+                  <div key={c.name} className={`${c.price !== "Free" ? "web-only " : ""}flex items-start gap-3 bg-white/[0.02] border border-dashed border-white/15 rounded-2xl p-5`}>
                     <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center text-lg font-bold text-gray-400 shrink-0">#</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">

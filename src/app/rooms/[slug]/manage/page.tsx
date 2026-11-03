@@ -399,7 +399,7 @@ export default function ManageRoomPage() {
       )}
 
       {isOwner && (
-        <section className="glass-card rounded-2xl p-5 space-y-3">
+        <section className="web-only glass-card rounded-2xl p-5 space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Membership price</h2>
           {!payoutsEnabled ? (
             <p className="text-xs text-gray-500">

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, MoreHorizontal, Ban, Flag, Hash } from "lucide-react";
+import { X, MessageSquare, Heart, TrendingUp, TrendingDown, FileText, Pin, PinOff, LogOut, Settings, MoreHorizontal, Ban, Flag, Hash, Trash2 } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import FounderBadge from "@/components/ui/FounderBadge";
 import BadgeDisplay from "@/components/ui/BadgeDisplay";
@@ -21,6 +21,7 @@ import RithmicConnectModal from "@/components/brokers/RithmicConnectModal";
 import WatchlistSection from "@/components/profile/WatchlistSection";
 import { timeAgo } from "@/lib/timeAgo";
 import { isVideoUrl } from "@/lib/isVideoUrl";
+import { WEB_ONLY } from "@/lib/paidContent";
 import { demoProfileData, demoLikedItems } from "@/lib/demoData";
 
 function nameSizeClass(name: string): string {
@@ -498,6 +499,14 @@ function ProfilePageInner() {
                   <Settings className="w-4 h-4" />
                   Manage account
                 </button>
+                <Link
+                  href="/settings?delete=1"
+                  onClick={() => setAccountMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-left"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete account
+                </Link>
                 <button
                   onClick={() => {
                     setAccountMenuOpen(false);
@@ -642,7 +651,7 @@ function ProfilePageInner() {
             href={profile.product_link_url.startsWith("http") ? profile.product_link_url : `https://${profile.product_link_url}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--green)] text-black text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="web-only mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--green)] text-black text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             🔗 {profile.product_link_label || "View Product"}
           </a>
@@ -692,7 +701,7 @@ function ProfilePageInner() {
                   <Link
                     key={ch.id}
                     href={`/rooms/${ch.slug}`}
-                    className="flex items-center gap-1.5 bg-[var(--green)]/[0.08] border border-[var(--green)]/25 hover:border-[var(--green)]/50 hover:bg-[var(--green)]/[0.14] text-gray-200 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                    className={`${paid && !isOwnProfile ? WEB_ONLY : ""} flex items-center gap-1.5 bg-[var(--green)]/[0.08] border border-[var(--green)]/25 hover:border-[var(--green)]/50 hover:bg-[var(--green)]/[0.14] text-gray-200 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors`}
                   >
                     <Hash className="w-3 h-3 text-[var(--green)]" />
                     {ch.name}
